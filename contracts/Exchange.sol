@@ -7,9 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-/*
- * We can have 1 market for each combinations of buy and sell tokens
- */
 contract Exchange is Ownable {
     /* Entities */
 
@@ -51,16 +48,17 @@ contract Exchange is Ownable {
     struct Market {
         // Map to buy and sell OrderBook
         mapping(OrderType => OrderBook) orderBooks;
-        // uint8 buyTokenIndex;
-        // uint8 sellTokenIndex;
     }
 
+    // Map token index to ERC20 token
     mapping(uint8 => ERC20Token) tokens;
+    /*
+     * We can have 1 market for each combinations of buy and sell tokens
+     */
     mapping(uint8 => Market) exchangeMarkets;
     // Map market index to buy and sell token index
     mapping(uint8 => uint8[]) buyToSell;
     // Map user address to user balances per token
-    // NOTE: token here is assumed to have been multiplied by its price
     mapping(address => mapping(uint8 => uint256)) userBalances;
 
     // Track number of tokens
@@ -122,6 +120,9 @@ contract Exchange is Ownable {
 
     event OrderCancelledEvent(
         uint256 orderIndex,
+        string symbol1,
+        string symbol2,
+        OrderType orderType,
         address userAddress,
         uint256 timestamp
     );
@@ -160,7 +161,7 @@ contract Exchange is Ownable {
     }
 
     // Owner -> Create new market (Triggered when a new token is issued)
-    // TODO: How to create the exchange market?
+    // TODO: How to correctly create the exchange market?
     function createMarket() public onlyOwner {
         require(marketIndex + 1 > marketIndex, "Market index overflow");
 
@@ -392,6 +393,7 @@ contract Exchange is Ownable {
             );
 
             // Add to active order queue
+            // TODO: Why did senior only add for LIMIT orders?
             addOrder(_marketIndex, _newOrderIndex, orderType);
         } else if (balance == 0) {
             exchangeMarkets[_marketIndex]
@@ -401,6 +403,7 @@ contract Exchange is Ownable {
         } else {
             // Not filled at all
             // Add to active order queue
+            // TODO: Why did senior only add for LIMIT orders?
             addOrder(_marketIndex, _newOrderIndex, orderType);
         }
     }
@@ -423,11 +426,10 @@ contract Exchange is Ownable {
         uint256 oppositeOrderCount = exchangeMarkets[_marketIndex]
             .orderBooks[oppositeOrderType]
             .activeCount;
-
         uint256 fulfilledOrdersCount = 0;
 
         if (orderType == OrderType.Buy) {
-            // Market Buy -> Match from lowest price
+            // Buy -> Match from lowest price
             for (uint256 i = 0; i < oppositeOrderCount; i++) {
                 if (pendingOrder.amount == 0) break;
 
@@ -485,7 +487,7 @@ contract Exchange is Ownable {
                 );
             }
         } else {
-            // Market Sell -> Match from highest price
+            // Sell -> Match from highest price
             for (uint256 i = oppositeOrderCount - 1; i >= 0; i--) {
                 if (pendingOrder.amount == 0) break;
 
@@ -578,7 +580,76 @@ contract Exchange is Ownable {
             .activeCount = updatedOrderCount;
     }
 
-    function cancelOrder() private {}
+    /*
+     * BUY -> 1: buySymbol, 2: sellSymbol
+     * SELL -> 1: sellSymbol, 2: buySymbol
+     */
+    function cancelOrder(
+        string memory symbol1,
+        string memory symbol2,
+        OrderType orderType,
+        uint256 orderId
+    ) private {
+        require(hasToken(symbol1), "Token does not exist");
+        require(hasToken(symbol2), "Token does not exist");
+
+        uint8 _marketIndex;
+        uint8 tokenIndex1 = getTokenIndex(symbol1);
+        uint8 tokenIndex2 = getTokenIndex(symbol2);
+
+        if (orderType == OrderType.Buy) {
+            _marketIndex = getMarketIndexByTokenIndex(tokenIndex1, tokenIndex2);
+        } else {
+            _marketIndex = getMarketIndexByTokenIndex(tokenIndex2, tokenIndex1);
+        }
+
+        uint256 currentActiveCount = exchangeMarkets[_marketIndex]
+            .orderBooks[orderType]
+            .activeCount;
+        require(currentActiveCount > 0, "No active orders for this order type");
+
+        bool isOrderRemoved = false;
+        uint256 newQueueIndex = 0;
+        uint256[] memory updatedQueue = new uint256[](currentActiveCount - 1);
+
+        for (uint256 i = 0; i < currentActiveCount; i++) {
+            if (
+                exchangeMarkets[_marketIndex].orderBooks[orderType].queue[i] !=
+                orderId
+            ) {
+                updatedQueue[newQueueIndex++] = exchangeMarkets[_marketIndex]
+                    .orderBooks[orderType]
+                    .queue[i];
+                continue;
+            }
+
+            isOrderRemoved = true;
+        }
+
+        exchangeMarkets[_marketIndex]
+            .orderBooks[orderType]
+            .queue = updatedQueue;
+        exchangeMarkets[_marketIndex]
+            .orderBooks[orderType]
+            .activeCount = newQueueIndex;
+
+        // TODO: Do I need to refund to user?
+
+        if (isOrderRemoved) {
+            exchangeMarkets[_marketIndex]
+                .orderBooks[orderType]
+                .orders[orderId]
+                .status = OrderStatus.Cancelled;
+            emit OrderCancelledEvent(
+                orderId,
+                symbol1,
+                symbol2,
+                orderType,
+                msg.sender,
+                block.timestamp
+            );
+        }
+    }
 
     /* Read-only utility methods */
 
@@ -594,11 +665,26 @@ contract Exchange is Ownable {
         return false;
     }
 
-    function getOrderBook(
+    function getActiveOrdersForOrderBook(
         uint8 buyTokenIndex,
         uint8 sellTokenIndex,
         OrderType orderType
-    ) public view {}
+    ) public view returns (Order[] memory activeOrders) {
+        uint8 _marketIndex = getMarketIndexByTokenIndex(buyTokenIndex, sellTokenIndex);
+        uint256 currentActiveCount = exchangeMarkets[_marketIndex]
+            .orderBooks[orderType]
+            .activeCount;
+            
+        for (uint8 i = 0; i <= currentActiveCount; i++) {
+            uint256 orderId = exchangeMarkets[
+                _marketIndex
+            ].orderBooks[orderType].queue[i];
+            
+            activeOrders[i] = exchangeMarkets[_marketIndex].orderBooks[orderType].orders[orderId];
+        }
+        
+        return activeOrders;
+    }
 
     function getTokenIndex(
         string memory symbol
@@ -622,7 +708,19 @@ contract Exchange is Ownable {
     function getMarketIndexBySymbol(
         string memory buyTokenSymbol,
         string memory sellTokenSymbol
-    ) public view returns (uint8 foundMarketIndex) {}
+    ) public view returns (uint8 foundMarketIndex) {
+        uint8 buyTokenIndex = getTokenIndex(buyTokenSymbol);
+        uint8 sellTokenIndex = getTokenIndex(sellTokenSymbol);
+        for (uint8 i = 0; i <= marketIndex; i++) {
+            if (
+                buyToSell[i][0] == buyTokenIndex &&
+                buyToSell[i][1] == sellTokenIndex
+            ) {
+                return i;
+            }
+        }
+        return 0;
+    }
 
     function getMarketIndexByTokenIndex(
         uint8 buyTokenIndex,
@@ -649,13 +747,22 @@ contract Exchange is Ownable {
         public
         view
         returns (string[] memory tokenSymbol, uint256[] memory tokenBalance)
-    {}
+    {
+        for (uint8 i = 0; i <= tokenIndex; i++) {
+            tokenSymbol[i] = tokens[i].symbol();
+            tokenBalance[i] = userBalances[msg.sender][i];
+        }
 
-    function getAllTokens()
-        public
-        view
-        returns (string[] memory tokenSymbol, uint256[] memory tokenBalance)
-    {}
+        return (tokenSymbol, tokenBalance);
+    }
+
+    function getAllTokens() public view returns (string[] memory tokenSymbol) {
+        for (uint8 i = 0; i <= tokenIndex; i++) {
+            tokenSymbol[i] = tokens[i].symbol();
+        }
+
+        return tokenSymbol;
+    }
 
     function getMarketIndex() public view returns (uint8) {
         return marketIndex;
@@ -665,7 +772,14 @@ contract Exchange is Ownable {
         public
         view
         returns (string[] memory buySymbolName, string[] memory sellSymbolName)
-    {}
+    {
+        for (uint8 i = 0; i <= marketIndex; i++) {
+            buySymbolName[i] = tokens[buyToSell[i][0]].symbol();
+            sellSymbolName[i] = tokens[buyToSell[i][1]].symbol();
+        }
+
+        return (buySymbolName, sellSymbolName);
+    }
 }
 
 contract ERC20Token is ERC20 {
