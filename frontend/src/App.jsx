@@ -1,12 +1,19 @@
-import PropTypes from "prop-types";
 import * as Tabs from "@radix-ui/react-tabs";
 import TokenDeposit from "./components/TokenDeposit";
 import TokenWithdraw from "./components/TokenWithdraw";
 import TokenIssue from "./components/TokenIssue";
 import PlaceOrder from "./components/PlaceOrder";
 import CancelOrder from "./components/CancelOrder";
+import { Web3Provider, useWeb3 } from "./contexts/web3";
+import PropTypes from "prop-types";
 
-export default function App() {
+function AppContent() {
+	const { account, networkId } = useWeb3();
+
+	if (!account) {
+		return <div>Please connect your MetaMask wallet.</div>;
+	}
+
 	return (
 		<div className="min-h-screen bg-gray-100">
 			<header className="bg-white shadow">
@@ -14,8 +21,11 @@ export default function App() {
 					<h1 className="text-3xl font-bold text-gray-900">
 						Decentralized Exchange
 					</h1>
+					<p className="text-sm text-gray-600">Connected Account: {account}</p>
+					<p className="text-sm text-gray-600">Network ID: {networkId}</p>
 				</div>
 			</header>
+
 			<main>
 				<div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
 					<div className="px-4 py-6 sm:px-0">
@@ -70,5 +80,13 @@ function TabsTrigger({ children, value }) {
 		>
 			{children}
 		</Tabs.Trigger>
+	);
+}
+
+export default function App() {
+	return (
+		<Web3Provider>
+			<AppContent />
+		</Web3Provider>
 	);
 }

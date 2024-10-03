@@ -1,13 +1,25 @@
 import { useState } from "react";
+import { useWeb3 } from "../contexts/web3";
 
 export default function TokenWithdraw() {
 	const [symbol, setSymbol] = useState("");
 	const [amount, setAmount] = useState("");
+	const [status, setStatus] = useState("");
+	const { contract, account } = useWeb3();
 
 	const handleWithdraw = async (e) => {
 		e.preventDefault();
-		// TODO: Implement withdraw logic using ethers.js
-		console.log(`Withdrawing ${amount} of ${symbol}`);
+		setStatus("Processing...");
+		try {
+			const result = await contract.methods
+				.withdrawTokens(symbol, amount)
+				.send({ from: account });
+			setStatus(
+				`Withdrawal successful. Transaction hash: ${result.transactionHash}`
+			);
+		} catch (error) {
+			setStatus(`Error: ${error.message}`);
+		}
 	};
 
 	return (
@@ -50,6 +62,7 @@ export default function TokenWithdraw() {
 			>
 				Withdraw
 			</button>
+			{status && <p className="mt-2 text-sm text-gray-600">{status}</p>}
 		</form>
 	);
 }

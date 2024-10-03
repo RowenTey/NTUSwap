@@ -1,13 +1,25 @@
 import { useState } from "react";
+import { useWeb3 } from "../contexts/web3";
 
 export default function TokenDeposit() {
 	const [symbol, setSymbol] = useState("");
 	const [amount, setAmount] = useState("");
+	const [status, setStatus] = useState("");
+	const { contract, account } = useWeb3();
 
 	const handleDeposit = async (e) => {
 		e.preventDefault();
-		// TODO: Implement deposit logic using ethers.js
-		console.log(`Depositing ${amount} of ${symbol}`);
+		setStatus("Processing...");
+		try {
+			const result = await contract.methods
+				.depositTokens(symbol, amount)
+				.send({ from: account });
+			setStatus(
+				`Deposit successful. Transaction hash: ${result.transactionHash}`
+			);
+		} catch (error) {
+			setStatus(`Error: ${error.message}`);
+		}
 	};
 
 	return (
@@ -50,6 +62,7 @@ export default function TokenDeposit() {
 			>
 				Deposit
 			</button>
+			{status && <p className="mt-2 text-sm text-gray-600">{status}</p>}
 		</form>
 	);
 }

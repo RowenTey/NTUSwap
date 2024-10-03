@@ -1,16 +1,27 @@
 import { useState } from "react";
+import { useWeb3 } from "../contexts/web3";
 
 export default function TokenIssue() {
 	const [name, setName] = useState("");
 	const [symbol, setSymbol] = useState("");
 	const [initialSupply, setInitialSupply] = useState("");
+	const [status, setStatus] = useState("");
+	const { contract, account } = useWeb3();
 
 	const handleIssue = async (e) => {
 		e.preventDefault();
-		// TODO: Implement token issuance logic using ethers.js
-		console.log(
-			`Issuing token: ${name} (${symbol}) with initial supply of ${initialSupply}`
-		);
+		setStatus("Processing...");
+		try {
+			const result = await contract.methods
+				.issueToken(name, symbol, initialSupply)
+				.send({ from: account });
+			console.log(result);
+			setStatus(
+				`Issue successful. Transaction hash: ${result.transactionHash}`
+			);
+		} catch (error) {
+			setStatus(`Error: ${error.message}`);
+		}
 	};
 
 	return (
@@ -69,6 +80,7 @@ export default function TokenIssue() {
 			>
 				Issue Token
 			</button>
+			{status && <p className="mt-2 text-sm text-gray-600">{status}</p>}
 		</form>
 	);
 }
