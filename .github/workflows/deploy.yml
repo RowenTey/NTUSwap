@@ -22,6 +22,5 @@ jobs:
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
-        working-directory: ./frontend
         with:
-          folder: build 
+          folder: frontend/build 
