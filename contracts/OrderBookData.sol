@@ -65,16 +65,24 @@ contract OrderBookData {
     }
 
     // Remove order from heap 
-    function removeOrder(OrderLibrary.OrderType _orderType, uint256 _orderId) public{
+    function removeOrder(OrderLibrary.OrderType _orderType, uint256 _orderId) public returns(bool){
+        
         OrderBook storage book = orderBooks[_orderType];
+
+        //Check if order exists 
+        require(book.orders[_orderId].status == OrderLibrary.OrderStatus.Active, "Order is not Active");
 
         //Get Node from heap 
         Heap.Node memory deletedNode = book.heap.extractById(int128(_orderId));
-        require(deletedNode.id == int128(_orderId), "Order not found in heap");
+        if(deletedNode.id != int128(_orderId)){
+                return false; //Order not in heap 
+        }
 
         //Cancel order and reduce active order count
-        book.orders[_orderId].status = OrderLibrary.OrderStatus.Cancelled;
+        book.orders[_orderId].status = updateOrderStatus(_orderType, _orderId, OrderLibrary.OrderStatus.Cancelled);
         book.activeCount--; 
+
+        return true; //Order removed successfully 
 
     }
 

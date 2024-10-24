@@ -26,11 +26,17 @@ contract OrderBookManager {
         return orderId;
     }
 
+    function cancelOrder(uint256 _orderId, OrderLibrary.OrderType _orderType) public returns(bool){
+        bool removed = OrderBookData.removeOrder(_orderType, _orderId);
+        return removed;
+    }
+    
+
     function matchOrder(
-        bytes32 marketId,
-        uint256 pendingOrderId,
-        OrderLibrary.OrderType orderType,
-        OrderLibrary.OrderNature orderNature
+        bytes32 _marketId,
+        uint256 _pendingOrderId,
+        OrderLibrary.OrderType _orderType,   
+        OrderLibrary.OrderNature _orderNature
     )
         public
         returns (
@@ -40,5 +46,13 @@ contract OrderBookManager {
             uint256[] memory tokenAmount,
             uint256[] memory currencyAmount
         )
-    {}
+    {
+        OrderBookData marketOrderBook = marketOrderBooks[_marketId];
+        OrderLibrary.Order storage pendingOrder = marketOrderBook.orderBooks[_orderType].orders[_pendingOrderId];
+        OrderLibrary.OrderType oppositeOrderType = _orderType == OrderLibrary.OrderType.Buy ? OrderLibrary.OrderType.Sell : OrderLibrary.OrderType.Buy;
+        
+        OrderBook orderBook = marketOrderBook[oppositeOrderType];
+        // if()
+        
+    }
 }
