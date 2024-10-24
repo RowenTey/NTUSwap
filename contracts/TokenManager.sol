@@ -68,7 +68,7 @@ contract TokenManager is Ownable {
         uint256 _amount
     ) internal returns (uint256 tokenBalance) {
         require(isToken[_symbol] > 0, "Token hasn't been issued");
-        require(amount > 0, "Amount must be greater than zero");
+        require(_amount > 0, "Amount must be greater than zero");
 
         uint256 userBalance = getUserTokenBalance(_symbol);
         require(userBalance + _amount > userBalance, "User balance overflow");
@@ -98,7 +98,7 @@ contract TokenManager is Ownable {
         require(_amount > 0, "Amount must be greater than zero");
 
         uint256 userBalance = getUserTokenBalance(_symbol);
-        require(userBalance >= amount, "Insufficient balance");
+        require(userBalance >= _amount, "Insufficient balance");
 
         uint8 tokenId = isToken[_symbol];
         IERC20 token = tokens[tokenId];
@@ -107,11 +107,11 @@ contract TokenManager is Ownable {
         require(token.transfer(msg.sender, _amount), "Failed to transfer amount");
 
         // Update ledger
-        userBalances[msg.sender][_tokenId] -= _amount;
+        userBalances[msg.sender][tokenId] -= _amount;
 
-        emit WithdrawalEvent(symbol, msg.sender, _amount, block.timestamp);
+        emit WithdrawalEvent(_symbol, msg.sender, _amount, block.timestamp);
 
-        return userBalances[msg.sender][_tokenId];
+        return userBalances[msg.sender][tokenId];
     }
 
     function getUserTokenBalance(
