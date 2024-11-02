@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
-import "contracts/OrderLibrary.sol";
-import "contracts/OrderBookData.sol";
+import "./OrderLibrary.sol";
+import "./OrderBookData.sol";
 
 contract OrderBookManager {
     mapping(bytes32 => IOrderBookData) public marketOrderBooks;
@@ -17,7 +17,7 @@ contract OrderBookManager {
         return address(marketOrderBooks[marketId]) != address(0);
     }
 
-    function createMarketOrderBook(bytes32 _marketId) public onlyMarketManager {
+    function createMarketOrderBook(bytes32 _marketId) public {
         require(address(marketOrderBooks[_marketId]) == address(0), "Order Book already exists");   
         // Deploy new OrderBookData contract for this market
         OrderBookData newOrderBook = new OrderBookData(address(this));
@@ -35,8 +35,7 @@ contract OrderBookManager {
         OrderLibrary.OrderNature _orderNature
     ) public returns (uint256 _orderId) {
         require(orderBookExists(_marketId), "Order Book does not exist");
-        OrderBookData marketOrderBook = marketOrderBooks[_marketId];
-        uint256 orderId = marketOrderBook.addOrder(
+        uint256 orderId = marketOrderBooks[_marketId].addOrder(
             _amount,
             _price,
             _userAddress,
@@ -74,7 +73,7 @@ contract OrderBookManager {
             uint256[] memory currencyAmount
         )
     {
-        OrderBookData marketOrderBook = marketOrderBooks[_marketId];
+        IOrderBookData marketOrderBook = marketOrderBooks[_marketId];
         OrderLibrary.Order memory pendingOrder = marketOrderBook.getOrderFromId(
             _orderType,
             _pendingOrderId

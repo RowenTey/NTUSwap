@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
-import "contracts/OrderLibrary.sol";
-import "contracts/MarketData.sol";
-import "contracts/OrderBookManager.sol";
+import "./OrderLibrary.sol";
+import "./MarketData.sol";
+import "./OrderBookManager.sol";
 
 contract MarketManager {
     IMarketData public immutable marketData;
@@ -30,7 +30,7 @@ contract MarketManager {
     }
 
     function createMarket(uint8 _tokenId) external {
-        require(tokenId > 1, "Invalid token ID");
+        require(_tokenId > 1, "Invalid token ID");
         marketData.addMarket(_tokenId);
 
         // Create orderbooks for each market pair
@@ -69,7 +69,7 @@ contract MarketManager {
             price,
             msg.sender,
             orderType,
-            orderNatrue
+            orderNature
         );
         emit OrderPlacedEvent(
             marketId,

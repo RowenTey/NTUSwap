@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
-import "contracts/OrderLibrary.sol";
+import "./OrderLibrary.sol";
 
 interface IOrderBookData {
     function initializeOrderBooks() external;
@@ -133,18 +133,6 @@ contract OrderBookData is IOrderBookData {
         );
         order.status = _neworderStatus;
     }
-
-    // // Update Fills struct to note transactions done on the order
-    // function updateOrderReceipts(
-    //     OrderLibrary.OrderType _orderType,
-    //     uint256 _orderId,
-    //     OrderLibrary.Fills memory _orderReceipts
-    // ) public {
-    //     OrderLibrary.Order storage order = orderBooks[_orderType].orders[
-    //         _orderId
-    //     ];
-    //     order.fills.push(_orderReceipts);
-    // }
 
     // Remove order from heap
     function removeOrder(

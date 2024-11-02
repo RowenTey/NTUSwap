@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
-import "contracts/OrderLibrary.sol";
-import "contracts/MarketManager.sol";
-import "contracts/OrderBookManager.sol";
-import "contracts/TokenManager.sol";
+import "./OrderLibrary.sol";
+import "./MarketManager.sol";
+import "./OrderBookManager.sol";
+import "./TokenManager.sol";
 
 contract Exchange {
     MarketManager public immutable marketManager;
