@@ -4,7 +4,6 @@ import "contracts/OrderLibrary.sol";
 import "contracts/OrderBookData.sol";
 
 contract OrderBookManager {
-    
     mapping(bytes32 => OrderBookData) internal marketOrderBooks;
 
     function createOrder(
@@ -16,7 +15,7 @@ contract OrderBookManager {
         OrderLibrary.OrderNature _orderNature
     ) public returns (uint256 _orderId) {
         OrderBookData marketOrderBook = marketOrderBooks[_marketId];
-        orderId = marketOrderBook.addOrder(
+        uint256 orderId = marketOrderBook.addOrder(
             _amount,
             _price,
             _userAddress,
@@ -26,16 +25,23 @@ contract OrderBookManager {
         return orderId;
     }
 
-    function cancelOrder(uint256 _orderId, OrderLibrary.OrderType _orderType) public returns(bool){
-        bool removed = OrderBookData.removeOrder(_orderType, _orderId);
+    function cancelOrder(
+        bytes32 _marketId,
+        uint256 _orderId,
+        OrderLibrary.OrderType _orderType
+    ) public returns (bool) {
+        bool removed = marketOrderBooks[_marketId].removeOrder(
+            _orderType,
+            _orderId
+        );
         return removed;
     }
-    
 
+    // TODO: Check if this is the best way to do this
     function matchOrder(
         bytes32 _marketId,
         uint256 _pendingOrderId,
-        OrderLibrary.OrderType _orderType,   
+        OrderLibrary.OrderType _orderType,
         OrderLibrary.OrderNature _orderNature
     )
         public
@@ -48,11 +54,231 @@ contract OrderBookManager {
         )
     {
         OrderBookData marketOrderBook = marketOrderBooks[_marketId];
-        OrderLibrary.Order storage pendingOrder = marketOrderBook.orderBooks[_orderType].orders[_pendingOrderId];
-        OrderLibrary.OrderType oppositeOrderType = _orderType == OrderLibrary.OrderType.Buy ? OrderLibrary.OrderType.Sell : OrderLibrary.OrderType.Buy;
-        
-        OrderBook orderBook = marketOrderBook[oppositeOrderType];
-        // if()
-        
+        OrderLibrary.Order memory pendingOrder = marketOrderBook.getOrderFromId(
+            _orderType,
+            _pendingOrderId
+        );
+        OrderLibrary.OrderType oppositeOrderType = _orderType ==
+            OrderLibrary.OrderType.Buy
+            ? OrderLibrary.OrderType.Sell
+            : OrderLibrary.OrderType.Buy;
+
+        // OrderBook orderBook = marketOrderBook[oppositeOrderType];
+        uint256 bestOrderId;
+
+        address[] memory temptoBePaid = new address[](
+            marketOrderBook.getActiveOrderCount(oppositeOrderType)
+        );
+        address[] memory temptoReceive = new address[](
+            marketOrderBook.getActiveOrderCount(oppositeOrderType)
+        );
+        uint256[] memory temptokenAmount = new uint256[](
+            marketOrderBook.getActiveOrderCount(oppositeOrderType)
+        );
+        uint256[] memory tempcurrencyAmount = new uint256[](
+            marketOrderBook.getActiveOrderCount(oppositeOrderType)
+        );
+        uint256 count = 0; // variable to track slot for the above arrays in which the current order's details are to be recorded
+
+        if (_orderType == OrderLibrary.OrderType.Buy) {
+            while (pendingOrder.remainingAmount > 0) {
+                bestOrderId = marketOrderBook.getBestOrderFromHeap(
+                    oppositeOrderType
+                );
+                OrderLibrary.Order memory bestOrder = marketOrderBook
+                    .getOrderFromId(oppositeOrderType, bestOrderId);
+
+                bool orderMatched = false;
+
+                if (_orderNature == OrderLibrary.OrderNature.Market) {
+                    // need to match immediately
+                    orderMatched = true;
+                } else {
+                    // Limit: match at that price or lesser in sell order book
+                    if (pendingOrder.price >= bestOrder.price) {
+                        orderMatched = true;
+                    } else {
+                        break;
+                    }
+                }
+                if (orderMatched) {
+                    uint256 matchedAmount = pendingOrder.remainingAmount <
+                        bestOrder.remainingAmount
+                        ? pendingOrder.remainingAmount
+                        : bestOrder.remainingAmount;
+                    // TODO: Check if the meaning interpreted is correct here
+                    temptoBePaid[count] = bestOrder.userAddress; // This user is the seller so he is paid the amount to buy a commodity
+                    temptoReceive[count] = pendingOrder.userAddress; // This user is the buyer so he receives the commodity
+                    temptokenAmount[count] = matchedAmount;
+                    tempcurrencyAmount[count] = matchedAmount * bestOrder.price;
+                    count++;
+
+                    // Update remaining amount
+                    uint256 pendingOrderNewAmount = pendingOrder
+                        .remainingAmount - matchedAmount;
+                    uint256 bestOrderNewAmount = bestOrder.remainingAmount -
+                        matchedAmount;
+
+                    // Update fills for both matched orders
+                    OrderLibrary.Fills
+                        memory pendingOrderNewReceipts = OrderLibrary.Fills({
+                            price: bestOrder.price,
+                            amount: matchedAmount,
+                            timestamp: block.timestamp
+                        });
+                    OrderLibrary.Fills
+                        memory bestOrderNewReceipts = OrderLibrary.Fills({
+                            price: bestOrder.price,
+                            amount: matchedAmount,
+                            timestamp: block.timestamp
+                        });
+
+                    // Update order status for sell order that was either fully or partially matched
+                    OrderLibrary.OrderStatus bestOrderNewStatus;
+                    // Update order status for sell order that was either fully or partially matched
+                    if (bestOrderNewAmount == 0) {
+                        bestOrderNewStatus = OrderLibrary.OrderStatus.Filled;
+                        marketOrderBook.removeOrder(
+                            oppositeOrderType,
+                            bestOrderId
+                        );
+                    } else {
+                        bestOrderNewStatus = OrderLibrary
+                            .OrderStatus
+                            .PartiallyFilled;
+                    }
+
+                    // Update order status for the pending buy order that was either fully or partially matched
+                    OrderLibrary.OrderStatus pendingOrderNewStatus;
+                    if (pendingOrderNewAmount == 0) {
+                        pendingOrderNewStatus = OrderLibrary.OrderStatus.Filled;
+                        marketOrderBook.removeOrder(
+                            _orderType,
+                            _pendingOrderId
+                        );
+                    } else {
+                        pendingOrderNewStatus = OrderLibrary
+                            .OrderStatus
+                            .PartiallyFilled;
+                    }
+
+                    marketOrderBook.updateOrder(
+                        _orderType,
+                        _pendingOrderId,
+                        pendingOrderNewAmount,
+                        pendingOrderNewStatus,
+                        pendingOrderNewReceipts
+                    );
+                    marketOrderBook.updateOrder(
+                        oppositeOrderType,
+                        bestOrderId,
+                        bestOrderNewAmount,
+                        bestOrderNewStatus,
+                        bestOrderNewReceipts
+                    );
+                } else {
+                    break;
+                }
+            }
+        } else {
+            while (pendingOrder.remainingAmount > 0) {
+                bestOrderId = marketOrderBook.getBestOrderFromHeap(
+                    oppositeOrderType
+                );
+                OrderLibrary.Order memory bestOrder = marketOrderBook
+                    .getOrderFromId(oppositeOrderType, bestOrderId);
+
+                bool orderMatched = false;
+
+                if (_orderNature == OrderLibrary.OrderNature.Market) {
+                    // order matched immediately order nature is market
+                    orderMatched = true;
+                } else {
+                    // order matched only if price in buy order book is greater than or equal to the price in sell order
+                    if (pendingOrder.price <= bestOrder.price) {
+                        orderMatched = true;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (orderMatched) {
+                    uint256 matchedAmount = pendingOrder.remainingAmount <
+                        bestOrder.remainingAmount
+                        ? pendingOrder.remainingAmount
+                        : bestOrder.remainingAmount;
+                    temptoBePaid[count] = pendingOrder.userAddress;
+                    temptoReceive[count] = bestOrder.userAddress;
+                    temptokenAmount[count] = matchedAmount;
+                    tempcurrencyAmount[count] = matchedAmount * bestOrder.price;
+                    count++;
+
+                    // Update the remaining amount
+                    uint256 pendingOrderNewAmount = pendingOrder
+                        .remainingAmount - matchedAmount;
+                    uint256 bestOrderNewAmount = bestOrder.remainingAmount -
+                        matchedAmount;
+
+                    // Update fills for both matched orders
+                    OrderLibrary.Fills
+                        memory pendingOrderNewReceipts = OrderLibrary.Fills({
+                            price: bestOrder.price,
+                            amount: matchedAmount,
+                            timestamp: block.timestamp
+                        });
+                    OrderLibrary.Fills
+                        memory bestOrderNewReceipts = OrderLibrary.Fills({
+                            price: bestOrder.price,
+                            amount: matchedAmount,
+                            timestamp: block.timestamp
+                        });
+
+                    OrderLibrary.OrderStatus bestOrderNewStatus;
+                    // Update order status for sell order that was either fully or partially matched
+                    if (bestOrderNewAmount == 0) {
+                        bestOrderNewStatus = OrderLibrary.OrderStatus.Filled;
+                        marketOrderBook.removeOrder(
+                            oppositeOrderType,
+                            bestOrderId
+                        );
+                    } else {
+                        bestOrderNewStatus = OrderLibrary
+                            .OrderStatus
+                            .PartiallyFilled;
+                    }
+
+                    // Update order status for the pending buy order that was either fully or partially matched
+                    OrderLibrary.OrderStatus pendingOrderNewStatus;
+                    if (pendingOrderNewAmount == 0) {
+                        pendingOrderNewStatus = OrderLibrary.OrderStatus.Filled;
+                        marketOrderBook.removeOrder(
+                            _orderType,
+                            _pendingOrderId
+                        );
+                    } else {
+                        pendingOrderNewStatus = OrderLibrary
+                            .OrderStatus
+                            .PartiallyFilled;
+                    }
+
+                    marketOrderBook.updateOrder(
+                        _orderType,
+                        _pendingOrderId,
+                        pendingOrderNewAmount,
+                        pendingOrderNewStatus,
+                        pendingOrderNewReceipts
+                    );
+                    marketOrderBook.updateOrder(
+                        oppositeOrderType,
+                        bestOrderId,
+                        bestOrderNewAmount,
+                        bestOrderNewStatus,
+                        bestOrderNewReceipts
+                    );
+                } else {
+                    break;
+                }
+            }
+        }
     }
 }

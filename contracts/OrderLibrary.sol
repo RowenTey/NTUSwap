@@ -22,11 +22,18 @@ library OrderLibrary {
     struct Order {
         uint256 totalAmount;
         uint256 remainingAmount;
-        int256 price;
+        uint256 price;
         uint256 timestamp;
         address userAddress;
         OrderStatus status;
         OrderNature nature;
+        Fills[] fills;
+    }
+
+    struct Fills {
+        uint256 price;
+        uint256 amount;
+        uint256 timestamp;
     }
 
     // struct PlaceOrderParams {
