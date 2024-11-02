@@ -66,16 +66,16 @@ contract OrderBookManager {
         // OrderBook orderBook = marketOrderBook[oppositeOrderType];
         uint256 bestOrderId;
 
-        address[] memory temptoBePaid = new address[](
+        toBePaid = new address[](
             marketOrderBook.getActiveOrderCount(oppositeOrderType)
         );
-        address[] memory temptoReceive = new address[](
+        toReceive = new address[](
             marketOrderBook.getActiveOrderCount(oppositeOrderType)
         );
-        uint256[] memory temptokenAmount = new uint256[](
+        tokenAmount = new uint256[](
             marketOrderBook.getActiveOrderCount(oppositeOrderType)
         );
-        uint256[] memory tempcurrencyAmount = new uint256[](
+        currencyAmount = new uint256[](
             marketOrderBook.getActiveOrderCount(oppositeOrderType)
         );
         uint256 count = 0; // variable to track slot for the above arrays in which the current order's details are to be recorded
@@ -107,10 +107,10 @@ contract OrderBookManager {
                         ? pendingOrder.remainingAmount
                         : bestOrder.remainingAmount;
                     // TODO: Check if the meaning interpreted is correct here
-                    temptoBePaid[count] = bestOrder.userAddress; // This user is the seller so he is paid the amount to buy a commodity
-                    temptoReceive[count] = pendingOrder.userAddress; // This user is the buyer so he receives the commodity
-                    temptokenAmount[count] = matchedAmount;
-                    tempcurrencyAmount[count] = matchedAmount * bestOrder.price;
+                    toBePaid[count] = bestOrder.userAddress; // This user is the seller so he is paid the amount to buy a commodity
+                    toReceive[count] = pendingOrder.userAddress; // This user is the buyer so he receives the commodity
+                    tokenAmount[count] = matchedAmount;
+                    currencyAmount[count] = matchedAmount * bestOrder.price;
                     count++;
 
                     // Update remaining amount
@@ -135,7 +135,6 @@ contract OrderBookManager {
 
                     // Update order status for sell order that was either fully or partially matched
                     OrderLibrary.OrderStatus bestOrderNewStatus;
-                    // Update order status for sell order that was either fully or partially matched
                     if (bestOrderNewAmount == 0) {
                         bestOrderNewStatus = OrderLibrary.OrderStatus.Filled;
                         marketOrderBook.removeOrder(
@@ -207,10 +206,10 @@ contract OrderBookManager {
                         bestOrder.remainingAmount
                         ? pendingOrder.remainingAmount
                         : bestOrder.remainingAmount;
-                    temptoBePaid[count] = pendingOrder.userAddress;
-                    temptoReceive[count] = bestOrder.userAddress;
-                    temptokenAmount[count] = matchedAmount;
-                    tempcurrencyAmount[count] = matchedAmount * bestOrder.price;
+                    toBePaid[count] = pendingOrder.userAddress;
+                    toReceive[count] = bestOrder.userAddress;
+                    tokenAmount[count] = matchedAmount;
+                    currencyAmount[count] = matchedAmount * bestOrder.price;
                     count++;
 
                     // Update the remaining amount
@@ -280,5 +279,11 @@ contract OrderBookManager {
                 }
             }
         }
+        return (
+            toBePaid,
+            toReceive,
+            tokenAmount,
+            currencyAmount
+        )
     }
 }

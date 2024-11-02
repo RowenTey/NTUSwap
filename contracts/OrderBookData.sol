@@ -10,12 +10,6 @@ contract OrderBookData {
         Data heap;
     }
 
-    struct OrderBookView {
-        uint256 totalOrders; // FIXME: Check if this is required
-        uint256 activeCount; // FIXME: Check if this is required
-        Data heap;
-    }
-
     mapping(OrderLibrary.OrderType => OrderBook) internal orderBooks;
 
     constructor() {
@@ -69,7 +63,6 @@ contract OrderBookData {
         uint256 _remainingAmount,
         OrderLibrary.OrderStatus _status,
         OrderLibrary.Fills memory _orderReceipts
-
     ) public {
         OrderLibrary.Order storage order = orderBooks[_orderType].orders[
             _orderId
