@@ -46,7 +46,7 @@ contract OrderBookManager {
     )
         public
         returns (
-            uint256 balance,
+            uint256,
             address[] memory toBePaid,
             address[] memory toReceive,
             uint256[] memory tokenAmount,
@@ -65,6 +65,7 @@ contract OrderBookManager {
 
         // OrderBook orderBook = marketOrderBook[oppositeOrderType];
         uint256 bestOrderId;
+        uint256 pendingOrderNewAmount;
 
         toBePaid = new address[](
             marketOrderBook.getActiveOrderCount(oppositeOrderType)
@@ -114,7 +115,7 @@ contract OrderBookManager {
                     count++;
 
                     // Update remaining amount
-                    uint256 pendingOrderNewAmount = pendingOrder
+                    pendingOrderNewAmount = pendingOrder
                         .remainingAmount - matchedAmount;
                     uint256 bestOrderNewAmount = bestOrder.remainingAmount -
                         matchedAmount;
@@ -280,6 +281,7 @@ contract OrderBookManager {
             }
         }
         return (
+            pendingOrderNewAmount,
             toBePaid,
             toReceive,
             tokenAmount,
