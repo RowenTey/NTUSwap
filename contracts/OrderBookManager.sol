@@ -46,7 +46,7 @@ contract OrderBookManager {
     )
         public
         returns (
-            uint256 balance,
+            uint256,
             address[] memory toBePaid,
             address[] memory toReceive,
             uint256[] memory tokenAmount,
@@ -280,6 +280,7 @@ contract OrderBookManager {
             }
         }
         return (
+            pendingOrderNewAmount,
             toBePaid,
             toReceive,
             tokenAmount,
