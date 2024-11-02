@@ -286,6 +286,6 @@ contract OrderBookManager {
             toReceive,
             tokenAmount,
             currencyAmount
-        )
+        );
     }
 }
