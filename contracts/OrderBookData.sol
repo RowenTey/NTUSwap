@@ -2,7 +2,42 @@
 pragma solidity ^0.8.0;
 import "contracts/OrderLibrary.sol";
 
-contract OrderBookData {
+interface IOrderBookData {
+    function initializeOrderBooks() external;
+    function addOrder(
+        uint256 _amount,
+        uint256 _price,
+        address _userAddress,
+        OrderLibrary.OrderType _orderType,
+        OrderLibrary.OrderNature _orderNature
+    ) external returns (uint256);
+    function removeOrder(
+        OrderLibrary.OrderType _orderType,
+        uint256 _orderId
+    ) external returns (bool);
+    function getBestOrderFromHeap(
+        OrderLibrary.OrderType _orderType
+    ) external view returns (uint256);
+    function getOrderFromId(
+        OrderLibrary.OrderType _orderType,
+        uint256 _orderId
+    ) external view returns (OrderLibrary.Order memory);
+    function getActiveOrderCount(
+        OrderLibrary.OrderType _orderType
+    ) external view returns (uint256);
+    function updateOrder(
+        OrderLibrary.OrderType _orderType,
+        uint256 _orderId,
+        uint256 _remainingAmount,
+        OrderLibrary.OrderStatus _status,
+        OrderLibrary.Fills memory _orderReceipts
+    ) external;
+}
+
+contract OrderBookData is IOrderBookData {
+
+    address public immutable orderBookManager;
+
     struct OrderBook {
         uint256 totalOrders;
         mapping(uint256 => OrderLibrary.Order) orders;
@@ -12,7 +47,17 @@ contract OrderBookData {
 
     mapping(OrderLibrary.OrderType => OrderBook) internal orderBooks;
 
-    constructor() {
+    modifier onlyManager() {
+        require(msg.sender == orderBookManager, "Caller is not the order book manager");
+        _;
+    }
+
+    constructor(address _orderBookManager) {
+        orderBookManager = _orderBookManager;
+        initializeOrderBooks();
+    }
+
+    function initializeOrderBooks() public override onlyManager {
         initOrderBook(OrderLibrary.OrderType.Buy);
         initOrderBook(OrderLibrary.OrderType.Sell);
     }
@@ -26,13 +71,14 @@ contract OrderBookData {
 
     // Adds a new order to the order book
     // NOTE: Use negative values of price to emulate a min-heap (for buy orderbook)
+
     function addOrder(
         uint256 _amount,
         uint256 _price,
         address _userAddress,
         OrderLibrary.OrderType _orderType,
         OrderLibrary.OrderNature _orderNature
-    ) public returns (uint256 orderId) {
+    ) public override onlyManager returns (uint256 orderId) {
         OrderBook storage book = orderBooks[_orderType];
         orderId = book.totalOrders++;
 

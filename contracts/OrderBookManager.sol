@@ -4,7 +4,27 @@ import "contracts/OrderLibrary.sol";
 import "contracts/OrderBookData.sol";
 
 contract OrderBookManager {
-    mapping(bytes32 => OrderBookData) internal marketOrderBooks;
+    mapping(bytes32 => IOrderBookData) public marketOrderBooks;
+    address public immutable marketManager;
+
+    event OrderBookCreated(bytes32 indexed marketId, address orderBookAddress);
+    
+    constructor(address _marketManager) {
+        marketManager = _marketManager;
+    }
+
+    function orderBookExists(bytes32 marketId) public view returns (bool) {
+        return address(marketOrderBooks[marketId]) != address(0);
+    }
+
+    function createMarketOrderBook(bytes32 _marketId) public onlyMarketManager {
+        require(address(marketOrderBooks[_marketId]) == address(0), "Order Book already exists");   
+        // Deploy new OrderBookData contract for this market
+        OrderBookData newOrderBook = new OrderBookData(address(this));
+        marketOrderBooks[_marketId] = IOrderBookData(address(newOrderBook));
+        
+        emit OrderBookCreated(_marketId, address(newOrderBook));
+    }
 
     function createOrder(
         bytes32 _marketId,
@@ -14,6 +34,7 @@ contract OrderBookManager {
         OrderLibrary.OrderType _orderType,
         OrderLibrary.OrderNature _orderNature
     ) public returns (uint256 _orderId) {
+        require(orderBookExists(_marketId), "Order Book does not exist");
         OrderBookData marketOrderBook = marketOrderBooks[_marketId];
         uint256 orderId = marketOrderBook.addOrder(
             _amount,
@@ -214,7 +235,7 @@ contract OrderBookManager {
                     count++;
 
                     // Update the remaining amount
-                    uint256 pendingOrderNewAmount = pendingOrder
+                    pendingOrderNewAmount = pendingOrder
                         .remainingAmount - matchedAmount;
                     uint256 bestOrderNewAmount = bestOrder.remainingAmount -
                         matchedAmount;

@@ -6,24 +6,26 @@ interface IMarketData {
     struct Market {
         uint8 token1;
         uint8 token2;
+        bool exists;
     }
     
     event MarketCreatedEvent(
-        uint16 marketId,
+        bytes32 indexed marketId,
         uint8 token1,
         uint8 token2,
         uint256 timestamp
     );
     
     function addMarket(uint8 _tokenId) external;
-    function getTokensFromMarketId(uint16 _marketId) external view returns (uint8, uint8);
+    function getTokensFromMarketId(bytes32 _marketId) external view returns (uint8, uint8);
+    function isMarketPresent(bytes32 marketId) external view returns (bool);
+
 }
 
 // MarketData contract
 contract MarketData is IMarketData {
     // Maps market index to the market
-    mapping(uint16 => Market) private exchangeMarkets;
-    uint16 private marketId = 1;
+    mapping(bytes32 => Market) private exchangeMarkets;
     address public marketManager;
     
     modifier onlyMarketManager() {
@@ -36,18 +38,32 @@ contract MarketData is IMarketData {
     }
     
     function addMarket(uint8 _tokenId) external override onlyMarketManager {
-        require(marketId + 1 > marketId, "Market index overflow");
-
+        
         for (uint8 i = 1; i < _tokenId; i++) {
-            exchangeMarkets[marketId] = Market({token1: i, token2: _tokenId});
-            emit MarketCreatedEvent(marketId, _tokenId, i, block.timestamp);
-            marketId++;
+            bytes32 marketId = getMarketId(i, _tokenId);
+            if (!(exchangeMarkets[marketId].exists)){
+                exchangeMarkets[marketId] = Market({token1: i, token2: _tokenId, exists: true});
+
+            }
+            emit MarketCreatedEvent(marketId, i, _tokenId, block.timestamp);
         }
     }
     
-    function getTokensFromMarketId(uint16 _marketId) external view override returns (uint8, uint8) {
+    function getTokensFromMarketId(bytes32 _marketId) external view override returns (uint8, uint8) {
         Market memory market = exchangeMarkets[_marketId];
-        require(market.token1 != 0, "Market does not exist");
+        require(market.exists, "Market does not exist");
         return (market.token1, market.token2);
+    }
+
+    function getMarketId(uint8 token1, uint8 token2) public pure returns (bytes32) {
+        // Ensures consistent ordering
+        if (token1 > token2) {
+            (token1, token2) = (token2, token1);
+        }
+        return keccak256(abi.encodePacked(token1, token2));
+    }
+    
+    function isMarketPresent(bytes32 marketId) external view returns (bool){
+        return exchangeMarkets[marketId].exists;
     }
 }

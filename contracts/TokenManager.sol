@@ -38,12 +38,20 @@ contract TokenManager is Ownable {
         uint256 timestamp
     );
 
+    event InternalTransferEvent(
+        uint8 tokenId,
+        address indexed from,
+        address indexed to,
+        uint256 amount,
+        uint256 timestamp
+    );
+
     function issueToken(
         string memory _name,
         string memory _symbol,
         uint256 _initialSupply
     ) internal onlyOwner {
-        require(isToken[_symbol] > 0, "Token already exists!");
+        require(isToken[_symbol] == 0, "Token already exists!");
         require(_initialSupply > 0, "Initial supply must be greater than 0");
 
         // Create a token
@@ -66,7 +74,7 @@ contract TokenManager is Ownable {
     function deposit(
         string memory _symbol,
         uint256 _amount
-    ) internal returns (uint256 tokenBalance) {
+    ) external returns (uint256 tokenBalance) {
         require(isToken[_symbol] > 0, "Token hasn't been issued");
         require(_amount > 0, "Amount must be greater than zero");
 
@@ -93,7 +101,7 @@ contract TokenManager is Ownable {
     function withdraw(
         string memory _symbol,
         uint256 _amount
-    ) internal returns (uint256 tokenBalance) {
+    ) external returns (uint256 tokenBalance) {
         require(isToken[_symbol] > 0, "Token hasn't been issued");
         require(_amount > 0, "Amount must be greater than zero");
 
@@ -116,8 +124,48 @@ contract TokenManager is Ownable {
 
     function getUserTokenBalance(
         string memory _symbol
-    ) internal view returns (uint256 tokenBalance) {
+    ) public view returns (uint256 tokenBalance) {
         uint8 tokenId = isToken[_symbol];
         return userBalances[msg.sender][tokenId];
+    }
+
+    function transferFrom(
+        address _from,
+        address _to,
+        uint8 _tokenId,
+        uint256 _amount
+    ) external returns (bool) {
+        require(_from != address(0), "Invalid from address");
+        require(_to != address(0), "Invalid to address");
+        require(_amount > 0, "Amount must be greater than zero");
+        require(tokens[_tokenId] != Token(address(0)), "Token does not exist");
+        
+        // Check if sender has sufficient balance
+        require(userBalances[_from][_tokenId] >= _amount, "Insufficient balance");
+
+        // Update balances
+        userBalances[_from][_tokenId] -= _amount;
+        userBalances[_to][_tokenId] += _amount;
+
+        emit InternalTransferEvent(
+            _tokenId,
+            _from,
+            _to,
+            _amount,
+            block.timestamp
+        );
+
+        return true;
+    }
+
+    // Helper function to get token ID from symbol
+    function getTokenId(string memory _symbol) external view returns (uint8) {
+        require(isToken[_symbol] > 0, "Token doesn't exist");
+        return isToken[_symbol];
+    }
+
+    // Helper function to get balance for any user (not just msg.sender)
+    function getBalance(address _user, uint8 _tokenId) external view returns (uint256) {
+        return userBalances[_user][_tokenId];
     }
 }
