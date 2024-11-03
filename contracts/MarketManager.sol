@@ -113,15 +113,28 @@ contract MarketManager {
         require(marketData.isMarketPresent(marketId), "Market does not exist");
 
         // Forward cancellation request to OrderBookManager
-        bool success = orderBookManager.cancelOrder(marketId, orderId, orderType);
+        bool success = orderBookManager.cancelOrder(
+            marketId,
+            orderId,
+            orderType
+        );
         if (success) {
-            emit OrderCancelledEvent(marketId, orderId, userAddress, orderType, block.timestamp);
+            emit OrderCancelledEvent(
+                marketId,
+                orderId,
+                userAddress,
+                orderType,
+                block.timestamp
+            );
         }
         return success;
     }
-    function getMarketTokens(bytes32 _marketId) external view returns (uint8, uint8) {
+
+    function getMarketTokens(
+        bytes32 _marketId
+    ) external view returns (uint8, uint8) {
         return marketData.getTokensFromMarketId(_marketId);
-    } 
+    }
 
     // Helper function to check if a market is fully initialized
     function isMarketInitialized(

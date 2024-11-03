@@ -12,6 +12,7 @@ contract Exchange {
     OrderBookManager public immutable orderBookManager;
     TokenManager public immutable tokenManager;
 
+
     // Events for tracking order lifecycle
     event OrderMatched(
         bytes32 indexed marketId,
@@ -294,8 +295,23 @@ contract Exchange {
             msg.sender,
             orderType
         );
+        //Cancel Order
+        bool success = marketManager.cancelOrder(
+            marketId,
+            orderId,
+            msg.sender,
+            orderType
+        );
         require(success, "Order could not be cancelled");
 
+        //Emit successful cancellation event
+        emit OrderCancelled(
+            marketId,
+            orderId,
+            msg.sender,
+            orderType,
+            block.timestamp
+        );
         //Emit successful cancellation event
         emit OrderCancelled(
             marketId,
@@ -307,8 +323,11 @@ contract Exchange {
     }
 
     function getUserTokenBalance(
+        
         address _userAddr,
+       
         string memory _symbol
+    
     ) external view returns (uint256) {
         return getTokenBalance(_userAddr, _symbol);
     }
