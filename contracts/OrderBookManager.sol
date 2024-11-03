@@ -8,7 +8,7 @@ contract OrderBookManager {
     address public immutable marketManager;
 
     event OrderBookCreated(bytes32 indexed marketId, address orderBookAddress);
-    
+
     constructor(address _marketManager) {
         marketManager = _marketManager;
     }
@@ -18,11 +18,14 @@ contract OrderBookManager {
     }
 
     function createMarketOrderBook(bytes32 _marketId) public {
-        require(address(marketOrderBooks[_marketId]) == address(0), "Order Book already exists");   
+        require(
+            address(marketOrderBooks[_marketId]) == address(0),
+            "Order Book already exists"
+        );
         // Deploy new OrderBookData contract for this market
         OrderBookData newOrderBook = new OrderBookData(address(this));
         marketOrderBooks[_marketId] = IOrderBookData(address(newOrderBook));
-        
+
         emit OrderBookCreated(_marketId, address(newOrderBook));
     }
 
@@ -49,7 +52,7 @@ contract OrderBookManager {
         bytes32 _marketId,
         uint256 _orderId,
         OrderLibrary.OrderType _orderType
-    ) public  returns (bool) {
+    ) public returns (bool) {
         require(orderBookExists(_marketId), "Order Book does not exist");
         bool removed = marketOrderBooks[_marketId].removeOrder(
             _orderType,
@@ -136,8 +139,9 @@ contract OrderBookManager {
                     count++;
 
                     // Update remaining amount
-                    pendingOrderNewAmount = pendingOrder
-                        .remainingAmount - matchedAmount;
+                    pendingOrderNewAmount =
+                        pendingOrder.remainingAmount -
+                        matchedAmount;
                     uint256 bestOrderNewAmount = bestOrder.remainingAmount -
                         matchedAmount;
 
@@ -235,8 +239,9 @@ contract OrderBookManager {
                     count++;
 
                     // Update the remaining amount
-                    pendingOrderNewAmount = pendingOrder
-                        .remainingAmount - matchedAmount;
+                    pendingOrderNewAmount =
+                        pendingOrder.remainingAmount -
+                        matchedAmount;
                     uint256 bestOrderNewAmount = bestOrder.remainingAmount -
                         matchedAmount;
 
