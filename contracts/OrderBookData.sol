@@ -207,9 +207,9 @@ contract OrderBookData is IOrderBookData {
         return orderBooks[_orderType].activeCount;
     }
 
-    function getAllOrdersWithStatus()  {
+    // function getAllOrdersWithStatus()  {
         
-    }
+    // }
 
     // Custom Heap Implementation
     uint constant ROOT_INDEX = 1;
