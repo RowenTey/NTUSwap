@@ -6,6 +6,7 @@ import "./OrderBookManager.sol";
 import "./TokenManager.sol";
 
 contract Exchange {
+    uint256 public constant DECIMALS = 1e18;
     MarketManager public immutable marketManager;
     OrderBookManager public immutable orderBookManager;
     TokenManager public immutable tokenManager;
@@ -107,14 +108,14 @@ contract Exchange {
     ) external returns (uint256) {
 
         // Check if buyer has sufficient quote token (currency) balance
-        price /= 1e18;
-        amount /= 1e18;
+        price /= DECIMALS;
+        amount /= DECIMALS;
         uint256 totalCost = price * amount;
         require(
             tokenManager.getBalance(msg.sender, tokenId2) >= totalCost,
             "Insufficient balance for buy order"
         );
-        
+
         // Place the order through market manager
         uint256 orderId = marketManager.placeOrder(
             tokenId1,
@@ -151,8 +152,8 @@ contract Exchange {
             "Insufficient balance for sell order"
         );
 
-        price /= 1e18;
-        amount /= 1e18;
+        price /= DECIMALS;
+        amount /= DECIMALS;
 
         // Place the order through market manager
         uint256 orderId = marketManager.placeOrder(
@@ -289,5 +290,10 @@ contract Exchange {
 
         //Emit successful cancellation event 
         emit OrderCancelled(marketId, orderId, msg.sender, orderType, block.timestamp);
+    }
+
+    function getUserTokenBalance(address _userAddr, string memory _symbol) external view returns (uint256) {
+        uint8 tokenId = tokenManager.getTokenId(_symbol);
+        return tokenManager.getBalance(_userAddr, tokenId);
     }
 }
