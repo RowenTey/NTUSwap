@@ -4,13 +4,14 @@ import "./OrderLibrary.sol";
 import "./MarketManager.sol";
 import "./OrderBookManager.sol";
 import "./TokenManager.sol";
+import "hardhat/console.sol";
 
 contract Exchange {
     uint256 public constant DECIMALS = 1e18;
     MarketManager public immutable marketManager;
     OrderBookManager public immutable orderBookManager;
     TokenManager public immutable tokenManager;
-    
+
     // Events for tracking order lifecycle
     event OrderMatched(
         bytes32 indexed marketId,
@@ -20,7 +21,7 @@ contract Exchange {
         uint256 executionPrice,
         uint256 timestamp
     );
-    
+
     event SettlementCompleted(
         bytes32 indexed marketId,
         address[] toBePaid,
@@ -60,7 +61,7 @@ contract Exchange {
     );
 
     constructor(
-        address _marketManager, 
+        address _marketManager,
         address _orderBookManager,
         address _tokenManager
     ) {
@@ -69,15 +70,14 @@ contract Exchange {
         tokenManager = TokenManager(_tokenManager);
     }
 
-
     // Function to deposit tokens before trading
     function depositTokens(string memory symbol, uint256 amount) external {
         // First, user must have approved this contract to spend their tokens
         // This is done outside the contract using the token's approve() function
-        
+
         // Perform the deposit
         uint256 newBalance = tokenManager.deposit(symbol, amount);
-        
+
         emit DepositReceived(
             msg.sender,
             tokenManager.getTokenId(symbol),
@@ -89,7 +89,7 @@ contract Exchange {
     // Function to withdraw tokens after trading
     function withdrawTokens(string memory symbol, uint256 amount) external {
         uint256 remainingBalance = tokenManager.withdraw(symbol, amount);
-        
+
         emit WithdrawalProcessed(
             msg.sender,
             tokenManager.getTokenId(symbol),
@@ -98,7 +98,6 @@ contract Exchange {
         );
     }
 
-
     function placeBuyOrder(
         uint8 tokenId1,
         uint8 tokenId2,
@@ -106,7 +105,6 @@ contract Exchange {
         uint256 amount,
         OrderLibrary.OrderNature orderNature
     ) external returns (uint256) {
-
         // Check if buyer has sufficient quote token (currency) balance
         price /= DECIMALS;
         amount /= DECIMALS;
@@ -126,7 +124,7 @@ contract Exchange {
             OrderLibrary.OrderType.Buy,
             orderNature
         );
-        
+
         // Try to match the order immediately
         _matchAndSettleOrder(
             marketManager.getMarketId(tokenId1, tokenId2),
@@ -134,7 +132,7 @@ contract Exchange {
             OrderLibrary.OrderType.Buy,
             orderNature
         );
-        
+
         return orderId;
     }
 
@@ -145,7 +143,6 @@ contract Exchange {
         uint256 amount,
         OrderLibrary.OrderNature orderNature
     ) external returns (uint256) {
-        
         // Check if seller has sufficient base token balance
         require(
             tokenManager.getBalance(msg.sender, tokenId1) >= amount,
@@ -165,7 +162,7 @@ contract Exchange {
             OrderLibrary.OrderType.Sell,
             orderNature
         );
-        
+
         // Try to match the order immediately
         _matchAndSettleOrder(
             marketManager.getMarketId(tokenId1, tokenId2),
@@ -173,7 +170,7 @@ contract Exchange {
             OrderLibrary.OrderType.Sell,
             orderNature
         );
-        
+
         return orderId;
     }
 
@@ -184,6 +181,7 @@ contract Exchange {
         OrderLibrary.OrderNature orderNature
     ) internal {
         // Get matching results from OrderBookManager
+        console.log("Reached matching of orders");
         (
             uint256 remainingAmount,
             address[] memory toBePaid,
@@ -191,16 +189,18 @@ contract Exchange {
             uint256[] memory tokenAmount,
             uint256[] memory currencyAmount
         ) = orderBookManager.matchOrder(
-            marketId,
-            orderId,
-            orderType,
-            orderNature
-        );
+                marketId,
+                orderId,
+                orderType,
+                orderNature
+            );
+        console.log("Order Matched");
+        console.log(toBePaid.length);
 
         // Process settlements
         for (uint256 i = 0; i < toBePaid.length; i++) {
             if (tokenAmount[i] == 0) continue; // Skips empty matches
-            
+
             emit OrderMatched(
                 marketId,
                 orderType == OrderLibrary.OrderType.Buy ? orderId : i,
@@ -209,10 +209,10 @@ contract Exchange {
                 currencyAmount[i] / tokenAmount[i], // Price per token
                 block.timestamp
             );
-            
+
             // Token transfers handling
             _settleTransaction(
-                marketId, 
+                marketId,
                 toBePaid[i],
                 toReceive[i],
                 tokenAmount[i],
@@ -221,6 +221,7 @@ contract Exchange {
         }
 
         if (tokenAmount.length > 0) {
+            console.log("EMIT SETTLEMENT COMPLETED EVENT");
             emit SettlementCompleted(
                 marketId,
                 toBePaid,
@@ -245,11 +246,13 @@ contract Exchange {
         require(currencyAmount > 0, "Invalid currency amount");
 
         // Get the market details from the matched order
-        (uint8 baseTokenId, uint8 quoteTokenId) = marketManager.getMarketTokens(marketId);
+        (uint8 baseTokenId, uint8 quoteTokenId) = marketManager.getMarketTokens(
+            marketId
+        );
 
         // Transfer base token from seller to buyer
         bool baseTokenTransferred = tokenManager.transferFrom(
-            toBePaid,  // seller
+            toBePaid, // seller
             toReceive, // buyer
             baseTokenId,
             tokenAmount
@@ -259,7 +262,7 @@ contract Exchange {
         // Transfer quote token (currency) from buyer to seller
         bool quoteTokenTransferred = tokenManager.transferFrom(
             toReceive, // buyer
-            toBePaid,  // seller
+            toBePaid, // seller
             quoteTokenId,
             currencyAmount
         );
@@ -281,18 +284,81 @@ contract Exchange {
         uint256 orderId,
         OrderLibrary.OrderType orderType
     ) external {
-        //Get Market Id 
+        //Get Market Id
         bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
 
-        //Cancel Order 
-        bool success = marketManager.cancelOrder(marketId, orderId, msg.sender, orderType);
+        //Cancel Order
+        bool success = marketManager.cancelOrder(
+            marketId,
+            orderId,
+            msg.sender,
+            orderType
+        );
         require(success, "Order could not be cancelled");
 
-        //Emit successful cancellation event 
-        emit OrderCancelled(marketId, orderId, msg.sender, orderType, block.timestamp);
+        //Emit successful cancellation event
+        emit OrderCancelled(
+            marketId,
+            orderId,
+            msg.sender,
+            orderType,
+            block.timestamp
+        );
     }
 
-    function getUserTokenBalance(address _userAddr, string memory _symbol) external view returns (uint256) {
+    function getUserTokenBalance(
+        address _userAddr,
+        string memory _symbol
+    ) external view returns (uint256) {
+        return getTokenBalance(_userAddr, _symbol);
+    }
+
+    function getAllAvailableTokens()
+        external
+        view
+        returns (string[] memory, string[] memory )
+    {
+        return tokenManager.getAllTokens();
+    }
+
+    function getAllUserTokenBalance(
+        address _userAddr
+    )
+        external
+        view
+        returns (uint256[] memory userTokenBalances, string[] memory tokenNames)
+    {
+        // Retrieve all token names and symbols from the token manager
+        string[] memory tokenSymbols;
+        (tokenNames, tokenSymbols) = tokenManager.getAllTokens();
+
+        // Initialize the userTokenBalances array with the correct length
+        userTokenBalances = new uint256[](tokenSymbols.length);
+
+        // Loop through each token and get the balance for the user
+        for (uint256 i = 0; i < tokenSymbols.length; i++) {
+            uint256 tokenBalance = getTokenBalance(_userAddr, tokenSymbols[i]);
+            userTokenBalances[i] = tokenBalance;
+        }
+
+        return (userTokenBalances, tokenNames);
+    }
+
+    function getAllActiveOrdersForAMarket(
+        string memory _token1,
+        string memory _token2
+    ) external view {
+        uint8 tokenId1 = tokenManager.getTokenId(_token1);
+        uint8 tokenId2 = tokenManager.getTokenId(_token2);
+        bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
+        // return orderBookManage
+    }
+
+    // Helper functions
+    function getTokenBalance(
+        address _userAddr,
+        string memory _symbol
+    ) private view returns (uint256) {
         uint8 tokenId = tokenManager.getTokenId(_symbol);
         return tokenManager.getBalance(_userAddr, tokenId);
     }

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 import "./OrderLibrary.sol";
+import "hardhat/console.sol";
 
 interface IOrderBookData {
     function initializeOrderBooks() external;
@@ -87,8 +88,10 @@ contract OrderBookData is IOrderBookData {
         OrderLibrary.OrderType _orderType,
         OrderLibrary.OrderNature _orderNature
     ) public override onlyManager returns (uint256 orderId) {
+        console.log("Reached Add Order");
         OrderBook storage book = orderBooks[_orderType];
-        orderId = book.totalOrders++;
+        book.totalOrders++;
+        orderId = book.totalOrders;
 
         book.orders[orderId] = OrderLibrary.Order({
             totalAmount: _amount,
@@ -103,15 +106,17 @@ contract OrderBookData is IOrderBookData {
             fillsTimestamp: new uint256[](0)
         });
         book.activeCount++;
-
+        console.log("Order Added: ", orderId);
         // To emulate a min-heap for sell orders to always get the cheapest sell order as the root
         int256 price;
         if (_orderType == OrderLibrary.OrderType.Sell) {
             price = -1 * int256(_price);
         }
         insertHeap(book.heap, orderId, price);
+        console.log("Exited Insert Heap");
         return orderId;
     }
+    
 
     function updateOrder(
         OrderLibrary.OrderType _orderType,
@@ -202,10 +207,13 @@ contract OrderBookData is IOrderBookData {
         return orderBooks[_orderType].activeCount;
     }
 
-    //FIXME: Check if needed at the end
+    function getAllOrdersWithStatus()  {
+        
+    }
 
     // Custom Heap Implementation
     uint constant ROOT_INDEX = 1;
+
 
     struct Data {
         uint256 idCount;
@@ -299,6 +307,7 @@ contract OrderBookData is IOrderBookData {
     }
 
     function _bubbleUp(Data storage data, Node memory n, uint i) private {
+        console.log("Reached _bubbleUp");
         if (i == ROOT_INDEX || n.priority <= data.nodes[i / 2].priority) {
             _insertHeap(data, n, i);
         } else {

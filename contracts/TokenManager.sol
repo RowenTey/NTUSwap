@@ -15,7 +15,6 @@ contract TokenManager is Ownable {
     mapping(address => mapping(uint8 => uint256)) internal userBalances;
 
     uint8 internal tokenId = 1;
-    
 
     event TokenIssueEvent(
         uint8 tokenId,
@@ -187,5 +186,22 @@ contract TokenManager is Ownable {
         uint8 _tokenId
     ) external view returns (uint256) {
         return userBalances[_user][_tokenId];
+    }
+
+    function getAllTokens()
+        external
+        view
+        returns (string[] memory tokenNames, string[] memory tokenSymbols)
+    {
+        tokenNames = new string[](tokenId);
+        tokenSymbols = new string[](tokenId);
+
+        for (uint8 i = 1; i < tokenId; i++) {
+            Token t = tokens[i];
+            tokenNames[i - 1] = t.name();
+            tokenSymbols[i - 1] = t.symbol();
+        }
+
+        return (tokenNames, tokenSymbols);
     }
 }

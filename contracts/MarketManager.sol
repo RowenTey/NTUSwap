@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
+import "hardhat/console.sol";
 import "./OrderLibrary.sol";
 import "./MarketData.sol";
 import "./OrderBookManager.sol";
+
 
 contract MarketManager {
     IMarketData public marketData;
@@ -80,10 +82,6 @@ contract MarketManager {
             isMarketInitialized(tokenId1, tokenId2),
             "Market does not exist for these pairs of tokens"
         );
-        require(
-            orderBookManager.orderBookExists(marketId),
-            "Order books not initialized"
-        );
         orderId = orderBookManager.createOrder(
             marketId,
             amount,
@@ -101,6 +99,8 @@ contract MarketManager {
             userAddress,
             orderNature
         );
+
+
         return orderId;
     }
 
