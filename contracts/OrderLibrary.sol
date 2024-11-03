@@ -27,7 +27,9 @@ library OrderLibrary {
         address userAddress;
         OrderStatus status;
         OrderNature nature;
-        Fills[] fills;
+        uint256[] fillsPrice;
+        uint256[] fillsAmount;
+        uint256[] fillsTimestamp;
     }
 
     struct Fills {

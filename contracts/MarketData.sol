@@ -19,6 +19,7 @@ interface IMarketData {
     function addMarket(uint8 _tokenId) external;
     function getTokensFromMarketId(bytes32 _marketId) external view returns (uint8, uint8);
     function isMarketPresent(bytes32 marketId) external view returns (bool);
+    function getMarketId(uint8 token1, uint8 token2) external pure returns (bytes32);
 
 }
 
@@ -27,14 +28,22 @@ contract MarketData is IMarketData {
     // Maps market index to the market
     mapping(bytes32 => Market) private exchangeMarkets;
     address public marketManager;
+    bool private initialized;
     
     modifier onlyMarketManager() {
         require(msg.sender == marketManager, "Caller is not the market manager");
         _;
     }
     
-    constructor(address _marketManager) {
+    constructor() {
+        initialized = false;
+    }
+
+    function initialize(address _marketManager) external {
+        require(!initialized, "Already initialized");
+        require(_marketManager != address(0), "Invalid market manager address");
         marketManager = _marketManager;
+        initialized = true;
     }
     
     function addMarket(uint8 _tokenId) external override onlyMarketManager {

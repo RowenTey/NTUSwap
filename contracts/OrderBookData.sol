@@ -4,6 +4,7 @@ import "./OrderLibrary.sol";
 
 interface IOrderBookData {
     function initializeOrderBooks() external;
+
     function addOrder(
         uint256 _amount,
         uint256 _price,
@@ -11,20 +12,25 @@ interface IOrderBookData {
         OrderLibrary.OrderType _orderType,
         OrderLibrary.OrderNature _orderNature
     ) external returns (uint256);
+
     function removeOrder(
         OrderLibrary.OrderType _orderType,
         uint256 _orderId
     ) external returns (bool);
+
     function getBestOrderFromHeap(
         OrderLibrary.OrderType _orderType
     ) external view returns (uint256);
+
     function getOrderFromId(
         OrderLibrary.OrderType _orderType,
         uint256 _orderId
     ) external view returns (OrderLibrary.Order memory);
+
     function getActiveOrderCount(
         OrderLibrary.OrderType _orderType
     ) external view returns (uint256);
+
     function updateOrder(
         OrderLibrary.OrderType _orderType,
         uint256 _orderId,
@@ -35,7 +41,6 @@ interface IOrderBookData {
 }
 
 contract OrderBookData is IOrderBookData {
-
     address public immutable orderBookManager;
 
     struct OrderBook {
@@ -48,7 +53,10 @@ contract OrderBookData is IOrderBookData {
     mapping(OrderLibrary.OrderType => OrderBook) internal orderBooks;
 
     modifier onlyManager() {
-        require(msg.sender == orderBookManager, "Caller is not the order book manager");
+        require(
+            msg.sender == orderBookManager,
+            "Caller is not the order book manager"
+        );
         _;
     }
 
@@ -90,7 +98,9 @@ contract OrderBookData is IOrderBookData {
             userAddress: _userAddress,
             status: OrderLibrary.OrderStatus.Active,
             nature: _orderNature,
-            fills: new OrderLibrary.Fills[](0)
+            fillsPrice: new uint256[](0),
+            fillsAmount: new uint256[](0),
+            fillsTimestamp: new uint256[](0)
         });
         book.activeCount++;
 
@@ -108,30 +118,32 @@ contract OrderBookData is IOrderBookData {
         uint256 _orderId,
         uint256 _remainingAmount,
         OrderLibrary.OrderStatus _status,
-        OrderLibrary.Fills memory _orderReceipts
+        OrderLibrary.Fills memory _orderReceipt
     ) public {
         OrderLibrary.Order storage order = orderBooks[_orderType].orders[
             _orderId
         ];
         order.remainingAmount = _remainingAmount;
         order.status = _status;
-        order.fills.push(_orderReceipts);
+        order.fillsPrice.push(_orderReceipt.price);
+        order.fillsAmount.push(_orderReceipt.amount);
+        order.fillsTimestamp.push(_orderReceipt.timestamp);
     }
 
     // Update Order Status (used for cancelling an order as this is just a status change)
     function updateOrderStatus(
         OrderLibrary.OrderType _orderType,
         uint256 _orderId,
-        OrderLibrary.OrderStatus _neworderStatus
+        OrderLibrary.OrderStatus _newOrderStatus
     ) public {
         OrderLibrary.Order storage order = orderBooks[_orderType].orders[
             _orderId
         ];
         require(
-            _neworderStatus != order.status,
+            _newOrderStatus != order.status,
             "Order is already in this status "
         );
-        order.status = _neworderStatus;
+        order.status = _newOrderStatus;
     }
 
     // Remove order from heap

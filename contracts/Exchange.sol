@@ -50,6 +50,13 @@ contract Exchange {
         uint256 amount,
         uint256 timestamp
     );
+    event OrderCancelled(
+        bytes32 indexed marketId,
+        uint256 orderId,
+        address userAddress,
+        OrderLibrary.OrderType orderType,
+        uint256 timestamp
+    );
 
     constructor(
         address _marketManager, 
@@ -100,18 +107,21 @@ contract Exchange {
     ) external returns (uint256) {
 
         // Check if buyer has sufficient quote token (currency) balance
+        price /= 1e18;
+        amount /= 1e18;
         uint256 totalCost = price * amount;
         require(
             tokenManager.getBalance(msg.sender, tokenId2) >= totalCost,
             "Insufficient balance for buy order"
         );
-
+        
         // Place the order through market manager
         uint256 orderId = marketManager.placeOrder(
             tokenId1,
             tokenId2,
             price,
             amount,
+            msg.sender,
             OrderLibrary.OrderType.Buy,
             orderNature
         );
@@ -141,12 +151,16 @@ contract Exchange {
             "Insufficient balance for sell order"
         );
 
+        price /= 1e18;
+        amount /= 1e18;
+
         // Place the order through market manager
         uint256 orderId = marketManager.placeOrder(
             tokenId1,
             tokenId2,
             price,
             amount,
+            msg.sender,
             OrderLibrary.OrderType.Sell,
             orderNature
         );
@@ -197,6 +211,7 @@ contract Exchange {
             
             // Token transfers handling
             _settleTransaction(
+                marketId, 
                 toBePaid[i],
                 toReceive[i],
                 tokenAmount[i],
@@ -217,6 +232,7 @@ contract Exchange {
     }
 
     function _settleTransaction(
+        bytes32 marketId,
         address toBePaid,
         address toReceive,
         uint256 tokenAmount,
@@ -256,5 +272,22 @@ contract Exchange {
             currencyAmount,
             block.timestamp
         );
+    }
+
+    function cancelOrder(
+        uint8 tokenId1,
+        uint8 tokenId2,
+        uint256 orderId,
+        OrderLibrary.OrderType orderType
+    ) external {
+        //Get Market Id 
+        bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
+
+        //Cancel Order 
+        bool success = marketManager.cancelOrder(marketId, orderId, msg.sender, orderType);
+        require(success, "Order could not be cancelled");
+
+        //Emit successful cancellation event 
+        emit OrderCancelled(marketId, orderId, msg.sender, orderType, block.timestamp);
     }
 }

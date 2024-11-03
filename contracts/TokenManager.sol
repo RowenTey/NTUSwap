@@ -15,6 +15,7 @@ contract TokenManager is Ownable {
     mapping(address => mapping(uint8 => uint256)) internal userBalances;
 
     uint8 internal tokenId = 1;
+    
 
     event TokenIssueEvent(
         uint8 tokenId,
@@ -46,11 +47,21 @@ contract TokenManager is Ownable {
         uint256 timestamp
     );
 
+    constructor() Ownable(msg.sender) {}
+
+    function getToken(uint8 _tokenId) external view returns (address) {
+        require(
+            address(tokens[_tokenId]) != address(0),
+            "Token does not exist"
+        );
+        return address(tokens[_tokenId]);
+    }
+
     function issueToken(
         string memory _name,
         string memory _symbol,
         uint256 _initialSupply
-    ) internal onlyOwner {
+    ) external onlyOwner {
         require(isToken[_symbol] == 0, "Token already exists!");
         require(_initialSupply > 0, "Initial supply must be greater than 0");
 
@@ -81,8 +92,8 @@ contract TokenManager is Ownable {
         uint256 userBalance = getUserTokenBalance(_symbol);
         require(userBalance + _amount > userBalance, "User balance overflow");
 
-        uint8 tokenId = isToken[_symbol];
-        IERC20 token = tokens[tokenId];
+        uint8 _tokenId = isToken[_symbol];
+        IERC20 token = tokens[_tokenId];
 
         // Deposit "amount" number of a particular token from sender to contract
         require(
@@ -91,12 +102,12 @@ contract TokenManager is Ownable {
         );
 
         // Ledger update
-        userBalances[msg.sender][tokenId] += _amount;
+        userBalances[msg.sender][_tokenId] += _amount;
 
         emit DepositEvent(_symbol, msg.sender, _amount, block.timestamp);
 
-        return userBalances[msg.sender][tokenId];
-    }       
+        return userBalances[msg.sender][_tokenId];
+    }
 
     function withdraw(
         string memory _symbol,
@@ -108,25 +119,28 @@ contract TokenManager is Ownable {
         uint256 userBalance = getUserTokenBalance(_symbol);
         require(userBalance >= _amount, "Insufficient balance");
 
-        uint8 tokenId = isToken[_symbol];
-        IERC20 token = tokens[tokenId];
+        uint8 _tokenId = isToken[_symbol];
+        IERC20 token = tokens[_tokenId];
 
         // Send "amount" number of a particular token from contract to sender
-        require(token.transfer(msg.sender, _amount), "Failed to transfer amount");
+        require(
+            token.transfer(msg.sender, _amount),
+            "Failed to transfer amount"
+        );
 
         // Update ledger
-        userBalances[msg.sender][tokenId] -= _amount;
+        userBalances[msg.sender][_tokenId] -= _amount;
 
         emit WithdrawalEvent(_symbol, msg.sender, _amount, block.timestamp);
 
-        return userBalances[msg.sender][tokenId];
+        return userBalances[msg.sender][_tokenId];
     }
 
     function getUserTokenBalance(
         string memory _symbol
     ) public view returns (uint256 tokenBalance) {
-        uint8 tokenId = isToken[_symbol];
-        return userBalances[msg.sender][tokenId];
+        uint8 _tokenId = isToken[_symbol];
+        return userBalances[msg.sender][_tokenId];
     }
 
     function transferFrom(
@@ -139,9 +153,12 @@ contract TokenManager is Ownable {
         require(_to != address(0), "Invalid to address");
         require(_amount > 0, "Amount must be greater than zero");
         require(tokens[_tokenId] != Token(address(0)), "Token does not exist");
-        
+
         // Check if sender has sufficient balance
-        require(userBalances[_from][_tokenId] >= _amount, "Insufficient balance");
+        require(
+            userBalances[_from][_tokenId] >= _amount,
+            "Insufficient balance"
+        );
 
         // Update balances
         userBalances[_from][_tokenId] -= _amount;
@@ -165,7 +182,10 @@ contract TokenManager is Ownable {
     }
 
     // Helper function to get balance for any user (not just msg.sender)
-    function getBalance(address _user, uint8 _tokenId) external view returns (uint256) {
+    function getBalance(
+        address _user,
+        uint8 _tokenId
+    ) external view returns (uint256) {
         return userBalances[_user][_tokenId];
     }
 }

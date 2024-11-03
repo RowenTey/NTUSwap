@@ -49,7 +49,8 @@ contract OrderBookManager {
         bytes32 _marketId,
         uint256 _orderId,
         OrderLibrary.OrderType _orderType
-    ) public returns (bool) {
+    ) public  returns (bool) {
+        require(orderBookExists(_marketId), "Order Book does not exist");
         bool removed = marketOrderBooks[_marketId].removeOrder(
             _orderType,
             _orderId
