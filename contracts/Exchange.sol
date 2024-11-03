@@ -295,13 +295,7 @@ contract Exchange {
             msg.sender,
             orderType
         );
-        //Cancel Order
-        bool success = marketManager.cancelOrder(
-            marketId,
-            orderId,
-            msg.sender,
-            orderType
-        );
+
         require(success, "Order could not be cancelled");
 
         //Emit successful cancellation event
@@ -363,15 +357,15 @@ contract Exchange {
         return (userTokenBalances, tokenNames);
     }
 
-    function getAllActiveOrdersForAMarket(
-        string memory _token1,
-        string memory _token2
-    ) external view {
-        uint8 tokenId1 = tokenManager.getTokenId(_token1);
-        uint8 tokenId2 = tokenManager.getTokenId(_token2);
-        bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
-        // return orderBookManage
-    }
+    // function getAllActiveOrdersForAMarket(
+    //     string memory _token1,
+    //     string memory _token2
+    // ) external view {
+    //     uint8 tokenId1 = tokenManager.getTokenId(_token1);
+    //     uint8 tokenId2 = tokenManager.getTokenId(_token2);
+    //     bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
+    //     // return orderBookManage
+    // }
 
     // Helper functions
     function getTokenBalance(

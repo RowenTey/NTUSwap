@@ -229,8 +229,8 @@ contract OrderBookManager {
         );
     }
 
-    function getAllOrdersForAMarketWithStatus(bytes32 _marketId, OrderLibrary.OrderStatus _orderStatus) external view {
-        IOrderBookData orderBooks = marketOrderBooks[_marketId];
+    // function getAllOrdersForAMarketWithStatus(bytes32 _marketId, OrderLibrary.OrderStatus _orderStatus) external view returns {
+    //     IOrderBookData orderBooks = marketOrderBooks[_marketId];
 
-    }
+    // }
 }
