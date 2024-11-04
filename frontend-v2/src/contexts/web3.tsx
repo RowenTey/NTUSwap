@@ -19,10 +19,13 @@ interface DEXContract {
 }
 
 interface DEXController {
-	initializeWeb3: () => Promise<void>;
+	connectWallet: () => Promise<void>;
 	fetchBalance: (
 		tokenMap: Map<string, string>
 	) => Promise<InvokeResponse<Map<string, number>>>;
+	updateBalance: (symbol: string, amount: number) => void;
+	deposit: (symbol: string, amount: number) => Promise<InvokeResponse<any>>;
+	withdraw: (symbol: string, amount: number) => Promise<InvokeResponse<any>>;
 	setActiveMarket: React.Dispatch<React.SetStateAction<Market | null>>;
 	fetchActiveOrders: (
 		market: Market,
@@ -126,7 +129,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 	const [balance, setBalance] = useState<Map<string, number>>(new Map());
 	const [activeMarket, setActiveMarket] = useState<Market | null>(null);
 
-	const initializeWeb3 = useCallback(async () => {
+	const connectWallet = useCallback(async () => {
 		if (!window.ethereum) {
 			console.log("Please install MetaMask!");
 			return;
@@ -167,6 +170,16 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			console.error(error);
 		}
 	}, []);
+
+	async function initializeTokenContract(
+		web3Instance: Web3,
+		tokenAddress: string
+	) {
+		const erc20Abi = await fetch("/contracts/Token.json").then((response) =>
+			response.json()
+		);
+		return new web3Instance.eth.Contract(erc20Abi.abi, tokenAddress);
+	}
 
 	// Check if the contract is initialized (type guard)
 	const isContractInitialized = (
@@ -218,10 +231,55 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			};
 		}
 
+		let tokenId;
 		try {
-			const result = await contract.exchange.methods
-				.withdrawTokens(symbol, amount)
+			const res = await contract.tokenManager.methods.getTokenId(symbol).call();
+			tokenId = Number(res);
+		} catch (error) {
+			console.error(`Failed to get token ID: ${error}`);
+			return {
+				status: "Error",
+				message: `Failed to get token ID: ${error}`,
+				result: null,
+			};
+		}
+
+		let tokenAddr;
+		try {
+			tokenAddr = await contract.tokenManager.methods.getToken(tokenId).call();
+		} catch (error) {
+			console.error(`Failed to get token address: ${error}`);
+			return {
+				status: "Error",
+				message: `Failed to get token address: ${error}`,
+				result: null,
+			};
+		}
+
+		try {
+			const tokenContract = await initializeTokenContract(
+				web3 as Web3,
+				tokenAddr
+			);
+
+			await tokenContract.methods
+				.approve(contract.tokenManager._address, amount)
 				.send({ from: account });
+		} catch (error) {
+			console.error(`Failed to approve token spending: ${error}`);
+			return {
+				status: "Error",
+				message: `Failed to approve token spending: ${error}`,
+				result: null,
+			};
+		}
+
+		try {
+			const result = await contract.tokenManager.methods
+				.withdraw(symbol, amount)
+				.send({ from: account });
+			console.log("Withdrawal result:", result);
+
 			return {
 				status: "Success",
 				message: `Withdrawal successful: ${result.transactionHash}`,
@@ -248,10 +306,58 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			};
 		}
 
+		let tokenId;
 		try {
-			const result = await contract.exchange.methods
-				.depositTokens(symbol, amount)
+			const res = await contract.tokenManager.methods.getTokenId(symbol).call();
+			tokenId = Number(res);
+		} catch (error) {
+			console.error(`Failed to get token ID: ${error}`);
+			return {
+				status: "Error",
+				message: `Failed to get token ID: ${error}`,
+				result: null,
+			};
+		}
+
+		let tokenAddr;
+		try {
+			tokenAddr = await contract.tokenManager.methods.getToken(tokenId).call();
+		} catch (error) {
+			console.error(`Failed to get token address: ${error}`);
+			return {
+				status: "Error",
+				message: `Failed to get token address: ${error}`,
+				result: null,
+			};
+		}
+
+		try {
+			const tokenContract = await initializeTokenContract(
+				web3 as Web3,
+				tokenAddr
+			);
+
+			const balance = await tokenContract.methods.balanceOf(account).call();
+			console.log("Token balance:", balance);
+
+			await tokenContract.methods
+				.approve(contract.tokenManager._address, amount)
 				.send({ from: account });
+		} catch (error) {
+			console.error(`Failed to approve token spending: ${error}`);
+			return {
+				status: "Error",
+				message: `Failed to approve token spending: ${error}`,
+				result: null,
+			};
+		}
+
+		try {
+			const result = await contract.tokenManager.methods
+				.deposit(symbol, amount)
+				.send({ from: account });
+			console.log("Deposit result:", result);
+
 			return {
 				status: "Success",
 				message: `Deposit successful: ${result.transactionHash}`,
@@ -264,6 +370,12 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 				result: null,
 			};
 		}
+	};
+
+	const updateBalance = async (symbol: string, amount: number) => {
+		const tmpBalance = new Map(balance);
+		tmpBalance.set(symbol, (tmpBalance.get(symbol) || 0) + amount);
+		setBalance(tmpBalance);
 	};
 
 	const fetchBalance = async (
@@ -548,15 +660,14 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		};
 
 		fetchData();
-	}, [contract]);
+	}, [contract, account]);
 
 	useEffect(() => {
 		if (window.ethereum) {
 			window.ethereum.on("accountsChanged", (accounts: any) => {
-				console.log("Account changed:", accounts);
-
-				// const accountsString = accounts as string[];
-				// setAccount(accountsString[0]);
+				const accountsString = accounts as string[];
+				console.log("Account changed:", accountsString[0]);
+				setAccount(accountsString[0]);
 			});
 
 			window.ethereum.on("chainChanged", () => {
@@ -574,9 +685,41 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		};
 	}, []);
 
+	// useEffect(() => {
+	// 	if (!isContractInitialized(contract)) return;
+
+	// 	console.log("Listening for DepositEvent...");
+	// 	const subscription = contract.tokenManager.events.DepositEvent(
+	// 		{
+	// 			fromBlock: "latest",
+	// 		},
+	// 		(_, event: any) => {
+	// 			console.log("DepositEvent:", event);
+	// 		}
+	// 	);
+
+	// 	subscription.on("data", (event: any) => {
+	// 		console.log("DepositEvent data:", event);
+	// 	});
+
+	// 	// Cleanup function to unsubscribe from the event
+	// 	return () => {
+	// 		subscription.unsubscribe((error: any, success: any) => {
+	// 			if (success) {
+	// 				console.log("Successfully unsubscribed!");
+	// 			} else {
+	// 				console.error("Error unsubscribing:", error);
+	// 			}
+	// 		});
+	// 	};
+	// }, [contract]);
+
 	const controller: DEXController = {
-		initializeWeb3,
+		connectWallet,
 		fetchBalance,
+		updateBalance,
+		deposit,
+		withdraw,
 		setActiveMarket,
 		fetchActiveOrders,
 	};

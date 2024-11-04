@@ -10,7 +10,7 @@ const Hero: FC = () => {
 	const router = useRouter();
 	const { toast } = useToast();
 	const { controller, isWalletConnected, account } = useWeb3();
-	const { initializeWeb3 } = controller;
+	const { connectWallet } = controller;
 
 	useEffect(() => {
 		router.prefetch("/dashboard");
@@ -19,7 +19,7 @@ const Hero: FC = () => {
 			return;
 		}
 
-		initializeWeb3();
+		connectWallet();
 	}, []);
 
 	const navigate = () => {
@@ -52,7 +52,7 @@ const Hero: FC = () => {
 				{isWalletConnected ? (
 					<span>Connected as {account}</span>
 				) : (
-					<Button onClick={initializeWeb3} className="w-full sm:w-auto">
+					<Button onClick={connectWallet} className="w-full sm:w-auto">
 						Connect MetaMask <Wallet className="ml-2 h-4 w-4" />
 					</Button>
 				)}

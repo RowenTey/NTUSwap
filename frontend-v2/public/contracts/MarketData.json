@@ -162,18 +162,18 @@
     "absolutePath": "project:/contracts/MarketData.sol",
     "exportedSymbols": {
       "IMarketData": [
-        1887
+        1896
       ],
       "MarketData": [
-        2077
+        2086
       ]
     },
-    "id": 2078,
+    "id": 2087,
     "license": "UNLICENSED",
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 1839,
+        "id": 1848,
         "literals": [
           "solidity",
           "^",
@@ -190,9 +190,9 @@
         "contractDependencies": [],
         "contractKind": "interface",
         "fullyImplemented": false,
-        "id": 1887,
+        "id": 1896,
         "linearizedBaseContracts": [
-          1887
+          1896
         ],
         "name": "IMarketData",
         "nameLocation": "111:11:6",
@@ -200,16 +200,16 @@
         "nodes": [
           {
             "canonicalName": "IMarketData.Market",
-            "id": 1846,
+            "id": 1855,
             "members": [
               {
                 "constant": false,
-                "id": 1841,
+                "id": 1850,
                 "mutability": "mutable",
                 "name": "token1",
                 "nameLocation": "159:6:6",
                 "nodeType": "VariableDeclaration",
-                "scope": 1846,
+                "scope": 1855,
                 "src": "153:12:6",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -218,7 +218,7 @@
                   "typeString": "uint8"
                 },
                 "typeName": {
-                  "id": 1840,
+                  "id": 1849,
                   "name": "uint8",
                   "nodeType": "ElementaryTypeName",
                   "src": "153:5:6",
@@ -231,12 +231,12 @@
               },
               {
                 "constant": false,
-                "id": 1843,
+                "id": 1852,
                 "mutability": "mutable",
                 "name": "token2",
                 "nameLocation": "181:6:6",
                 "nodeType": "VariableDeclaration",
-                "scope": 1846,
+                "scope": 1855,
                 "src": "175:12:6",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -245,7 +245,7 @@
                   "typeString": "uint8"
                 },
                 "typeName": {
-                  "id": 1842,
+                  "id": 1851,
                   "name": "uint8",
                   "nodeType": "ElementaryTypeName",
                   "src": "175:5:6",
@@ -258,12 +258,12 @@
               },
               {
                 "constant": false,
-                "id": 1845,
+                "id": 1854,
                 "mutability": "mutable",
                 "name": "exists",
                 "nameLocation": "202:6:6",
                 "nodeType": "VariableDeclaration",
-                "scope": 1846,
+                "scope": 1855,
                 "src": "197:11:6",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -272,7 +272,7 @@
                   "typeString": "bool"
                 },
                 "typeName": {
-                  "id": 1844,
+                  "id": 1853,
                   "name": "bool",
                   "nodeType": "ElementaryTypeName",
                   "src": "197:4:6",
@@ -287,30 +287,30 @@
             "name": "Market",
             "nameLocation": "136:6:6",
             "nodeType": "StructDefinition",
-            "scope": 1887,
+            "scope": 1896,
             "src": "129:86:6",
             "visibility": "public"
           },
           {
             "anonymous": false,
             "eventSelector": "e0547082c0fc18bcd60dde0b005d4a57de8e9ef8ef6e43258083a2bb975a7de9",
-            "id": 1856,
+            "id": 1865,
             "name": "MarketCreatedEvent",
             "nameLocation": "227:18:6",
             "nodeType": "EventDefinition",
             "parameters": {
-              "id": 1855,
+              "id": 1864,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 1848,
+                  "id": 1857,
                   "indexed": true,
                   "mutability": "mutable",
                   "name": "marketId",
                   "nameLocation": "271:8:6",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1856,
+                  "scope": 1865,
                   "src": "255:24:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -319,7 +319,7 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 1847,
+                    "id": 1856,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
                     "src": "255:7:6",
@@ -332,13 +332,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 1850,
+                  "id": 1859,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "token1",
                   "nameLocation": "295:6:6",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1856,
+                  "scope": 1865,
                   "src": "289:12:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -347,7 +347,7 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 1849,
+                    "id": 1858,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
                     "src": "289:5:6",
@@ -360,13 +360,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 1852,
+                  "id": 1861,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "token2",
                   "nameLocation": "317:6:6",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1856,
+                  "scope": 1865,
                   "src": "311:12:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -375,7 +375,7 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 1851,
+                    "id": 1860,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
                     "src": "311:5:6",
@@ -388,13 +388,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 1854,
+                  "id": 1863,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "timestamp",
                   "nameLocation": "341:9:6",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1856,
+                  "scope": 1865,
                   "src": "333:17:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -403,7 +403,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 1853,
+                    "id": 1862,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "333:7:6",
@@ -421,7 +421,7 @@
           },
           {
             "functionSelector": "c115ec63",
-            "id": 1861,
+            "id": 1870,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -429,17 +429,17 @@
             "nameLocation": "372:9:6",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 1859,
+              "id": 1868,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 1858,
+                  "id": 1867,
                   "mutability": "mutable",
                   "name": "_tokenId",
                   "nameLocation": "388:8:6",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1861,
+                  "scope": 1870,
                   "src": "382:14:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -448,7 +448,7 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 1857,
+                    "id": 1866,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
                     "src": "382:5:6",
@@ -463,12 +463,12 @@
               "src": "381:16:6"
             },
             "returnParameters": {
-              "id": 1860,
+              "id": 1869,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "406:0:6"
             },
-            "scope": 1887,
+            "scope": 1896,
             "src": "363:44:6",
             "stateMutability": "nonpayable",
             "virtual": false,
@@ -476,7 +476,7 @@
           },
           {
             "functionSelector": "b9ed567a",
-            "id": 1870,
+            "id": 1879,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -484,17 +484,17 @@
             "nameLocation": "422:21:6",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 1864,
+              "id": 1873,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 1863,
+                  "id": 1872,
                   "mutability": "mutable",
                   "name": "_marketId",
                   "nameLocation": "461:9:6",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1870,
+                  "scope": 1879,
                   "src": "453:17:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -503,7 +503,7 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 1862,
+                    "id": 1871,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
                     "src": "453:7:6",
@@ -518,17 +518,17 @@
               "src": "443:33:6"
             },
             "returnParameters": {
-              "id": 1869,
+              "id": 1878,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 1866,
+                  "id": 1875,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1870,
+                  "scope": 1879,
                   "src": "500:5:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -537,7 +537,7 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 1865,
+                    "id": 1874,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
                     "src": "500:5:6",
@@ -550,12 +550,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 1868,
+                  "id": 1877,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1870,
+                  "scope": 1879,
                   "src": "507:5:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -564,7 +564,7 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 1867,
+                    "id": 1876,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
                     "src": "507:5:6",
@@ -578,7 +578,7 @@
               ],
               "src": "499:14:6"
             },
-            "scope": 1887,
+            "scope": 1896,
             "src": "413:101:6",
             "stateMutability": "view",
             "virtual": false,
@@ -586,7 +586,7 @@
           },
           {
             "functionSelector": "f79db5a1",
-            "id": 1877,
+            "id": 1886,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -594,17 +594,17 @@
             "nameLocation": "529:15:6",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 1873,
+              "id": 1882,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 1872,
+                  "id": 1881,
                   "mutability": "mutable",
                   "name": "marketId",
                   "nameLocation": "553:8:6",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1877,
+                  "scope": 1886,
                   "src": "545:16:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -613,7 +613,7 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 1871,
+                    "id": 1880,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
                     "src": "545:7:6",
@@ -628,17 +628,17 @@
               "src": "544:18:6"
             },
             "returnParameters": {
-              "id": 1876,
+              "id": 1885,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 1875,
+                  "id": 1884,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1877,
+                  "scope": 1886,
                   "src": "586:4:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -647,7 +647,7 @@
                     "typeString": "bool"
                   },
                   "typeName": {
-                    "id": 1874,
+                    "id": 1883,
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
                     "src": "586:4:6",
@@ -661,7 +661,7 @@
               ],
               "src": "585:6:6"
             },
-            "scope": 1887,
+            "scope": 1896,
             "src": "520:72:6",
             "stateMutability": "view",
             "virtual": false,
@@ -669,7 +669,7 @@
           },
           {
             "functionSelector": "65d020b6",
-            "id": 1886,
+            "id": 1895,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -677,17 +677,17 @@
             "nameLocation": "607:11:6",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 1882,
+              "id": 1891,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 1879,
+                  "id": 1888,
                   "mutability": "mutable",
                   "name": "token1",
                   "nameLocation": "634:6:6",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1886,
+                  "scope": 1895,
                   "src": "628:12:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -696,7 +696,7 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 1878,
+                    "id": 1887,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
                     "src": "628:5:6",
@@ -709,12 +709,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 1881,
+                  "id": 1890,
                   "mutability": "mutable",
                   "name": "token2",
                   "nameLocation": "656:6:6",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1886,
+                  "scope": 1895,
                   "src": "650:12:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -723,7 +723,7 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 1880,
+                    "id": 1889,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
                     "src": "650:5:6",
@@ -738,17 +738,17 @@
               "src": "618:50:6"
             },
             "returnParameters": {
-              "id": 1885,
+              "id": 1894,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 1884,
+                  "id": 1893,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1886,
+                  "scope": 1895,
                   "src": "692:7:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -757,7 +757,7 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 1883,
+                    "id": 1892,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
                     "src": "692:7:6",
@@ -771,14 +771,14 @@
               ],
               "src": "691:9:6"
             },
-            "scope": 1887,
+            "scope": 1896,
             "src": "598:103:6",
             "stateMutability": "pure",
             "virtual": false,
             "visibility": "external"
           }
         ],
-        "scope": 2078,
+        "scope": 2087,
         "src": "101:602:6",
         "usedErrors": []
       },
@@ -787,13 +787,13 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 1888,
+              "id": 1897,
               "name": "IMarketData",
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 1887,
+              "referencedDeclaration": 1896,
               "src": "751:11:6"
             },
-            "id": 1889,
+            "id": 1898,
             "nodeType": "InheritanceSpecifier",
             "src": "751:11:6"
           }
@@ -802,10 +802,10 @@
         "contractDependencies": [],
         "contractKind": "contract",
         "fullyImplemented": true,
-        "id": 2077,
+        "id": 2086,
         "linearizedBaseContracts": [
-          2077,
-          1887
+          2086,
+          1896
         ],
         "name": "MarketData",
         "nameLocation": "737:10:6",
@@ -813,23 +813,23 @@
         "nodes": [
           {
             "constant": false,
-            "id": 1894,
+            "id": 1903,
             "mutability": "mutable",
             "name": "exchangeMarkets",
             "nameLocation": "843:15:6",
             "nodeType": "VariableDeclaration",
-            "scope": 2077,
+            "scope": 2086,
             "src": "808:50:6",
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_Market_$1846_storage_$",
+              "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_Market_$1855_storage_$",
               "typeString": "mapping(bytes32 => struct IMarketData.Market)"
             },
             "typeName": {
-              "id": 1893,
+              "id": 1902,
               "keyType": {
-                "id": 1890,
+                "id": 1899,
                 "name": "bytes32",
                 "nodeType": "ElementaryTypeName",
                 "src": "816:7:6",
@@ -841,23 +841,23 @@
               "nodeType": "Mapping",
               "src": "808:26:6",
               "typeDescriptions": {
-                "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_Market_$1846_storage_$",
+                "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_Market_$1855_storage_$",
                 "typeString": "mapping(bytes32 => struct IMarketData.Market)"
               },
               "valueType": {
-                "id": 1892,
+                "id": 1901,
                 "nodeType": "UserDefinedTypeName",
                 "pathNode": {
-                  "id": 1891,
+                  "id": 1900,
                   "name": "Market",
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 1846,
+                  "referencedDeclaration": 1855,
                   "src": "827:6:6"
                 },
-                "referencedDeclaration": 1846,
+                "referencedDeclaration": 1855,
                 "src": "827:6:6",
                 "typeDescriptions": {
-                  "typeIdentifier": "t_struct$_Market_$1846_storage_ptr",
+                  "typeIdentifier": "t_struct$_Market_$1855_storage_ptr",
                   "typeString": "struct IMarketData.Market"
                 }
               }
@@ -867,12 +867,12 @@
           {
             "constant": false,
             "functionSelector": "41ed2c12",
-            "id": 1896,
+            "id": 1905,
             "mutability": "mutable",
             "name": "marketManager",
             "nameLocation": "879:13:6",
             "nodeType": "VariableDeclaration",
-            "scope": 2077,
+            "scope": 2086,
             "src": "864:28:6",
             "stateVariable": true,
             "storageLocation": "default",
@@ -881,7 +881,7 @@
               "typeString": "address"
             },
             "typeName": {
-              "id": 1895,
+              "id": 1904,
               "name": "address",
               "nodeType": "ElementaryTypeName",
               "src": "864:7:6",
@@ -895,12 +895,12 @@
           },
           {
             "constant": false,
-            "id": 1898,
+            "id": 1907,
             "mutability": "mutable",
             "name": "initialized",
             "nameLocation": "911:11:6",
             "nodeType": "VariableDeclaration",
-            "scope": 2077,
+            "scope": 2086,
             "src": "898:24:6",
             "stateVariable": true,
             "storageLocation": "default",
@@ -909,7 +909,7 @@
               "typeString": "bool"
             },
             "typeName": {
-              "id": 1897,
+              "id": 1906,
               "name": "bool",
               "nodeType": "ElementaryTypeName",
               "src": "898:4:6",
@@ -922,7 +922,7 @@
           },
           {
             "body": {
-              "id": 1909,
+              "id": 1918,
               "nodeType": "Block",
               "src": "958:134:6",
               "statements": [
@@ -934,14 +934,14 @@
                           "typeIdentifier": "t_address",
                           "typeString": "address"
                         },
-                        "id": 1904,
+                        "id": 1913,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
                         "lValueRequested": false,
                         "leftExpression": {
                           "expression": {
-                            "id": 1901,
+                            "id": 1910,
                             "name": "msg",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
@@ -952,7 +952,7 @@
                               "typeString": "msg"
                             }
                           },
-                          "id": 1902,
+                          "id": 1911,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": false,
@@ -968,11 +968,11 @@
                         "nodeType": "BinaryOperation",
                         "operator": "==",
                         "rightExpression": {
-                          "id": 1903,
+                          "id": 1912,
                           "name": "marketManager",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 1896,
+                          "referencedDeclaration": 1905,
                           "src": "1003:13:6",
                           "typeDescriptions": {
                             "typeIdentifier": "t_address",
@@ -987,7 +987,7 @@
                       },
                       {
                         "hexValue": "43616c6c6572206973206e6f7420746865206d61726b6574206d616e61676572",
-                        "id": 1905,
+                        "id": 1914,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -1013,7 +1013,7 @@
                           "typeString": "literal_string \"Caller is not the market manager\""
                         }
                       ],
-                      "id": 1900,
+                      "id": 1909,
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
@@ -1027,7 +1027,7 @@
                         "typeString": "function (bool,string memory) pure"
                       }
                     },
-                    "id": 1906,
+                    "id": 1915,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1042,23 +1042,23 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 1907,
+                  "id": 1916,
                   "nodeType": "ExpressionStatement",
                   "src": "968:106:6"
                 },
                 {
-                  "id": 1908,
+                  "id": 1917,
                   "nodeType": "PlaceholderStatement",
                   "src": "1084:1:6"
                 }
               ]
             },
-            "id": 1910,
+            "id": 1919,
             "name": "onlyMarketManager",
             "nameLocation": "938:17:6",
             "nodeType": "ModifierDefinition",
             "parameters": {
-              "id": 1899,
+              "id": 1908,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "955:2:6"
@@ -1069,23 +1069,23 @@
           },
           {
             "body": {
-              "id": 1917,
+              "id": 1926,
               "nodeType": "Block",
               "src": "1112:36:6",
               "statements": [
                 {
                   "expression": {
-                    "id": 1915,
+                    "id": 1924,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
-                      "id": 1913,
+                      "id": 1922,
                       "name": "initialized",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 1898,
+                      "referencedDeclaration": 1907,
                       "src": "1122:11:6",
                       "typeDescriptions": {
                         "typeIdentifier": "t_bool",
@@ -1096,7 +1096,7 @@
                     "operator": "=",
                     "rightHandSide": {
                       "hexValue": "66616c7365",
-                      "id": 1914,
+                      "id": 1923,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -1116,13 +1116,13 @@
                       "typeString": "bool"
                     }
                   },
-                  "id": 1916,
+                  "id": 1925,
                   "nodeType": "ExpressionStatement",
                   "src": "1122:19:6"
                 }
               ]
             },
-            "id": 1918,
+            "id": 1927,
             "implemented": true,
             "kind": "constructor",
             "modifiers": [],
@@ -1130,18 +1130,18 @@
             "nameLocation": "-1:-1:-1",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 1911,
+              "id": 1920,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1109:2:6"
             },
             "returnParameters": {
-              "id": 1912,
+              "id": 1921,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1112:0:6"
             },
-            "scope": 2077,
+            "scope": 2086,
             "src": "1098:50:6",
             "stateMutability": "nonpayable",
             "virtual": false,
@@ -1149,7 +1149,7 @@
           },
           {
             "body": {
-              "id": 1947,
+              "id": 1956,
               "nodeType": "Block",
               "src": "1207:210:6",
               "statements": [
@@ -1157,7 +1157,7 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 1925,
+                        "id": 1934,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -1167,11 +1167,11 @@
                         "prefix": true,
                         "src": "1225:12:6",
                         "subExpression": {
-                          "id": 1924,
+                          "id": 1933,
                           "name": "initialized",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 1898,
+                          "referencedDeclaration": 1907,
                           "src": "1226:11:6",
                           "typeDescriptions": {
                             "typeIdentifier": "t_bool",
@@ -1185,7 +1185,7 @@
                       },
                       {
                         "hexValue": "416c726561647920696e697469616c697a6564",
-                        "id": 1926,
+                        "id": 1935,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -1211,7 +1211,7 @@
                           "typeString": "literal_string \"Already initialized\""
                         }
                       ],
-                      "id": 1923,
+                      "id": 1932,
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
@@ -1225,7 +1225,7 @@
                         "typeString": "function (bool,string memory) pure"
                       }
                     },
-                    "id": 1927,
+                    "id": 1936,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1240,7 +1240,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 1928,
+                  "id": 1937,
                   "nodeType": "ExpressionStatement",
                   "src": "1217:44:6"
                 },
@@ -1252,17 +1252,17 @@
                           "typeIdentifier": "t_address",
                           "typeString": "address"
                         },
-                        "id": 1935,
+                        "id": 1944,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
                         "lValueRequested": false,
                         "leftExpression": {
-                          "id": 1930,
+                          "id": 1939,
                           "name": "_marketManager",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 1920,
+                          "referencedDeclaration": 1929,
                           "src": "1279:14:6",
                           "typeDescriptions": {
                             "typeIdentifier": "t_address",
@@ -1275,7 +1275,7 @@
                           "arguments": [
                             {
                               "hexValue": "30",
-                              "id": 1933,
+                              "id": 1942,
                               "isConstant": false,
                               "isLValue": false,
                               "isPure": true,
@@ -1297,7 +1297,7 @@
                                 "typeString": "int_const 0"
                               }
                             ],
-                            "id": 1932,
+                            "id": 1941,
                             "isConstant": false,
                             "isLValue": false,
                             "isPure": true,
@@ -1309,14 +1309,14 @@
                               "typeString": "type(address)"
                             },
                             "typeName": {
-                              "id": 1931,
+                              "id": 1940,
                               "name": "address",
                               "nodeType": "ElementaryTypeName",
                               "src": "1297:7:6",
                               "typeDescriptions": {}
                             }
                           },
-                          "id": 1934,
+                          "id": 1943,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -1339,7 +1339,7 @@
                       },
                       {
                         "hexValue": "496e76616c6964206d61726b6574206d616e616765722061646472657373",
-                        "id": 1936,
+                        "id": 1945,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -1365,7 +1365,7 @@
                           "typeString": "literal_string \"Invalid market manager address\""
                         }
                       ],
-                      "id": 1929,
+                      "id": 1938,
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
@@ -1379,7 +1379,7 @@
                         "typeString": "function (bool,string memory) pure"
                       }
                     },
-                    "id": 1937,
+                    "id": 1946,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1394,23 +1394,23 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 1938,
+                  "id": 1947,
                   "nodeType": "ExpressionStatement",
                   "src": "1271:71:6"
                 },
                 {
                   "expression": {
-                    "id": 1941,
+                    "id": 1950,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
-                      "id": 1939,
+                      "id": 1948,
                       "name": "marketManager",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 1896,
+                      "referencedDeclaration": 1905,
                       "src": "1352:13:6",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
@@ -1420,11 +1420,11 @@
                     "nodeType": "Assignment",
                     "operator": "=",
                     "rightHandSide": {
-                      "id": 1940,
+                      "id": 1949,
                       "name": "_marketManager",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 1920,
+                      "referencedDeclaration": 1929,
                       "src": "1368:14:6",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
@@ -1437,23 +1437,23 @@
                       "typeString": "address"
                     }
                   },
-                  "id": 1942,
+                  "id": 1951,
                   "nodeType": "ExpressionStatement",
                   "src": "1352:30:6"
                 },
                 {
                   "expression": {
-                    "id": 1945,
+                    "id": 1954,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
-                      "id": 1943,
+                      "id": 1952,
                       "name": "initialized",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 1898,
+                      "referencedDeclaration": 1907,
                       "src": "1392:11:6",
                       "typeDescriptions": {
                         "typeIdentifier": "t_bool",
@@ -1464,7 +1464,7 @@
                     "operator": "=",
                     "rightHandSide": {
                       "hexValue": "74727565",
-                      "id": 1944,
+                      "id": 1953,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -1484,14 +1484,14 @@
                       "typeString": "bool"
                     }
                   },
-                  "id": 1946,
+                  "id": 1955,
                   "nodeType": "ExpressionStatement",
                   "src": "1392:18:6"
                 }
               ]
             },
             "functionSelector": "c4d66de8",
-            "id": 1948,
+            "id": 1957,
             "implemented": true,
             "kind": "function",
             "modifiers": [],
@@ -1499,17 +1499,17 @@
             "nameLocation": "1163:10:6",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 1921,
+              "id": 1930,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 1920,
+                  "id": 1929,
                   "mutability": "mutable",
                   "name": "_marketManager",
                   "nameLocation": "1182:14:6",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1948,
+                  "scope": 1957,
                   "src": "1174:22:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1518,7 +1518,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 1919,
+                    "id": 1928,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1174:7:6",
@@ -1534,12 +1534,12 @@
               "src": "1173:24:6"
             },
             "returnParameters": {
-              "id": 1922,
+              "id": 1931,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1207:0:6"
             },
-            "scope": 2077,
+            "scope": 2086,
             "src": "1154:263:6",
             "stateMutability": "nonpayable",
             "virtual": false,
@@ -1547,32 +1547,32 @@
           },
           {
             "baseFunctions": [
-              1861
+              1870
             ],
             "body": {
-              "id": 2001,
+              "id": 2010,
               "nodeType": "Block",
               "src": "1494:442:6",
               "statements": [
                 {
                   "body": {
-                    "id": 1999,
+                    "id": 2008,
                     "nodeType": "Block",
                     "src": "1541:389:6",
                     "statements": [
                       {
                         "assignments": [
-                          1967
+                          1976
                         ],
                         "declarations": [
                           {
                             "constant": false,
-                            "id": 1967,
+                            "id": 1976,
                             "mutability": "mutable",
                             "name": "marketId",
                             "nameLocation": "1563:8:6",
                             "nodeType": "VariableDeclaration",
-                            "scope": 1999,
+                            "scope": 2008,
                             "src": "1555:16:6",
                             "stateVariable": false,
                             "storageLocation": "default",
@@ -1581,7 +1581,7 @@
                               "typeString": "bytes32"
                             },
                             "typeName": {
-                              "id": 1966,
+                              "id": 1975,
                               "name": "bytes32",
                               "nodeType": "ElementaryTypeName",
                               "src": "1555:7:6",
@@ -1593,15 +1593,15 @@
                             "visibility": "internal"
                           }
                         ],
-                        "id": 1972,
+                        "id": 1981,
                         "initialValue": {
                           "arguments": [
                             {
-                              "id": 1969,
+                              "id": 1978,
                               "name": "i",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 1957,
+                              "referencedDeclaration": 1966,
                               "src": "1586:1:6",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_uint8",
@@ -1609,11 +1609,11 @@
                               }
                             },
                             {
-                              "id": 1970,
+                              "id": 1979,
                               "name": "_tokenId",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 1950,
+                              "referencedDeclaration": 1959,
                               "src": "1589:8:6",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_uint8",
@@ -1632,18 +1632,18 @@
                                 "typeString": "uint8"
                               }
                             ],
-                            "id": 1968,
+                            "id": 1977,
                             "name": "getMarketId",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 2063,
+                            "referencedDeclaration": 2072,
                             "src": "1574:11:6",
                             "typeDescriptions": {
                               "typeIdentifier": "t_function_internal_pure$_t_uint8_$_t_uint8_$returns$_t_bytes32_$",
                               "typeString": "function (uint8,uint8) pure returns (bytes32)"
                             }
                           },
-                          "id": 1971,
+                          "id": 1980,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": false,
@@ -1663,7 +1663,7 @@
                       },
                       {
                         "condition": {
-                          "id": 1978,
+                          "id": 1987,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": false,
@@ -1677,24 +1677,24 @@
                               {
                                 "expression": {
                                   "baseExpression": {
-                                    "id": 1973,
+                                    "id": 1982,
                                     "name": "exchangeMarkets",
                                     "nodeType": "Identifier",
                                     "overloadedDeclarations": [],
-                                    "referencedDeclaration": 1894,
+                                    "referencedDeclaration": 1903,
                                     "src": "1618:15:6",
                                     "typeDescriptions": {
-                                      "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_Market_$1846_storage_$",
+                                      "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_Market_$1855_storage_$",
                                       "typeString": "mapping(bytes32 => struct IMarketData.Market storage ref)"
                                     }
                                   },
-                                  "id": 1975,
+                                  "id": 1984,
                                   "indexExpression": {
-                                    "id": 1974,
+                                    "id": 1983,
                                     "name": "marketId",
                                     "nodeType": "Identifier",
                                     "overloadedDeclarations": [],
-                                    "referencedDeclaration": 1967,
+                                    "referencedDeclaration": 1976,
                                     "src": "1634:8:6",
                                     "typeDescriptions": {
                                       "typeIdentifier": "t_bytes32",
@@ -1708,18 +1708,18 @@
                                   "nodeType": "IndexAccess",
                                   "src": "1618:25:6",
                                   "typeDescriptions": {
-                                    "typeIdentifier": "t_struct$_Market_$1846_storage",
+                                    "typeIdentifier": "t_struct$_Market_$1855_storage",
                                     "typeString": "struct IMarketData.Market storage ref"
                                   }
                                 },
-                                "id": 1976,
+                                "id": 1985,
                                 "isConstant": false,
                                 "isLValue": true,
                                 "isPure": false,
                                 "lValueRequested": false,
                                 "memberName": "exists",
                                 "nodeType": "MemberAccess",
-                                "referencedDeclaration": 1845,
+                                "referencedDeclaration": 1854,
                                 "src": "1618:32:6",
                                 "typeDescriptions": {
                                   "typeIdentifier": "t_bool",
@@ -1727,7 +1727,7 @@
                                 }
                               }
                             ],
-                            "id": 1977,
+                            "id": 1986,
                             "isConstant": false,
                             "isInlineArray": false,
                             "isLValue": false,
@@ -1745,41 +1745,41 @@
                             "typeString": "bool"
                           }
                         },
-                        "id": 1990,
+                        "id": 1999,
                         "nodeType": "IfStatement",
                         "src": "1612:231:6",
                         "trueBody": {
-                          "id": 1989,
+                          "id": 1998,
                           "nodeType": "Block",
                           "src": "1653:190:6",
                           "statements": [
                             {
                               "expression": {
-                                "id": 1987,
+                                "id": 1996,
                                 "isConstant": false,
                                 "isLValue": false,
                                 "isPure": false,
                                 "lValueRequested": false,
                                 "leftHandSide": {
                                   "baseExpression": {
-                                    "id": 1979,
+                                    "id": 1988,
                                     "name": "exchangeMarkets",
                                     "nodeType": "Identifier",
                                     "overloadedDeclarations": [],
-                                    "referencedDeclaration": 1894,
+                                    "referencedDeclaration": 1903,
                                     "src": "1671:15:6",
                                     "typeDescriptions": {
-                                      "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_Market_$1846_storage_$",
+                                      "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_Market_$1855_storage_$",
                                       "typeString": "mapping(bytes32 => struct IMarketData.Market storage ref)"
                                     }
                                   },
-                                  "id": 1981,
+                                  "id": 1990,
                                   "indexExpression": {
-                                    "id": 1980,
+                                    "id": 1989,
                                     "name": "marketId",
                                     "nodeType": "Identifier",
                                     "overloadedDeclarations": [],
-                                    "referencedDeclaration": 1967,
+                                    "referencedDeclaration": 1976,
                                     "src": "1687:8:6",
                                     "typeDescriptions": {
                                       "typeIdentifier": "t_bytes32",
@@ -1793,7 +1793,7 @@
                                   "nodeType": "IndexAccess",
                                   "src": "1671:25:6",
                                   "typeDescriptions": {
-                                    "typeIdentifier": "t_struct$_Market_$1846_storage",
+                                    "typeIdentifier": "t_struct$_Market_$1855_storage",
                                     "typeString": "struct IMarketData.Market storage ref"
                                   }
                                 },
@@ -1802,11 +1802,11 @@
                                 "rightHandSide": {
                                   "arguments": [
                                     {
-                                      "id": 1983,
+                                      "id": 1992,
                                       "name": "i",
                                       "nodeType": "Identifier",
                                       "overloadedDeclarations": [],
-                                      "referencedDeclaration": 1957,
+                                      "referencedDeclaration": 1966,
                                       "src": "1736:1:6",
                                       "typeDescriptions": {
                                         "typeIdentifier": "t_uint8",
@@ -1814,11 +1814,11 @@
                                       }
                                     },
                                     {
-                                      "id": 1984,
+                                      "id": 1993,
                                       "name": "_tokenId",
                                       "nodeType": "Identifier",
                                       "overloadedDeclarations": [],
-                                      "referencedDeclaration": 1950,
+                                      "referencedDeclaration": 1959,
                                       "src": "1767:8:6",
                                       "typeDescriptions": {
                                         "typeIdentifier": "t_uint8",
@@ -1827,7 +1827,7 @@
                                     },
                                     {
                                       "hexValue": "74727565",
-                                      "id": 1985,
+                                      "id": 1994,
                                       "isConstant": false,
                                       "isLValue": false,
                                       "isPure": true,
@@ -1857,18 +1857,18 @@
                                         "typeString": "bool"
                                       }
                                     ],
-                                    "id": 1982,
+                                    "id": 1991,
                                     "name": "Market",
                                     "nodeType": "Identifier",
                                     "overloadedDeclarations": [],
-                                    "referencedDeclaration": 1846,
+                                    "referencedDeclaration": 1855,
                                     "src": "1699:6:6",
                                     "typeDescriptions": {
-                                      "typeIdentifier": "t_type$_t_struct$_Market_$1846_storage_ptr_$",
+                                      "typeIdentifier": "t_type$_t_struct$_Market_$1855_storage_ptr_$",
                                       "typeString": "type(struct IMarketData.Market storage pointer)"
                                     }
                                   },
-                                  "id": 1986,
+                                  "id": 1995,
                                   "isConstant": false,
                                   "isLValue": false,
                                   "isPure": false,
@@ -1883,17 +1883,17 @@
                                   "src": "1699:129:6",
                                   "tryCall": false,
                                   "typeDescriptions": {
-                                    "typeIdentifier": "t_struct$_Market_$1846_memory_ptr",
+                                    "typeIdentifier": "t_struct$_Market_$1855_memory_ptr",
                                     "typeString": "struct IMarketData.Market memory"
                                   }
                                 },
                                 "src": "1671:157:6",
                                 "typeDescriptions": {
-                                  "typeIdentifier": "t_struct$_Market_$1846_storage",
+                                  "typeIdentifier": "t_struct$_Market_$1855_storage",
                                   "typeString": "struct IMarketData.Market storage ref"
                                 }
                               },
-                              "id": 1988,
+                              "id": 1997,
                               "nodeType": "ExpressionStatement",
                               "src": "1671:157:6"
                             }
@@ -1904,11 +1904,11 @@
                         "eventCall": {
                           "arguments": [
                             {
-                              "id": 1992,
+                              "id": 2001,
                               "name": "marketId",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 1967,
+                              "referencedDeclaration": 1976,
                               "src": "1880:8:6",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_bytes32",
@@ -1916,11 +1916,11 @@
                               }
                             },
                             {
-                              "id": 1993,
+                              "id": 2002,
                               "name": "i",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 1957,
+                              "referencedDeclaration": 1966,
                               "src": "1890:1:6",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_uint8",
@@ -1928,11 +1928,11 @@
                               }
                             },
                             {
-                              "id": 1994,
+                              "id": 2003,
                               "name": "_tokenId",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 1950,
+                              "referencedDeclaration": 1959,
                               "src": "1893:8:6",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_uint8",
@@ -1941,7 +1941,7 @@
                             },
                             {
                               "expression": {
-                                "id": 1995,
+                                "id": 2004,
                                 "name": "block",
                                 "nodeType": "Identifier",
                                 "overloadedDeclarations": [],
@@ -1952,7 +1952,7 @@
                                   "typeString": "block"
                                 }
                               },
-                              "id": 1996,
+                              "id": 2005,
                               "isConstant": false,
                               "isLValue": false,
                               "isPure": false,
@@ -1985,18 +1985,18 @@
                                 "typeString": "uint256"
                               }
                             ],
-                            "id": 1991,
+                            "id": 2000,
                             "name": "MarketCreatedEvent",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 1856,
+                            "referencedDeclaration": 1865,
                             "src": "1861:18:6",
                             "typeDescriptions": {
                               "typeIdentifier": "t_function_event_nonpayable$_t_bytes32_$_t_uint8_$_t_uint8_$_t_uint256_$returns$__$",
                               "typeString": "function (bytes32,uint8,uint8,uint256)"
                             }
                           },
-                          "id": 1997,
+                          "id": 2006,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": false,
@@ -2011,7 +2011,7 @@
                             "typeString": "tuple()"
                           }
                         },
-                        "id": 1998,
+                        "id": 2007,
                         "nodeType": "EmitStatement",
                         "src": "1856:63:6"
                       }
@@ -2022,17 +2022,17 @@
                       "typeIdentifier": "t_uint8",
                       "typeString": "uint8"
                     },
-                    "id": 1962,
+                    "id": 1971,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftExpression": {
-                      "id": 1960,
+                      "id": 1969,
                       "name": "i",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 1957,
+                      "referencedDeclaration": 1966,
                       "src": "1522:1:6",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint8",
@@ -2042,11 +2042,11 @@
                     "nodeType": "BinaryOperation",
                     "operator": "<",
                     "rightExpression": {
-                      "id": 1961,
+                      "id": 1970,
                       "name": "_tokenId",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 1950,
+                      "referencedDeclaration": 1959,
                       "src": "1526:8:6",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint8",
@@ -2059,20 +2059,20 @@
                       "typeString": "bool"
                     }
                   },
-                  "id": 2000,
+                  "id": 2009,
                   "initializationExpression": {
                     "assignments": [
-                      1957
+                      1966
                     ],
                     "declarations": [
                       {
                         "constant": false,
-                        "id": 1957,
+                        "id": 1966,
                         "mutability": "mutable",
                         "name": "i",
                         "nameLocation": "1515:1:6",
                         "nodeType": "VariableDeclaration",
-                        "scope": 2000,
+                        "scope": 2009,
                         "src": "1509:7:6",
                         "stateVariable": false,
                         "storageLocation": "default",
@@ -2081,7 +2081,7 @@
                           "typeString": "uint8"
                         },
                         "typeName": {
-                          "id": 1956,
+                          "id": 1965,
                           "name": "uint8",
                           "nodeType": "ElementaryTypeName",
                           "src": "1509:5:6",
@@ -2093,10 +2093,10 @@
                         "visibility": "internal"
                       }
                     ],
-                    "id": 1959,
+                    "id": 1968,
                     "initialValue": {
                       "hexValue": "31",
-                      "id": 1958,
+                      "id": 1967,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -2115,7 +2115,7 @@
                   },
                   "loopExpression": {
                     "expression": {
-                      "id": 1964,
+                      "id": 1973,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -2125,11 +2125,11 @@
                       "prefix": false,
                       "src": "1536:3:6",
                       "subExpression": {
-                        "id": 1963,
+                        "id": 1972,
                         "name": "i",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 1957,
+                        "referencedDeclaration": 1966,
                         "src": "1536:1:6",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint8",
@@ -2141,7 +2141,7 @@
                         "typeString": "uint8"
                       }
                     },
-                    "id": 1965,
+                    "id": 1974,
                     "nodeType": "ExpressionStatement",
                     "src": "1536:3:6"
                   },
@@ -2151,18 +2151,18 @@
               ]
             },
             "functionSelector": "c115ec63",
-            "id": 2002,
+            "id": 2011,
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
-                "id": 1954,
+                "id": 1963,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 1953,
+                  "id": 1962,
                   "name": "onlyMarketManager",
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 1910,
+                  "referencedDeclaration": 1919,
                   "src": "1476:17:6"
                 },
                 "nodeType": "ModifierInvocation",
@@ -2173,23 +2173,23 @@
             "nameLocation": "1432:9:6",
             "nodeType": "FunctionDefinition",
             "overrides": {
-              "id": 1952,
+              "id": 1961,
               "nodeType": "OverrideSpecifier",
               "overrides": [],
               "src": "1467:8:6"
             },
             "parameters": {
-              "id": 1951,
+              "id": 1960,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 1950,
+                  "id": 1959,
                   "mutability": "mutable",
                   "name": "_tokenId",
                   "nameLocation": "1448:8:6",
                   "nodeType": "VariableDeclaration",
-                  "scope": 2002,
+                  "scope": 2011,
                   "src": "1442:14:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2198,7 +2198,7 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 1949,
+                    "id": 1958,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
                     "src": "1442:5:6",
@@ -2213,12 +2213,12 @@
               "src": "1441:16:6"
             },
             "returnParameters": {
-              "id": 1955,
+              "id": 1964,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1494:0:6"
             },
-            "scope": 2077,
+            "scope": 2086,
             "src": "1423:513:6",
             "stateMutability": "nonpayable",
             "virtual": false,
@@ -2226,74 +2226,74 @@
           },
           {
             "baseFunctions": [
-              1870
+              1879
             ],
             "body": {
-              "id": 2031,
+              "id": 2040,
               "nodeType": "Block",
               "src": "2052:170:6",
               "statements": [
                 {
                   "assignments": [
-                    2014
+                    2023
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 2014,
+                      "id": 2023,
                       "mutability": "mutable",
                       "name": "market",
                       "nameLocation": "2076:6:6",
                       "nodeType": "VariableDeclaration",
-                      "scope": 2031,
+                      "scope": 2040,
                       "src": "2062:20:6",
                       "stateVariable": false,
                       "storageLocation": "memory",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_struct$_Market_$1846_memory_ptr",
+                        "typeIdentifier": "t_struct$_Market_$1855_memory_ptr",
                         "typeString": "struct IMarketData.Market"
                       },
                       "typeName": {
-                        "id": 2013,
+                        "id": 2022,
                         "nodeType": "UserDefinedTypeName",
                         "pathNode": {
-                          "id": 2012,
+                          "id": 2021,
                           "name": "Market",
                           "nodeType": "IdentifierPath",
-                          "referencedDeclaration": 1846,
+                          "referencedDeclaration": 1855,
                           "src": "2062:6:6"
                         },
-                        "referencedDeclaration": 1846,
+                        "referencedDeclaration": 1855,
                         "src": "2062:6:6",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_struct$_Market_$1846_storage_ptr",
+                          "typeIdentifier": "t_struct$_Market_$1855_storage_ptr",
                           "typeString": "struct IMarketData.Market"
                         }
                       },
                       "visibility": "internal"
                     }
                   ],
-                  "id": 2018,
+                  "id": 2027,
                   "initialValue": {
                     "baseExpression": {
-                      "id": 2015,
+                      "id": 2024,
                       "name": "exchangeMarkets",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 1894,
+                      "referencedDeclaration": 1903,
                       "src": "2085:15:6",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_Market_$1846_storage_$",
+                        "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_Market_$1855_storage_$",
                         "typeString": "mapping(bytes32 => struct IMarketData.Market storage ref)"
                       }
                     },
-                    "id": 2017,
+                    "id": 2026,
                     "indexExpression": {
-                      "id": 2016,
+                      "id": 2025,
                       "name": "_marketId",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 2004,
+                      "referencedDeclaration": 2013,
                       "src": "2101:9:6",
                       "typeDescriptions": {
                         "typeIdentifier": "t_bytes32",
@@ -2307,7 +2307,7 @@
                     "nodeType": "IndexAccess",
                     "src": "2085:26:6",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Market_$1846_storage",
+                      "typeIdentifier": "t_struct$_Market_$1855_storage",
                       "typeString": "struct IMarketData.Market storage ref"
                     }
                   },
@@ -2319,25 +2319,25 @@
                     "arguments": [
                       {
                         "expression": {
-                          "id": 2020,
+                          "id": 2029,
                           "name": "market",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 2014,
+                          "referencedDeclaration": 2023,
                           "src": "2129:6:6",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_struct$_Market_$1846_memory_ptr",
+                            "typeIdentifier": "t_struct$_Market_$1855_memory_ptr",
                             "typeString": "struct IMarketData.Market memory"
                           }
                         },
-                        "id": 2021,
+                        "id": 2030,
                         "isConstant": false,
                         "isLValue": true,
                         "isPure": false,
                         "lValueRequested": false,
                         "memberName": "exists",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 1845,
+                        "referencedDeclaration": 1854,
                         "src": "2129:13:6",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bool",
@@ -2346,7 +2346,7 @@
                       },
                       {
                         "hexValue": "4d61726b657420646f6573206e6f74206578697374",
-                        "id": 2022,
+                        "id": 2031,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -2372,7 +2372,7 @@
                           "typeString": "literal_string \"Market does not exist\""
                         }
                       ],
-                      "id": 2019,
+                      "id": 2028,
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
@@ -2386,7 +2386,7 @@
                         "typeString": "function (bool,string memory) pure"
                       }
                     },
-                    "id": 2023,
+                    "id": 2032,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2401,7 +2401,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 2024,
+                  "id": 2033,
                   "nodeType": "ExpressionStatement",
                   "src": "2121:47:6"
                 },
@@ -2410,25 +2410,25 @@
                     "components": [
                       {
                         "expression": {
-                          "id": 2025,
+                          "id": 2034,
                           "name": "market",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 2014,
+                          "referencedDeclaration": 2023,
                           "src": "2186:6:6",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_struct$_Market_$1846_memory_ptr",
+                            "typeIdentifier": "t_struct$_Market_$1855_memory_ptr",
                             "typeString": "struct IMarketData.Market memory"
                           }
                         },
-                        "id": 2026,
+                        "id": 2035,
                         "isConstant": false,
                         "isLValue": true,
                         "isPure": false,
                         "lValueRequested": false,
                         "memberName": "token1",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 1841,
+                        "referencedDeclaration": 1850,
                         "src": "2186:13:6",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint8",
@@ -2437,25 +2437,25 @@
                       },
                       {
                         "expression": {
-                          "id": 2027,
+                          "id": 2036,
                           "name": "market",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 2014,
+                          "referencedDeclaration": 2023,
                           "src": "2201:6:6",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_struct$_Market_$1846_memory_ptr",
+                            "typeIdentifier": "t_struct$_Market_$1855_memory_ptr",
                             "typeString": "struct IMarketData.Market memory"
                           }
                         },
-                        "id": 2028,
+                        "id": 2037,
                         "isConstant": false,
                         "isLValue": true,
                         "isPure": false,
                         "lValueRequested": false,
                         "memberName": "token2",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 1843,
+                        "referencedDeclaration": 1852,
                         "src": "2201:13:6",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint8",
@@ -2463,7 +2463,7 @@
                         }
                       }
                     ],
-                    "id": 2029,
+                    "id": 2038,
                     "isConstant": false,
                     "isInlineArray": false,
                     "isLValue": false,
@@ -2476,15 +2476,15 @@
                       "typeString": "tuple(uint8,uint8)"
                     }
                   },
-                  "functionReturnParameters": 2011,
-                  "id": 2030,
+                  "functionReturnParameters": 2020,
+                  "id": 2039,
                   "nodeType": "Return",
                   "src": "2178:37:6"
                 }
               ]
             },
             "functionSelector": "b9ed567a",
-            "id": 2032,
+            "id": 2041,
             "implemented": true,
             "kind": "function",
             "modifiers": [],
@@ -2492,23 +2492,23 @@
             "nameLocation": "1951:21:6",
             "nodeType": "FunctionDefinition",
             "overrides": {
-              "id": 2006,
+              "id": 2015,
               "nodeType": "OverrideSpecifier",
               "overrides": [],
               "src": "2020:8:6"
             },
             "parameters": {
-              "id": 2005,
+              "id": 2014,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 2004,
+                  "id": 2013,
                   "mutability": "mutable",
                   "name": "_marketId",
                   "nameLocation": "1990:9:6",
                   "nodeType": "VariableDeclaration",
-                  "scope": 2032,
+                  "scope": 2041,
                   "src": "1982:17:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2517,7 +2517,7 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 2003,
+                    "id": 2012,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
                     "src": "1982:7:6",
@@ -2532,17 +2532,17 @@
               "src": "1972:33:6"
             },
             "returnParameters": {
-              "id": 2011,
+              "id": 2020,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 2008,
+                  "id": 2017,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 2032,
+                  "scope": 2041,
                   "src": "2038:5:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2551,7 +2551,7 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 2007,
+                    "id": 2016,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
                     "src": "2038:5:6",
@@ -2564,12 +2564,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 2010,
+                  "id": 2019,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 2032,
+                  "scope": 2041,
                   "src": "2045:5:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2578,7 +2578,7 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 2009,
+                    "id": 2018,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
                     "src": "2045:5:6",
@@ -2592,7 +2592,7 @@
               ],
               "src": "2037:14:6"
             },
-            "scope": 2077,
+            "scope": 2086,
             "src": "1942:280:6",
             "stateMutability": "view",
             "virtual": false,
@@ -2600,10 +2600,10 @@
           },
           {
             "baseFunctions": [
-              1886
+              1895
             ],
             "body": {
-              "id": 2062,
+              "id": 2071,
               "nodeType": "Block",
               "src": "2329:196:6",
               "statements": [
@@ -2613,17 +2613,17 @@
                       "typeIdentifier": "t_uint8",
                       "typeString": "uint8"
                     },
-                    "id": 2043,
+                    "id": 2052,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftExpression": {
-                      "id": 2041,
+                      "id": 2050,
                       "name": "token1",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 2034,
+                      "referencedDeclaration": 2043,
                       "src": "2382:6:6",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint8",
@@ -2633,11 +2633,11 @@
                     "nodeType": "BinaryOperation",
                     "operator": ">",
                     "rightExpression": {
-                      "id": 2042,
+                      "id": 2051,
                       "name": "token2",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 2036,
+                      "referencedDeclaration": 2045,
                       "src": "2391:6:6",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint8",
@@ -2650,17 +2650,17 @@
                       "typeString": "bool"
                     }
                   },
-                  "id": 2053,
+                  "id": 2062,
                   "nodeType": "IfStatement",
                   "src": "2378:81:6",
                   "trueBody": {
-                    "id": 2052,
+                    "id": 2061,
                     "nodeType": "Block",
                     "src": "2399:60:6",
                     "statements": [
                       {
                         "expression": {
-                          "id": 2050,
+                          "id": 2059,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": false,
@@ -2668,11 +2668,11 @@
                           "leftHandSide": {
                             "components": [
                               {
-                                "id": 2044,
+                                "id": 2053,
                                 "name": "token1",
                                 "nodeType": "Identifier",
                                 "overloadedDeclarations": [],
-                                "referencedDeclaration": 2034,
+                                "referencedDeclaration": 2043,
                                 "src": "2414:6:6",
                                 "typeDescriptions": {
                                   "typeIdentifier": "t_uint8",
@@ -2680,11 +2680,11 @@
                                 }
                               },
                               {
-                                "id": 2045,
+                                "id": 2054,
                                 "name": "token2",
                                 "nodeType": "Identifier",
                                 "overloadedDeclarations": [],
-                                "referencedDeclaration": 2036,
+                                "referencedDeclaration": 2045,
                                 "src": "2422:6:6",
                                 "typeDescriptions": {
                                   "typeIdentifier": "t_uint8",
@@ -2692,7 +2692,7 @@
                                 }
                               }
                             ],
-                            "id": 2046,
+                            "id": 2055,
                             "isConstant": false,
                             "isInlineArray": false,
                             "isLValue": true,
@@ -2710,11 +2710,11 @@
                           "rightHandSide": {
                             "components": [
                               {
-                                "id": 2047,
+                                "id": 2056,
                                 "name": "token2",
                                 "nodeType": "Identifier",
                                 "overloadedDeclarations": [],
-                                "referencedDeclaration": 2036,
+                                "referencedDeclaration": 2045,
                                 "src": "2433:6:6",
                                 "typeDescriptions": {
                                   "typeIdentifier": "t_uint8",
@@ -2722,11 +2722,11 @@
                                 }
                               },
                               {
-                                "id": 2048,
+                                "id": 2057,
                                 "name": "token1",
                                 "nodeType": "Identifier",
                                 "overloadedDeclarations": [],
-                                "referencedDeclaration": 2034,
+                                "referencedDeclaration": 2043,
                                 "src": "2441:6:6",
                                 "typeDescriptions": {
                                   "typeIdentifier": "t_uint8",
@@ -2734,7 +2734,7 @@
                                 }
                               }
                             ],
-                            "id": 2049,
+                            "id": 2058,
                             "isConstant": false,
                             "isInlineArray": false,
                             "isLValue": false,
@@ -2753,7 +2753,7 @@
                             "typeString": "tuple()"
                           }
                         },
-                        "id": 2051,
+                        "id": 2060,
                         "nodeType": "ExpressionStatement",
                         "src": "2413:35:6"
                       }
@@ -2766,11 +2766,11 @@
                       {
                         "arguments": [
                           {
-                            "id": 2057,
+                            "id": 2066,
                             "name": "token1",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 2034,
+                            "referencedDeclaration": 2043,
                             "src": "2502:6:6",
                             "typeDescriptions": {
                               "typeIdentifier": "t_uint8",
@@ -2778,11 +2778,11 @@
                             }
                           },
                           {
-                            "id": 2058,
+                            "id": 2067,
                             "name": "token2",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 2036,
+                            "referencedDeclaration": 2045,
                             "src": "2510:6:6",
                             "typeDescriptions": {
                               "typeIdentifier": "t_uint8",
@@ -2802,7 +2802,7 @@
                             }
                           ],
                           "expression": {
-                            "id": 2055,
+                            "id": 2064,
                             "name": "abi",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
@@ -2813,7 +2813,7 @@
                               "typeString": "abi"
                             }
                           },
-                          "id": 2056,
+                          "id": 2065,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -2826,7 +2826,7 @@
                             "typeString": "function () pure returns (bytes memory)"
                           }
                         },
-                        "id": 2059,
+                        "id": 2068,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -2849,7 +2849,7 @@
                           "typeString": "bytes memory"
                         }
                       ],
-                      "id": 2054,
+                      "id": 2063,
                       "name": "keccak256",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
@@ -2860,7 +2860,7 @@
                         "typeString": "function (bytes memory) pure returns (bytes32)"
                       }
                     },
-                    "id": 2060,
+                    "id": 2069,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2875,15 +2875,15 @@
                       "typeString": "bytes32"
                     }
                   },
-                  "functionReturnParameters": 2040,
-                  "id": 2061,
+                  "functionReturnParameters": 2049,
+                  "id": 2070,
                   "nodeType": "Return",
                   "src": "2468:50:6"
                 }
               ]
             },
             "functionSelector": "65d020b6",
-            "id": 2063,
+            "id": 2072,
             "implemented": true,
             "kind": "function",
             "modifiers": [],
@@ -2891,17 +2891,17 @@
             "nameLocation": "2237:11:6",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 2037,
+              "id": 2046,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 2034,
+                  "id": 2043,
                   "mutability": "mutable",
                   "name": "token1",
                   "nameLocation": "2264:6:6",
                   "nodeType": "VariableDeclaration",
-                  "scope": 2063,
+                  "scope": 2072,
                   "src": "2258:12:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2910,7 +2910,7 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 2033,
+                    "id": 2042,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
                     "src": "2258:5:6",
@@ -2923,12 +2923,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 2036,
+                  "id": 2045,
                   "mutability": "mutable",
                   "name": "token2",
                   "nameLocation": "2286:6:6",
                   "nodeType": "VariableDeclaration",
-                  "scope": 2063,
+                  "scope": 2072,
                   "src": "2280:12:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2937,7 +2937,7 @@
                     "typeString": "uint8"
                   },
                   "typeName": {
-                    "id": 2035,
+                    "id": 2044,
                     "name": "uint8",
                     "nodeType": "ElementaryTypeName",
                     "src": "2280:5:6",
@@ -2952,17 +2952,17 @@
               "src": "2248:50:6"
             },
             "returnParameters": {
-              "id": 2040,
+              "id": 2049,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 2039,
+                  "id": 2048,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 2063,
+                  "scope": 2072,
                   "src": "2320:7:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2971,7 +2971,7 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 2038,
+                    "id": 2047,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
                     "src": "2320:7:6",
@@ -2985,7 +2985,7 @@
               ],
               "src": "2319:9:6"
             },
-            "scope": 2077,
+            "scope": 2086,
             "src": "2228:297:6",
             "stateMutability": "pure",
             "virtual": false,
@@ -2993,10 +2993,10 @@
           },
           {
             "baseFunctions": [
-              1877
+              1886
             ],
             "body": {
-              "id": 2075,
+              "id": 2084,
               "nodeType": "Block",
               "src": "2603:56:6",
               "statements": [
@@ -3004,24 +3004,24 @@
                   "expression": {
                     "expression": {
                       "baseExpression": {
-                        "id": 2070,
+                        "id": 2079,
                         "name": "exchangeMarkets",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 1894,
+                        "referencedDeclaration": 1903,
                         "src": "2620:15:6",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_Market_$1846_storage_$",
+                          "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_Market_$1855_storage_$",
                           "typeString": "mapping(bytes32 => struct IMarketData.Market storage ref)"
                         }
                       },
-                      "id": 2072,
+                      "id": 2081,
                       "indexExpression": {
-                        "id": 2071,
+                        "id": 2080,
                         "name": "marketId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 2065,
+                        "referencedDeclaration": 2074,
                         "src": "2636:8:6",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes32",
@@ -3035,33 +3035,33 @@
                       "nodeType": "IndexAccess",
                       "src": "2620:25:6",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_struct$_Market_$1846_storage",
+                        "typeIdentifier": "t_struct$_Market_$1855_storage",
                         "typeString": "struct IMarketData.Market storage ref"
                       }
                     },
-                    "id": 2073,
+                    "id": 2082,
                     "isConstant": false,
                     "isLValue": true,
                     "isPure": false,
                     "lValueRequested": false,
                     "memberName": "exists",
                     "nodeType": "MemberAccess",
-                    "referencedDeclaration": 1845,
+                    "referencedDeclaration": 1854,
                     "src": "2620:32:6",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bool",
                       "typeString": "bool"
                     }
                   },
-                  "functionReturnParameters": 2069,
-                  "id": 2074,
+                  "functionReturnParameters": 2078,
+                  "id": 2083,
                   "nodeType": "Return",
                   "src": "2613:39:6"
                 }
               ]
             },
             "functionSelector": "f79db5a1",
-            "id": 2076,
+            "id": 2085,
             "implemented": true,
             "kind": "function",
             "modifiers": [],
@@ -3069,17 +3069,17 @@
             "nameLocation": "2540:15:6",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 2066,
+              "id": 2075,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 2065,
+                  "id": 2074,
                   "mutability": "mutable",
                   "name": "marketId",
                   "nameLocation": "2564:8:6",
                   "nodeType": "VariableDeclaration",
-                  "scope": 2076,
+                  "scope": 2085,
                   "src": "2556:16:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3088,7 +3088,7 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 2064,
+                    "id": 2073,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
                     "src": "2556:7:6",
@@ -3103,17 +3103,17 @@
               "src": "2555:18:6"
             },
             "returnParameters": {
-              "id": 2069,
+              "id": 2078,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 2068,
+                  "id": 2077,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 2076,
+                  "scope": 2085,
                   "src": "2597:4:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3122,7 +3122,7 @@
                     "typeString": "bool"
                   },
                   "typeName": {
-                    "id": 2067,
+                    "id": 2076,
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
                     "src": "2597:4:6",
@@ -3136,14 +3136,14 @@
               ],
               "src": "2596:6:6"
             },
-            "scope": 2077,
+            "scope": 2086,
             "src": "2531:128:6",
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           }
         ],
-        "scope": 2078,
+        "scope": 2087,
         "src": "728:1933:6",
         "usedErrors": []
       }
@@ -3158,12 +3158,12 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0xa4E1d433986F210A4dF8B0c1ed22da08fc4adb29",
-      "transactionHash": "0x764531c8af248d399f3bc2fe24e6b7944f894f059f3b1aeb88acd143e622fe72"
+      "address": "0x0beBA52b2dC08D2af32A8db6EB0f9F9380aA46EA",
+      "transactionHash": "0x1776b18c030ebf87a6d528fd3b33912fe3f4c1a9f48222fbdc0df15698aab581"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2024-11-04T13:02:41.279Z",
+  "updatedAt": "2024-11-04T16:02:28.293Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
