@@ -33,7 +33,7 @@ module.exports = async function (deployer, network, accounts) {
     console.log('Initialization complete');
 
     console.log('Deploying TokenManager...');
-    await deployer.deploy(TokenManager);
+    await deployer.deploy(TokenManager, marketManager.address);
     const tokenManager = await TokenManager.deployed();
     console.log('TokenManager deployed at:', tokenManager.address);
 
@@ -55,7 +55,7 @@ module.exports = async function (deployer, network, accounts) {
     const tokenB = await TokenB.deployed();
     await deployer.deploy(TokenC, oneMillionTokens);
     const tokenC = await TokenC.deployed();
-    
+
     console.log('Tokens deployed at:');
     console.log('TokenA:', tokenA.address);
     console.log('TokenB:', tokenB.address);
@@ -77,7 +77,6 @@ module.exports = async function (deployer, network, accounts) {
     console.log('TokenA:', tokenA.address);
     console.log('TokenB:', tokenB.address);
     console.log('TokenC:', tokenC.address);
-
   } catch (error) {
     console.error('\nDeployment failed:', error);
     throw error;

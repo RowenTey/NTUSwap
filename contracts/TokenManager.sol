@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Token.sol";
+import "./MarketManager.sol";
 
 contract TokenManager is Ownable {
     // Token ID -> Token
@@ -13,6 +14,8 @@ contract TokenManager is Ownable {
 
     // User Address -> [Token ID -> Balance]
     mapping(address => mapping(uint8 => uint256)) internal userBalances;
+
+    MarketManager public immutable marketManager;
 
     uint8 internal tokenId = 1;
 
@@ -46,7 +49,9 @@ contract TokenManager is Ownable {
         uint256 timestamp
     );
 
-    constructor() Ownable() {}
+    constructor(address _marketManagerAddr) Ownable() {
+        marketManager = MarketManager(_marketManagerAddr);
+    }
 
     function getToken(uint8 _tokenId) external view returns (address) {
         require(
@@ -77,6 +82,10 @@ contract TokenManager is Ownable {
             _initialSupply,
             block.timestamp
         );
+
+        if (tokenId > 1) {
+            marketManager.createMarket(tokenId);
+        }
 
         tokenId++;
     }
@@ -193,8 +202,8 @@ contract TokenManager is Ownable {
         view
         returns (string[] memory tokenNames, string[] memory tokenSymbols)
     {
-        tokenNames = new string[](tokenId);
-        tokenSymbols = new string[](tokenId);
+        tokenNames = new string[](tokenId - 1);
+        tokenSymbols = new string[](tokenId - 1);
 
         for (uint8 i = 1; i < tokenId; i++) {
             Token t = tokens[i];

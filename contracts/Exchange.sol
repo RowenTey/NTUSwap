@@ -4,6 +4,7 @@ import "./OrderLibrary.sol";
 import "./MarketManager.sol";
 import "./OrderBookManager.sol";
 import "./TokenManager.sol";
+
 // import "hardhat/console.sol";
 
 contract Exchange {
@@ -429,6 +430,12 @@ contract Exchange {
         uint8 tokenId1 = tokenManager.getTokenId(_token1);
         uint8 tokenId2 = tokenManager.getTokenId(_token2);
         bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
+
+        require(
+            marketManager.isMarketInitialized(tokenId1, tokenId2),
+            "Market does not exist for these pairs of tokens"
+        );
+
         return
             orderBookManager.getAllOrdersForAMarket(
                 marketId,
