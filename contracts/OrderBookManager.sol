@@ -6,14 +6,8 @@ import "hardhat/console.sol";
 
 contract OrderBookManager {
     mapping(bytes32 => IOrderBookData) public marketOrderBooks;
-    address public immutable marketManager;
 
     event OrderBookCreated(bytes32 indexed marketId, address orderBookAddress);
-
-
-    constructor(address _marketManager) {
-        marketManager = _marketManager;
-    }
 
     function orderBookExists(bytes32 marketId) public view returns (bool) {
         return address(marketOrderBooks[marketId]) != address(0);
@@ -229,7 +223,7 @@ contract OrderBookManager {
         );
     }
 
-    // function getAllOrdersForAMarketWithStatus(bytes32 _marketId, OrderLibrary.OrderStatus _orderStatus) external view returns {
+    // function getAllOrdersForAMarketWithStatus(bytes32 _marketId, OrderLibrary.OrderStatus _orderStatus) external view returns (){
     //     IOrderBookData orderBooks = marketOrderBooks[_marketId];
 
     // }
