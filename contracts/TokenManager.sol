@@ -46,7 +46,7 @@ contract TokenManager is Ownable {
         uint256 timestamp
     );
 
-    constructor() Ownable(msg.sender) {}
+    constructor() Ownable() {}
 
     function getToken(uint8 _tokenId) external view returns (address) {
         require(

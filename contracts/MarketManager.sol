@@ -5,7 +5,6 @@ import "./OrderLibrary.sol";
 import "./MarketData.sol";
 import "./OrderBookManager.sol";
 
-
 contract MarketManager {
     IMarketData public marketData;
     OrderBookManager public immutable orderBookManager;
@@ -99,7 +98,6 @@ contract MarketManager {
             userAddress,
             orderNature
         );
-
 
         return orderId;
     }

@@ -1,4 +1,7 @@
-import type { Metadata } from "next";
+"use client";
+// import type { Metadata } from "next";
+import { Toaster } from "@/components/ui/toaster";
+import { Web3Provider } from "@/contexts/web3";
 import Navbar from "@/components/navbar";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -14,10 +17,10 @@ const geistMono = localFont({
 	weight: "100 900",
 });
 
-export const metadata: Metadata = {
-	title: "NTUSwap",
-	description: "Trade crypto and get rich",
-};
+// export const metadata: Metadata = {
+// 	title: "NTUSwap",
+// 	description: "Trade crypto and get rich",
+// };
 
 export default function RootLayout({
 	children,
@@ -25,13 +28,26 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en">
-			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-br from-slate-400 to-slate-950 `}
-			>
-				<Navbar />
-				<main>{children}</main>
-			</body>
-		</html>
+		<Web3Provider>
+			<html lang="en">
+				<body
+					className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-br from-slate-400 to-slate-950 `}
+				>
+					<Navbar />
+					<main>{children}</main>
+					<Toaster />
+				</body>
+			</html>
+		</Web3Provider>
+
+		// <html lang="en">
+		// 	<body
+		// 		className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-br from-slate-400 to-slate-950 `}
+		// 	>
+		// 		<Navbar />
+		// 		<main>{children}</main>
+		// 		<Toaster />
+		// 	</body>
+		// </html>
 	);
 }

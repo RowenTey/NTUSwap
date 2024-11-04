@@ -20,6 +20,18 @@ const UserBalanceWidget: FC = () => {
 					token: "SMU",
 					quantity: 3.0,
 				},
+				{
+					token: "SMU",
+					quantity: 3.0,
+				},
+				{
+					token: "SMU",
+					quantity: 3.0,
+				},
+				{
+					token: "SMU",
+					quantity: 3.0,
+				},
 			]);
 		});
 	};

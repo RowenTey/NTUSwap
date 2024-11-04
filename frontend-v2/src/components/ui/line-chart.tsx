@@ -116,7 +116,7 @@ const chartData = [
 // TODO: change to apr
 const chartConfig = {
 	views: {
-		label: "Token Price",
+		label: "Price",
 	},
 	desktop: {
 		label: "Desktop",
@@ -143,7 +143,7 @@ export function InteractiveLineChart() {
 	return (
 		<Card className="w-full">
 			<CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
-				<div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
+				<div className="flex flex-1 flex-col justify-center gap-1 px-3 py-2 sm:py-3">
 					<CardTitle>Line Chart</CardTitle>
 					<CardDescription>
 						Showing transacted token price for the last day.

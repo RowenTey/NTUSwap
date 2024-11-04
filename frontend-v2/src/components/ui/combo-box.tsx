@@ -57,7 +57,13 @@ export function ComboBox({ data, defaultValue }: ComboBoxProps) {
 									key={dataPoint.value}
 									value={dataPoint.value}
 									onSelect={(currentValue) => {
-										setValue(currentValue === value ? "" : currentValue);
+										setValue(
+											currentValue === value
+												? defaultValue
+													? defaultValue
+													: ""
+												: currentValue
+										);
 										setOpen(false);
 									}}
 								>
