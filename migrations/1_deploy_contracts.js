@@ -33,7 +33,7 @@ module.exports = async function (deployer, network, accounts) {
     console.log('Initialization complete');
 
     console.log('Deploying TokenManager...');
-    await deployer.deploy(TokenManager, marketManager.address);
+    await deployer.deploy(TokenManager, marketManager.address, accounts[0]);
     const tokenManager = await TokenManager.deployed();
     console.log('TokenManager deployed at:', tokenManager.address);
 
