@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 import "./OrderLibrary.sol";
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 interface IOrderBookData {
     function initializeOrderBooks() external;
@@ -39,6 +39,21 @@ interface IOrderBookData {
         OrderLibrary.OrderStatus _status,
         OrderLibrary.Fills memory _orderReceipts
     ) external;
+
+    function getAllOrdersWithFilters(
+        OrderLibrary.AllOrdersQueryParams memory params
+    )
+        external
+        view
+        returns (
+            uint256[] memory amount,
+            uint256[] memory price,
+            OrderLibrary.OrderType[] memory orderType,
+            OrderLibrary.OrderNature[] memory nature,
+            uint256[][] memory fillsPrice,
+            uint256[][] memory fillsAmount,
+            uint256[][] memory fillsTimestamp
+        );
 }
 
 contract OrderBookData is IOrderBookData {
@@ -88,7 +103,6 @@ contract OrderBookData is IOrderBookData {
         OrderLibrary.OrderType _orderType,
         OrderLibrary.OrderNature _orderNature
     ) public override onlyManager returns (uint256 orderId) {
-        console.log("Reached Add Order");
         OrderBook storage book = orderBooks[_orderType];
         book.totalOrders++;
         orderId = book.totalOrders;
@@ -106,17 +120,14 @@ contract OrderBookData is IOrderBookData {
             fillsTimestamp: new uint256[](0)
         });
         book.activeCount++;
-        console.log("Order Added: ", orderId);
         // To emulate a min-heap for sell orders to always get the cheapest sell order as the root
         int256 price;
         if (_orderType == OrderLibrary.OrderType.Sell) {
             price = -1 * int256(_price);
         }
         insertHeap(book.heap, orderId, price);
-        console.log("Exited Insert Heap");
         return orderId;
     }
-    
 
     function updateOrder(
         OrderLibrary.OrderType _orderType,
@@ -207,13 +218,161 @@ contract OrderBookData is IOrderBookData {
         return orderBooks[_orderType].activeCount;
     }
 
-    // function getAllOrdersWithStatus()  {
-        
-    // }
+    function getAllOrdersWithFilters(
+        OrderLibrary.AllOrdersQueryParams memory params
+    )
+        external
+        view
+        returns (
+            uint256[] memory amount,
+            uint256[] memory price,
+            OrderLibrary.OrderType[] memory orderType,
+            OrderLibrary.OrderNature[] memory nature,
+            uint256[][] memory fillsPrice,
+            uint256[][] memory fillsAmount,
+            uint256[][] memory fillsTimestamp
+        )
+    {
+        OrderLibrary.OrderStatus status2 = params.status;
+        if (params.status == OrderLibrary.OrderStatus.Active) {
+            status2 = OrderLibrary.OrderStatus.PartiallyFilled;
+        }
+
+        uint256 matchingOrders = 0;
+        for (
+            uint256 i = 1;
+            i <= orderBooks[OrderLibrary.OrderType.Buy].totalOrders;
+            i++
+        ) {
+            OrderLibrary.Order memory order = orderBooks[
+                OrderLibrary.OrderType.Buy
+            ].orders[i];
+            if (
+                (order.status == params.status || order.status == status2) &&
+                (!params.filterByUser ||
+                    params.userAddress == order.userAddress)
+            ) {
+                matchingOrders++;
+            }
+        }
+        for (
+            uint256 i = 1;
+            i <= orderBooks[OrderLibrary.OrderType.Sell].totalOrders;
+            i++
+        ) {
+            OrderLibrary.Order memory order = orderBooks[
+                OrderLibrary.OrderType.Sell
+            ].orders[i];
+            if (
+                (order.status == params.status || order.status == status2) &&
+                (!params.filterByUser ||
+                    params.userAddress == order.userAddress)
+            ) {
+                matchingOrders++;
+            }
+        }
+
+        amount = new uint256[](matchingOrders);
+        price = new uint256[](matchingOrders);
+        orderType = new OrderLibrary.OrderType[](matchingOrders);
+        nature = new OrderLibrary.OrderNature[](matchingOrders);
+        fillsPrice = new uint256[][](matchingOrders);
+        fillsAmount = new uint256[][](matchingOrders);
+        fillsTimestamp = new uint256[][](matchingOrders);
+
+        uint256 currentIndex = 0;
+
+        // Process buy orders
+        for (
+            uint256 i = 1;
+            i <= orderBooks[OrderLibrary.OrderType.Buy].totalOrders;
+            i++
+        ) {
+            OrderLibrary.Order memory order = orderBooks[
+                OrderLibrary.OrderType.Buy
+            ].orders[i];
+            if (
+                (order.status == params.status || order.status == status2) &&
+                (!params.filterByUser ||
+                    params.userAddress == order.userAddress)
+            ) {
+                amount[currentIndex] = order.remainingAmount;
+                price[currentIndex] = order.price;
+                orderType[currentIndex] = OrderLibrary.OrderType.Buy;
+                nature[currentIndex] = order.nature;
+
+                fillsPrice[currentIndex] = new uint256[](
+                    order.fillsPrice.length
+                );
+                fillsAmount[currentIndex] = new uint256[](
+                    order.fillsAmount.length
+                );
+                fillsTimestamp[currentIndex] = new uint256[](
+                    order.fillsTimestamp.length
+                );
+
+                for (uint256 j = 0; j < order.fillsPrice.length; j++) {
+                    fillsPrice[currentIndex][j] = order.fillsPrice[j];
+                    fillsAmount[currentIndex][j] = order.fillsAmount[j];
+                    fillsTimestamp[currentIndex][j] = order.fillsTimestamp[j];
+                }
+
+                currentIndex++;
+            }
+        }
+
+        // Process sell orders
+        for (
+            uint256 i = 1;
+            i <= orderBooks[OrderLibrary.OrderType.Sell].totalOrders;
+            i++
+        ) {
+            OrderLibrary.Order memory order = orderBooks[
+                OrderLibrary.OrderType.Sell
+            ].orders[i];
+            if (
+                (order.status == params.status || order.status == status2) &&
+                (!params.filterByUser ||
+                    params.userAddress == order.userAddress)
+            ) {
+                amount[currentIndex] = order.remainingAmount;
+                price[currentIndex] = order.price;
+                orderType[currentIndex] = OrderLibrary.OrderType.Sell;
+                nature[currentIndex] = order.nature;
+
+                fillsPrice[currentIndex] = new uint256[](
+                    order.fillsPrice.length
+                );
+                fillsAmount[currentIndex] = new uint256[](
+                    order.fillsAmount.length
+                );
+                fillsTimestamp[currentIndex] = new uint256[](
+                    order.fillsTimestamp.length
+                );
+
+                for (uint256 j = 0; j < order.fillsPrice.length; j++) {
+                    fillsPrice[currentIndex][j] = order.fillsPrice[j];
+                    fillsAmount[currentIndex][j] = order.fillsAmount[j];
+                    fillsTimestamp[currentIndex][j] = order.fillsTimestamp[j];
+                }
+
+                currentIndex++;
+            }
+        }
+
+        return (
+            amount,
+            price,
+            orderType,
+            nature,
+            fillsPrice,
+            fillsAmount,
+            fillsTimestamp
+        );
+    }
 
     // Custom Heap Implementation
     uint constant ROOT_INDEX = 1;
-
 
     struct Data {
         uint256 idCount;
@@ -307,7 +466,6 @@ contract OrderBookData is IOrderBookData {
     }
 
     function _bubbleUp(Data storage data, Node memory n, uint i) private {
-        console.log("Reached _bubbleUp");
         if (i == ROOT_INDEX || n.priority <= data.nodes[i / 2].priority) {
             _insertHeap(data, n, i);
         } else {

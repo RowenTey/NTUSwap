@@ -38,6 +38,12 @@ library OrderLibrary {
         uint256 timestamp;
     }
 
+    struct AllOrdersQueryParams {
+        OrderLibrary.OrderStatus status;
+        address userAddress;
+        bool filterByUser;
+    }
+
     // struct PlaceOrderParams {
     //     uint8 tokenIndex1;
     //     uint8 tokenIndex2;

@@ -4,14 +4,13 @@ import "./OrderLibrary.sol";
 import "./MarketManager.sol";
 import "./OrderBookManager.sol";
 import "./TokenManager.sol";
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 contract Exchange {
     uint256 public constant DECIMALS = 1e18;
     MarketManager public immutable marketManager;
     OrderBookManager public immutable orderBookManager;
     TokenManager public immutable tokenManager;
-
 
     // Events for tracking order lifecycle
     event OrderMatched(
@@ -182,7 +181,6 @@ contract Exchange {
         OrderLibrary.OrderNature orderNature
     ) internal {
         // Get matching results from OrderBookManager
-        console.log("Reached matching of orders");
         (
             uint256 remainingAmount,
             address[] memory toBePaid,
@@ -195,8 +193,6 @@ contract Exchange {
                 orderType,
                 orderNature
             );
-        console.log("Order Matched");
-        console.log(toBePaid.length);
 
         // Process settlements
         for (uint256 i = 0; i < toBePaid.length; i++) {
@@ -222,7 +218,6 @@ contract Exchange {
         }
 
         if (tokenAmount.length > 0) {
-            console.log("EMIT SETTLEMENT COMPLETED EVENT");
             emit SettlementCompleted(
                 marketId,
                 toBePaid,
@@ -317,11 +312,8 @@ contract Exchange {
     }
 
     function getUserTokenBalance(
-        
         address _userAddr,
-       
         string memory _symbol
-    
     ) external view returns (uint256) {
         return getTokenBalance(_userAddr, _symbol);
     }
@@ -329,7 +321,7 @@ contract Exchange {
     function getAllAvailableTokens()
         external
         view
-        returns (string[] memory, string[] memory )
+        returns (string[] memory, string[] memory)
     {
         return tokenManager.getAllTokens();
     }
@@ -357,15 +349,127 @@ contract Exchange {
         return (userTokenBalances, tokenNames);
     }
 
-    // function getAllActiveOrdersForAMarket(
-    //     string memory _token1,
-    //     string memory _token2
-    // ) external view {
-    //     uint8 tokenId1 = tokenManager.getTokenId(_token1);
-    //     uint8 tokenId2 = tokenManager.getTokenId(_token2);
-    //     bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
-    //     // return orderBookManage
-    // }
+    function getAllActiveOrdersForAMarket(
+        string memory _token1,
+        string memory _token2
+    )
+        external
+        view
+        returns (
+            uint256[] memory amount,
+            uint256[] memory price,
+            OrderLibrary.OrderType[] memory orderType,
+            OrderLibrary.OrderNature[] memory nature,
+            uint256[][] memory fillsPrice,
+            uint256[][] memory fillsAmount,
+            uint256[][] memory fillsTimestamp
+        )
+    {
+        uint8 tokenId1 = tokenManager.getTokenId(_token1);
+        uint8 tokenId2 = tokenManager.getTokenId(_token2);
+        bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
+        return
+            orderBookManager.getAllOrdersForAMarket(
+                marketId,
+                OrderLibrary.AllOrdersQueryParams({
+                    status: OrderLibrary.OrderStatus.Active,
+                    userAddress: msg.sender,
+                    filterByUser: false
+                })
+            );
+    }
+
+    function getAllFulfilledOrdersOfAMarket(
+        string memory _token1,
+        string memory _token2
+    )
+        external
+        view
+        returns (
+            uint256[] memory amount,
+            uint256[] memory price,
+            OrderLibrary.OrderType[] memory orderType,
+            OrderLibrary.OrderNature[] memory nature,
+            uint256[][] memory fillsPrice,
+            uint256[][] memory fillsAmount,
+            uint256[][] memory fillsTimestamp
+        )
+    {
+        uint8 tokenId1 = tokenManager.getTokenId(_token1);
+        uint8 tokenId2 = tokenManager.getTokenId(_token2);
+        bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
+        return
+            orderBookManager.getAllOrdersForAMarket(
+                marketId,
+                OrderLibrary.AllOrdersQueryParams({
+                    status: OrderLibrary.OrderStatus.Filled,
+                    userAddress: msg.sender,
+                    filterByUser: false
+                })
+            );
+    }
+
+    function getAllActiveUserOrdersForAMarket(
+        string memory _token1,
+        string memory _token2,
+        address _userAddress
+    )
+        external
+        view
+        returns (
+            uint256[] memory amount,
+            uint256[] memory price,
+            OrderLibrary.OrderType[] memory orderType,
+            OrderLibrary.OrderNature[] memory nature,
+            uint256[][] memory fillsPrice,
+            uint256[][] memory fillsAmount,
+            uint256[][] memory fillsTimestamp
+        )
+    {
+        uint8 tokenId1 = tokenManager.getTokenId(_token1);
+        uint8 tokenId2 = tokenManager.getTokenId(_token2);
+        bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
+        return
+            orderBookManager.getAllOrdersForAMarket(
+                marketId,
+                OrderLibrary.AllOrdersQueryParams({
+                    status: OrderLibrary.OrderStatus.Active,
+                    userAddress: _userAddress,
+                    filterByUser: true
+                })
+            );
+    }
+
+    function getAllFulfilledUserOrdersForAMarket(
+        string memory _token1,
+        string memory _token2,
+        address _userAddress
+    )
+        external
+        view
+        returns (
+            uint256[] memory amount,
+            uint256[] memory price,
+            OrderLibrary.OrderType[] memory orderType,
+            OrderLibrary.OrderNature[] memory nature,
+            uint256[][] memory fillsPrice,
+            uint256[][] memory fillsAmount,
+            uint256[][] memory fillsTimestamp
+        )
+    {
+        uint8 tokenId1 = tokenManager.getTokenId(_token1);
+        uint8 tokenId2 = tokenManager.getTokenId(_token2);
+        bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
+        return
+            orderBookManager.getAllOrdersForAMarket(
+                marketId,
+                OrderLibrary.AllOrdersQueryParams({
+                    status: OrderLibrary.OrderStatus.Filled,
+                    userAddress: _userAddress,
+                    filterByUser: true
+                })
+            );
+    }
 
     // Helper functions
     function getTokenBalance(

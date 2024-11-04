@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 import "./OrderLibrary.sol";
 import "./OrderBookData.sol";
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 contract OrderBookManager {
     mapping(bytes32 => IOrderBookData) public marketOrderBooks;
@@ -57,7 +57,6 @@ contract OrderBookManager {
         return removed;
     }
 
-    // TODO: Check if this is the best way to do this
     function matchOrder(
         bytes32 _marketId,
         uint256 _pendingOrderId,
@@ -223,8 +222,22 @@ contract OrderBookManager {
         );
     }
 
-    // function getAllOrdersForAMarketWithStatus(bytes32 _marketId, OrderLibrary.OrderStatus _orderStatus) external view returns (){
-    //     IOrderBookData orderBooks = marketOrderBooks[_marketId];
-
-    // }
+    function getAllOrdersForAMarket(
+        bytes32 _marketId,
+        OrderLibrary.AllOrdersQueryParams memory params
+    )
+        external
+        view
+        returns (
+            uint256[] memory amount,
+            uint256[] memory price,
+            OrderLibrary.OrderType[] memory orderType,
+            OrderLibrary.OrderNature[] memory nature,
+            uint256[][] memory fillsPrice,
+            uint256[][] memory fillsAmount,
+            uint256[][] memory fillsTimestamp
+        )
+    {
+        return marketOrderBooks[_marketId].getAllOrdersWithFilters(params);
+    }
 }
