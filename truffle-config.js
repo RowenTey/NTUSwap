@@ -69,11 +69,12 @@ module.exports = {
     // tab if you use this network and you must also set the `host`, `port` and `network_id`
     // options below to some value.
     //
-    // development: {
-    //  host: "127.0.0.1",     // Localhost (default: none)
-    //  port: 8545,            // Standard Ethereum port (default: none)
-    //  network_id: "*",       // Any network (default: none)
-    // },
+    development: {
+      host: "127.0.0.1",     // Localhost (default: none)
+      port: 7545,            // Standard Ethereum ganache port (default: 7545)
+      network_id: "*",       // Any network (default: none)
+      gas: 6721975, // Custom gas limit used for deploys
+    },
     //
     // An additional network, but with some advanced options…
     // advanced: {
@@ -111,7 +112,7 @@ module.exports = {
   // Configure your compilers
   compilers: {
     solc: {
-      version: "0.8.21",
+      version: "0.8.13",
       settings: {
         optimizer: {
           enabled: true,
