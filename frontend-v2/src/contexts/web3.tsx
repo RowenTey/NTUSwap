@@ -8,11 +8,26 @@ import React, {
 	ReactNode,
 } from "react";
 import Web3 from "web3";
+import { toCamelCase } from "@/lib/utils";
+import { Order } from "@/components/columns/order-book-table";
 
 interface DEXContract {
 	exchange: any | null;
 	tokenManager: any | null;
 	marketManager: any | null;
+	orderBookManager: any | null;
+}
+
+interface DEXController {
+	initializeWeb3: () => Promise<void>;
+	fetchBalance: (
+		tokenMap: Map<string, string>
+	) => Promise<InvokeResponse<Map<string, number>>>;
+	setActiveMarket: React.Dispatch<React.SetStateAction<Market | null>>;
+	fetchActiveOrders: (
+		market: Market,
+		all?: boolean
+	) => Promise<InvokeResponse<Order[]>>;
 }
 
 interface Web3ContextType {
@@ -21,7 +36,11 @@ interface Web3ContextType {
 	account: string | null;
 	contract: DEXContract | null;
 	networkId: string | null;
-	initializeWeb3: () => Promise<void>;
+	balance: Map<string, number>;
+	tokens: Map<string, string>;
+	activeMarket: Market | null;
+	markets: Market[];
+	controller: DEXController;
 }
 
 interface Web3ProviderProps {
@@ -37,10 +56,17 @@ interface ContractJSON {
 	};
 }
 
-interface InvokeResponse {
+interface InvokeResponse<T> {
 	status: string;
 	message: string;
-	result: any;
+	result: T;
+}
+
+export type Token = Map<string, string>;
+
+interface Market {
+	tokenSymbol1: string;
+	tokenSymbol2: string;
 }
 
 export type OrderType = "Buy" | "Sell";
@@ -49,20 +75,66 @@ export type OrderNature = "Limit" | "Market";
 
 export const Web3Context = createContext<Web3ContextType | null>(null);
 
+const CONTRACTS = [
+	"Exchange",
+	"TokenManager",
+	"MarketManager",
+	"OrderBookManager",
+];
+
+async function initialiseContracts(
+	web3Instance: Web3,
+	networkId: string
+): Promise<DEXContract> {
+	const contracts: DEXContract = {
+		exchange: null,
+		tokenManager: null,
+		marketManager: null,
+		orderBookManager: null,
+	};
+
+	for (const contract of CONTRACTS) {
+		// Load the smart contract
+		const contractData = await fetch(`/contracts/${contract}.json`);
+		const contractABI: ContractJSON = await contractData.json();
+		console.log("Contract ABI:", contractABI.abi);
+
+		const contractAddress = contractABI.networks[networkId].address;
+		console.log("Contract address:", contractAddress);
+
+		const contractInstance = new web3Instance.eth.Contract(
+			contractABI.abi,
+			contractAddress
+		);
+		contracts[toCamelCase(contract) as keyof DEXContract] = contractInstance;
+	}
+
+	return contracts;
+}
+
 export function Web3Provider({ children }: Web3ProviderProps) {
 	const [web3, setWeb3] = useState<Web3 | null>(null);
 	const [contract, setContract] = useState<DEXContract | null>(null);
 	const [isWalletConnected, setIsWalletConnected] = useState<boolean>(false);
 
-	const [networkId, setNetworkId] = useState<string | null>(null);
-	const [account, setAccount] = useState<string | null>(null);
+	const [networkId, setNetworkId] = useState<string>("");
+	const [account, setAccount] = useState<string>("");
 
-	const [markets, setMarkets] = useState<string[] | null>(null);
-	const [tokens, setTokens] = useState<string[] | null>(null);
+	const [markets, setMarkets] = useState<Market[]>([]);
+	const [tokens, setTokens] = useState<Token>(new Map());
+
+	const [balance, setBalance] = useState<Map<string, number>>(new Map());
+	const [activeMarket, setActiveMarket] = useState<Market | null>(null);
 
 	const initializeWeb3 = useCallback(async () => {
 		if (!window.ethereum) {
 			console.log("Please install MetaMask!");
+			return;
+		}
+
+		const initialized = isWalletConnected && account && web3 && contract;
+		if (initialized) {
+			console.log("Web3 already initialized!");
 			return;
 		}
 
@@ -82,23 +154,12 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			setNetworkId(retrievedNetworkId.toString());
 
 			// Load the smart contract
-			const contractData = await fetch("/src/contracts/Exchange.json");
-			const contractABI: ContractJSON = await contractData.json();
-			console.log("Contract ABI:", contractABI.abi);
-
-			const contractAddress =
-				contractABI.networks[retrievedNetworkId.toString()].address;
-			console.log("Contract address:", contractAddress);
-
-			const contractInstance = new web3Instance.eth.Contract(
-				contractABI.abi,
-				contractAddress
+			const contract = await initialiseContracts(
+				web3Instance,
+				retrievedNetworkId.toString()
 			);
-			setContract({
-				exchange: contractInstance,
-				tokenManager: null,
-				marketManager: null,
-			});
+			console.log("Initialized contract:", contract);
+			setContract(contract);
 		} catch (error) {
 			console.error(
 				"Failed to load web3, accounts, or contract. Check console for details."
@@ -107,13 +168,28 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		}
 	}, []);
 
+	// Check if the contract is initialized (type guard)
+	const isContractInitialized = (
+		contract: DEXContract | null
+	): contract is DEXContract => {
+		return contract !== null;
+	};
+
 	const issue = async (
 		name: string,
 		symbol: string,
 		initialSupply: number
-	): Promise<InvokeResponse> => {
+	): Promise<InvokeResponse<any>> => {
+		if (!isContractInitialized(contract)) {
+			return {
+				status: "Error",
+				message: "Contract not initialized",
+				result: null,
+			};
+		}
+
 		try {
-			const result = await contract?.tokenManager.methods
+			const result = await contract.tokenManager.methods
 				.issueToken(name, symbol, initialSupply)
 				.send({ from: account });
 			return {
@@ -133,9 +209,17 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 	const withdraw = async (
 		symbol: string,
 		amount: number
-	): Promise<InvokeResponse> => {
+	): Promise<InvokeResponse<any>> => {
+		if (!isContractInitialized(contract)) {
+			return {
+				status: "Error",
+				message: "Contract not initialized",
+				result: null,
+			};
+		}
+
 		try {
-			const result = await contract?.exchange.methods
+			const result = await contract.exchange.methods
 				.withdrawTokens(symbol, amount)
 				.send({ from: account });
 			return {
@@ -155,9 +239,17 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 	const deposit = async (
 		symbol: string,
 		amount: number
-	): Promise<InvokeResponse> => {
+	): Promise<InvokeResponse<any>> => {
+		if (!isContractInitialized(contract)) {
+			return {
+				status: "Error",
+				message: "Contract not initialized",
+				result: null,
+			};
+		}
+
 		try {
-			const result = await contract?.exchange.methods
+			const result = await contract.exchange.methods
 				.depositTokens(symbol, amount)
 				.send({ from: account });
 			return {
@@ -174,40 +266,143 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		}
 	};
 
-	const fetchBalance = async (symbol: string): Promise<InvokeResponse> => {
+	const fetchBalance = async (
+		tokenMap: Map<string, string>
+	): Promise<InvokeResponse<Map<string, number>>> => {
+		if (!isContractInitialized(contract)) {
+			return {
+				status: "Error",
+				message: "Contract not initialized",
+				result: new Map(),
+			};
+		}
+
 		try {
-			const balance = await contract?.tokenManager.methods
-				.getUserTokenBalance(symbol)
+			console.log("Fetching balance for account: ", account);
+			const fetchedBalance = await contract.exchange.methods
+				.getAllUserTokenBalance(account)
 				.call();
+
+			const balanceMap = new Map<string, number>();
+			for (let i = 0; i < fetchedBalance[0].length; i++) {
+				const tokenName = fetchedBalance[1][i];
+				const tokenSymbol = tokenMap.get(tokenName);
+				if (!tokenSymbol) {
+					console.error(`Token not found: ${tokenName}`);
+					continue;
+				}
+
+				const tokenBalance = Number(fetchedBalance[0][i]);
+				balanceMap.set(tokenSymbol, tokenBalance);
+			}
+			setBalance(balanceMap);
+
+			console.log("Balance map:", balanceMap);
 			return {
 				status: "Success",
-				message: `Balance fetched: ${balance}`,
-				result: balance,
+				message: `Balance fetched: ${Array.from(balanceMap.entries())}`,
+				result: balanceMap,
 			};
 		} catch (error) {
 			return {
 				status: "Error",
 				message: `Failed to fetch balance: ${error}`,
-				result: null,
+				result: new Map(),
 			};
 		}
 	};
 
-	const fetchMarkets = async (): Promise<InvokeResponse> => {
-		try {
-			const markets = await contract?.marketManager.methods.getMarkets().call();
+	const fetchTokens = async (): Promise<
+		InvokeResponse<Map<string, string>>
+	> => {
+		if (!isContractInitialized(contract)) {
+			return {
+				status: "Error",
+				message: "Contract not initialized",
+				result: new Map(),
+			};
+		}
+
+		if (tokens.size > 0) {
 			return {
 				status: "Success",
-				message: `Markets fetched: ${markets}`,
-				result: markets,
+				message: "Tokens already fetched",
+				result: tokens,
+			};
+		}
+
+		try {
+			console.log("Fetching tokens...");
+			const fetchedTokens = await contract.exchange.methods
+				.getAllAvailableTokens()
+				.call();
+
+			console.log("Fetched tokens:", fetchedTokens);
+			const tokenMap = new Map<string, string>();
+			for (let i = 0; i < fetchedTokens[0].length; i++) {
+				if (fetchedTokens[0][i] === "") {
+					continue;
+				}
+
+				tokenMap.set(fetchedTokens[0][i], fetchedTokens[1][i]);
+			}
+			console.log("Token map:", tokenMap);
+			setTokens(tokenMap);
+
+			return {
+				status: "Success",
+				message: "Tokens fetched!",
+				result: tokenMap,
 			};
 		} catch (error) {
 			return {
 				status: "Error",
-				message: `Failed to fetch markets: ${error}`,
-				result: null,
+				message: `Failed to fetch tokens: ${error}`,
+				result: new Map(),
 			};
 		}
+	};
+
+	const constructMarkets = (
+		tokenMap: Map<string, string>
+	): InvokeResponse<Market[]> => {
+		if (tokenMap.size === 0) {
+			return {
+				status: "Error",
+				message: "Tokens not fetched",
+				result: [],
+			};
+		}
+
+		if (markets.length > 0) {
+			return {
+				status: "Success",
+				message: "Markets already constructed",
+				result: markets,
+			};
+		}
+
+		console.log("Constructing markets...");
+		const marketList: Market[] = [];
+		const tokensArray = Array.from(tokenMap.entries());
+
+		for (let i = 0; i < tokensArray.length; i++) {
+			for (let j = i + 1; j < tokensArray.length; j++) {
+				const market: Market = {
+					tokenSymbol1: tokensArray[i][1],
+					tokenSymbol2: tokensArray[j][1],
+				};
+				marketList.push(market);
+			}
+		}
+		setMarkets(marketList);
+
+		console.log("Markets constructed:", marketList);
+		return {
+			status: "Success",
+			message: "Markets constructed",
+			result: marketList,
+		};
 	};
 
 	const createOrder = async (
@@ -217,7 +412,15 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		amount: number,
 		type: OrderType,
 		nature: OrderNature
-	): Promise<InvokeResponse> => {
+	): Promise<InvokeResponse<any>> => {
+		if (!isContractInitialized(contract)) {
+			return {
+				status: "Error",
+				message: "Contract not initialized",
+				result: null,
+			};
+		}
+
 		try {
 			let result;
 			if (type === "Buy") {
@@ -244,30 +447,84 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		}
 	};
 
-	const fetchActiveOrders = async (): Promise<InvokeResponse> => {
-		// TODO:Implement this function
-		try {
-			const orders = await contract?.exchange.methods.getActiveOrders().call();
+	const fetchActiveOrders = async (
+		market: Market,
+		all?: boolean
+	): Promise<InvokeResponse<Order[]>> => {
+		if (!isContractInitialized(contract)) {
 			return {
-				status: "Success",
-				message: `Orders fetched: ${orders}`,
-				result: orders,
+				status: "Error",
+				message: "Contract not initialized",
+				result: [],
 			};
+		}
+
+		let activeOrders;
+		try {
+			console.log(
+				"Fetching active orders...",
+				market.tokenSymbol1,
+				market.tokenSymbol2,
+				account
+			);
+
+			if (all) {
+				activeOrders = await contract.exchange.methods
+					.getAllActiveUserOrdersForAMarket(
+						market.tokenSymbol1,
+						market.tokenSymbol2
+					)
+					.call();
+			} else {
+				activeOrders = await contract.exchange.methods
+					.getAllActiveUserOrdersForAMarket(
+						market.tokenSymbol1,
+						market.tokenSymbol2,
+						account
+					)
+					.call();
+			}
 		} catch (error) {
 			return {
 				status: "Error",
 				message: `Failed to fetch orders: ${error}`,
-				result: null,
+				result: [],
 			};
 		}
+
+		const activeOrdersArr: Order[] = [];
+		for (let i = 0; i < activeOrders[0].length; i++) {
+			const order: Order = {
+				price: Number(activeOrders[1][i]),
+				quantity: Number(activeOrders[0][i]),
+				type: activeOrders[2][i] === 0 ? "buy" : "sell",
+				nature: activeOrders[3][i] === 0 ? "limit" : "market",
+				status: "active",
+				market: activeMarket
+					? `${activeMarket.tokenSymbol1}/${activeMarket.tokenSymbol2}`
+					: "",
+			};
+			activeOrdersArr.push(order);
+		}
+		console.log("Active orders:", activeOrdersArr);
+
+		return {
+			status: "Success",
+			message: `Orders fetched!`,
+			result: activeOrdersArr,
+		};
 	};
 
 	const watchUserWithdrawals = () => {
-		if (!contract?.exchange) {
-			return;
+		if (!isContractInitialized(contract)) {
+			return {
+				status: "Error",
+				message: "Contract not initialized",
+				result: null,
+			};
 		}
 
-		contract?.exchange.events
+		contract.exchange.events
 			.WithdrawalProcessed({
 				filter: { user: account },
 				fromBlock: "latest",
@@ -282,6 +539,16 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 				});
 			});
 	};
+
+	useEffect(() => {
+		const fetchData = async () => {
+			const tokenRes = await fetchTokens();
+			constructMarkets(tokenRes.result);
+			await fetchBalance(tokenRes.result);
+		};
+
+		fetchData();
+	}, [contract]);
 
 	useEffect(() => {
 		if (window.ethereum) {
@@ -307,6 +574,13 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		};
 	}, []);
 
+	const controller: DEXController = {
+		initializeWeb3,
+		fetchBalance,
+		setActiveMarket,
+		fetchActiveOrders,
+	};
+
 	const contextValue = useMemo<Web3ContextType>(
 		() => ({
 			web3,
@@ -314,9 +588,24 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			account,
 			contract,
 			networkId,
-			initializeWeb3,
+			controller,
+			balance,
+			tokens,
+			activeMarket,
+			markets,
 		}),
-		[web3, isWalletConnected, account, contract, networkId, initializeWeb3]
+		[
+			web3,
+			isWalletConnected,
+			account,
+			contract,
+			networkId,
+			controller,
+			balance,
+			tokens,
+			activeMarket,
+			markets,
+		]
 	);
 
 	return (

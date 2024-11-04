@@ -39,15 +39,5 @@ export default function RootLayout({
 				</body>
 			</html>
 		</Web3Provider>
-
-		// <html lang="en">
-		// 	<body
-		// 		className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-br from-slate-400 to-slate-950 `}
-		// 	>
-		// 		<Navbar />
-		// 		<main>{children}</main>
-		// 		<Toaster />
-		// 	</body>
-		// </html>
 	);
 }

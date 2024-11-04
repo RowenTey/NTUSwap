@@ -16,12 +16,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-	background: gray;
+	background: #cfcfcf;
 	border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-	background: #cfcfcf;
+	background: gray;
 }
 
 @layer utilities {

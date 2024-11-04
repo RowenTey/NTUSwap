@@ -9,17 +9,17 @@ import { useWeb3 } from "@/contexts/web3";
 const Hero: FC = () => {
 	const router = useRouter();
 	const { toast } = useToast();
-	const { initializeWeb3, isWalletConnected, account } = useWeb3();
+	const { controller, isWalletConnected, account } = useWeb3();
+	const { initializeWeb3 } = controller;
 
 	useEffect(() => {
 		router.prefetch("/dashboard");
-
 		if (isWalletConnected) {
 			console.log("Wallet connected!");
 			return;
 		}
+
 		initializeWeb3();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const navigate = () => {

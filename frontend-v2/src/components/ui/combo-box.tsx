@@ -20,13 +20,26 @@ import {
 } from "@/components/ui/popover";
 
 interface ComboBoxProps {
-	defaultValue?: string;
 	data: { value: string; label: string }[];
+	defaultValue?: string;
+	onValueChanged?: (value: string) => void;
 }
 
-export function ComboBox({ data, defaultValue }: ComboBoxProps) {
+export function ComboBox({
+	data,
+	defaultValue,
+	onValueChanged,
+}: ComboBoxProps) {
 	const [open, setOpen] = React.useState(false);
 	const [value, setValue] = React.useState(defaultValue ? defaultValue : "");
+
+	React.useEffect(() => {
+		if (!onValueChanged) {
+			return;
+		}
+
+		onValueChanged(value);
+	}, [value]);
 
 	return (
 		<Popover open={open} onOpenChange={setOpen}>

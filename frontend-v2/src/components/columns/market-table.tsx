@@ -2,15 +2,9 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Order } from "./order-book-table";
 
-export type MarketOrder = {
-	market: string;
-	orderType: string;
-	price: number;
-	quantity: number;
-};
-
-export const columns: ColumnDef<MarketOrder>[] = [
+export const columns: ColumnDef<Order>[] = [
 	{
 		id: "select",
 		// header: ({ table }) => (
@@ -36,8 +30,12 @@ export const columns: ColumnDef<MarketOrder>[] = [
 		header: "Market",
 	},
 	{
-		accessorKey: "orderType",
+		accessorKey: "type",
 		header: "Type",
+		cell: ({ cell }) => {
+			const value = cell.getValue();
+			return typeof value === "string" ? value.toUpperCase() : value;
+		},
 	},
 	{
 		accessorKey: "price",

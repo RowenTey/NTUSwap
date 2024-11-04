@@ -1,67 +1,35 @@
 import { FC, useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable } from "@/components/ui/data-table";
-// import { MarketOrder, columns } from "../columns/market-table";
 import { columns } from "../columns/market-table";
-
-// TODO: remove later, just a placeholder
-interface MarketOrder {
-	market: string;
-	orderType: "BUY" | "SELL";
-	price: number;
-	quantity: number;
-	status: "open" | "cancelled" | "completed";
-}
+import { useWeb3 } from "@/contexts/web3";
+import { Order } from "../columns/order-book-table";
 
 const MarketTableWidget: FC = () => {
-	const [data, setData] = useState<MarketOrder[]>([]);
+	const { activeMarket, controller } = useWeb3();
+	const { fetchActiveOrders } = controller;
+	const [data, setData] = useState<Order[]>([]);
 	const [activeTab, setActiveTab] = useState<
 		"open-orders" | "cancelled-orders" | "trade-history"
 	>("open-orders");
 
-	// Simulated API call to fetch data
-	const getData = async (): Promise<MarketOrder[]> => {
-		return new Promise((resolve) => {
-			resolve([
-				{
-					market: "NTU/NUS",
-					orderType: "SELL",
-					price: 2.0,
-					quantity: 3.0,
-					status: "open",
-				},
-				{
-					market: "NTU/NUS",
-					orderType: "BUY",
-					price: 4.0,
-					quantity: 12.0,
-					status: "cancelled",
-				},
-				{
-					market: "NTU/NUS",
-					orderType: "BUY",
-					price: 6.0,
-					quantity: 3.0,
-					status: "completed",
-				},
-			]);
-		});
-	};
-
 	useEffect(() => {
+		if (!activeMarket) return;
+
 		const fetchData = async () => {
-			const resp = await getData();
-			setData(resp);
+			const resp = await fetchActiveOrders(activeMarket, true);
+			console.log("Fetched all active orders: ", resp);
+			setData(resp.result);
 		};
 
 		fetchData();
-	}, []);
+	}, [activeMarket, activeTab]);
 
 	// Filter data based on the active tab
 	const filteredData = data.filter((order) => {
-		if (activeTab === "open-orders") return order.status === "open";
+		if (activeTab === "open-orders") return order.status === "active";
 		if (activeTab === "cancelled-orders") return order.status === "cancelled";
-		if (activeTab === "trade-history") return order.status === "completed";
+		if (activeTab === "trade-history") return order.status === "filled";
 		return false;
 	});
 

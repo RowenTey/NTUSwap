@@ -11,12 +11,14 @@ import TokenManagerWidget from "@/components/widgets/token-manager-widget";
 
 const DashboardPage: FC = () => {
 	const router = useRouter();
-	const { isWalletConnected } = useWeb3();
+	const { isWalletConnected, tokens } = useWeb3();
 
 	useEffect(() => {
-		if (!isWalletConnected) {
-			router.push("/");
-		}
+		// if (!isWalletConnected) {
+		// 	router.push("/");
+		// 	return;
+		// }
+		console.log("Dashboard page loaded!", tokens);
 	}, []);
 
 	return (

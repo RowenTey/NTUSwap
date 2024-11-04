@@ -144,7 +144,7 @@ export function InteractiveLineChart() {
 		<Card className="w-full">
 			<CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
 				<div className="flex flex-1 flex-col justify-center gap-1 px-3 py-2 sm:py-3">
-					<CardTitle>Line Chart</CardTitle>
+					<CardTitle>Token Price History</CardTitle>
 					<CardDescription>
 						Showing transacted token price for the last day.
 					</CardDescription>
@@ -172,7 +172,8 @@ export function InteractiveLineChart() {
 				</div> */}
 			</CardHeader>
 
-			<CardContent className="px-2 sm:p-6">
+			{/* <CardContent className="px-2 sm:p-6"> */}
+			<CardContent className="pt-0 pb-1">
 				<ChartContainer
 					config={chartConfig}
 					className="aspect-auto h-[250px] w-full"
