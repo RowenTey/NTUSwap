@@ -101,8 +101,8 @@ contract Exchange {
     }
 
     function placeBuyOrder(
-        uint8 tokenId1, // buy
-        uint8 tokenId2, // sell
+        string memory token1, // buy
+        string memory token2, // sell
         uint256 price,
         uint256 amount,
         OrderLibrary.OrderNature orderNature
@@ -116,6 +116,9 @@ contract Exchange {
         //     tokenManager.getBalance(msg.sender, tokenId2) >= totalCost,
         //     "Insufficient balance for buy order"
         // );
+
+        uint8 tokenId1 = tokenManager.getTokenId(token1);
+        uint8 tokenId2 = tokenManager.getTokenId(token2);
 
         if (orderNature == OrderLibrary.OrderNature.Limit) {
             require(
@@ -147,12 +150,16 @@ contract Exchange {
     }
 
     function placeSellOrder(
-        uint8 tokenId1, // sell
-        uint8 tokenId2, // buy
+        string memory token1, // sell
+        string memory token2, // buy
         uint256 price,
         uint256 amount,
         OrderLibrary.OrderNature orderNature
     ) external returns (uint256) {
+
+        uint8 tokenId1 = tokenManager.getTokenId(token1);
+        uint8 tokenId2 = tokenManager.getTokenId(token2);
+
         // Check if seller has sufficient base token balance
         if (orderNature == OrderLibrary.OrderNature.Limit) {
             require(
