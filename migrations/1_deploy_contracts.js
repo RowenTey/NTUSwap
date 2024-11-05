@@ -51,25 +51,19 @@ module.exports = async function (deployer, network, accounts) {
     const exchange = await Exchange.deployed();
     console.log('Exchange deployed at:', exchange.address);
 
-    console.log('Deploying Tokens...');
+    console.log('Issuing Tokens...');
     const oneMillionTokens = web3.utils.toWei("1000000", "ether");
-    await deployer.deploy(TokenA, oneMillionTokens);
-    const tokenA = await TokenA.deployed();
-    await deployer.deploy(TokenB, oneMillionTokens);
-    const tokenB = await TokenB.deployed();
-    await deployer.deploy(TokenC, oneMillionTokens);
-    const tokenC = await TokenC.deployed();
-
-    console.log('Tokens deployed at:');
-    console.log('TokenA:', tokenA.address);
-    console.log('TokenB:', tokenB.address);
-    console.log('TokenC:', tokenC.address);
-
-    console.log('Registering tokens...');
     await tokenManager.issueToken("TokenA", "TokA", oneMillionTokens);
     await tokenManager.issueToken("TokenB", "TokB", oneMillionTokens);
     await tokenManager.issueToken("TokenC", "TokC", oneMillionTokens);
     console.log('Token registration complete');
+    const tokenAAddr = await tokenManager.getToken("TokA");
+    const tokenBAddr = await tokenManager.getToken("TokB");
+    const tokenCAddr = await tokenManager.getToken("TokC");
+
+    console.log('Token A - ', tokenAAddr);
+    console.log('Token B - ', tokenBAddr);
+    console.log('Token C - ', tokenCAddr);
 
     console.log('\nDeployment Summary:');
     console.log('==================');
