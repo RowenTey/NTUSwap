@@ -22,18 +22,18 @@ library OrderLibrary {
     struct Order {
         uint256 totalAmount;
         uint256 remainingAmount;
-        uint256 price;
+        int256 price;
         uint256 timestamp;
         address userAddress;
         OrderStatus status;
         OrderNature nature;
-        uint256[] fillsPrice;
+        int256[] fillsPrice;
         uint256[] fillsAmount;
         uint256[] fillsTimestamp;
     }
 
     struct Fills {
-        uint256 price;
+        int256 price;
         uint256 amount;
         uint256 timestamp;
     }

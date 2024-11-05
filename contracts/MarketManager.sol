@@ -7,14 +7,14 @@ import "./OrderBookManager.sol";
 
 contract MarketManager {
     IMarketData public marketData;
-    OrderBookManager public immutable orderBookManager;
+    OrderBookManager public orderBookManager;
     bool private initialized;
 
     event OrderPlacedEvent(
         bytes32 indexed marketId,
         uint256 orderId,
         OrderLibrary.OrderType orderType,
-        uint256 price,
+        int256 price,
         uint256 timestamp,
         address userAddress,
         OrderLibrary.OrderNature orderNature
@@ -39,15 +39,16 @@ contract MarketManager {
         _;
     }
 
-    constructor(address _orderBookManagerAddr) {
-        orderBookManager = OrderBookManager(_orderBookManagerAddr);
+    constructor() {
         initialized = false;
     }
 
-    function initialize(address _marketDataAddr) external {
+    function initialize(address _marketDataAddr, address _orderBookManagerAddr) external {
         require(!initialized, "Already initialized");
         require(_marketDataAddr != address(0), "Invalid market data address");
+        require(_orderBookManagerAddr != address(0), "Invalid orderbook manager address");
         marketData = IMarketData(_marketDataAddr);
+        orderBookManager = OrderBookManager(_orderBookManagerAddr);
         initialized = true;
     }
 
@@ -70,7 +71,7 @@ contract MarketManager {
     function placeOrder(
         uint8 tokenId1,
         uint8 tokenId2,
-        uint256 price,
+        int256 price,
         uint256 amount,
         address userAddress,
         OrderLibrary.OrderType orderType,
@@ -108,7 +109,7 @@ contract MarketManager {
         uint256 orderId,
         address userAddress,
         OrderLibrary.OrderType orderType
-    ) external returns (bool) {
+    ) external onlyInitialized returns (bool) {
         require(marketData.isMarketPresent(marketId), "Market does not exist");
 
         // Forward cancellation request to OrderBookManager
@@ -131,7 +132,7 @@ contract MarketManager {
 
     function getMarketTokens(
         bytes32 _marketId
-    ) external view returns (uint8, uint8) {
+    ) external view onlyInitialized() returns (uint8, uint8) {
         return marketData.getTokensFromMarketId(_marketId);
     }
 
@@ -139,7 +140,7 @@ contract MarketManager {
     function isMarketInitialized(
         uint8 tokenId1,
         uint8 tokenId2
-    ) public view returns (bool) {
+    ) public view onlyInitialized returns (bool) {
         bytes32 marketId = getMarketId(tokenId1, tokenId2);
         return
             marketData.isMarketPresent(marketId) &&
@@ -149,7 +150,7 @@ contract MarketManager {
     function getMarketId(
         uint8 tokenId1,
         uint8 tokenId2
-    ) public view returns (bytes32) {
+    ) public view onlyInitialized returns (bytes32) {
         return marketData.getMarketId(tokenId1, tokenId2);
     }
 }

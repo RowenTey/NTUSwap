@@ -15,7 +15,7 @@ contract TokenManager is Ownable {
     // User Address -> [Token ID -> Balance]
     mapping(address => mapping(uint8 => uint256)) internal userBalances;
 
-    MarketManager public immutable marketManager;
+    MarketManager public marketManager;
 
     uint8 internal tokenId = 1;
 
@@ -49,8 +49,22 @@ contract TokenManager is Ownable {
         uint256 timestamp
     );
 
-    constructor(address _marketManagerAddr) Ownable() {
+    bool private initialized;
+
+    modifier onlyInitialized() {
+        require(initialized, "Not initialized");
+        _;
+    }
+    
+    constructor() Ownable() {
+        initialized = false;
+    }
+
+    function initialize(address _marketManagerAddr) external {
+        require(!initialized, "Already initialized");
+        require(_marketManagerAddr != address(0), "Invalid market manager address");
         marketManager = MarketManager(_marketManagerAddr);
+        initialized = true;
     }
 
     function getToken(uint8 _tokenId) external view returns (address) {
@@ -65,7 +79,7 @@ contract TokenManager is Ownable {
         string memory _name,
         string memory _symbol,
         uint256 _initialSupply
-    ) external onlyOwner {
+    ) external onlyOwner onlyInitialized {
         require(isToken[_symbol] == 0, "Token already exists!");
         require(_initialSupply > 0, "Initial supply must be greater than 0");
 

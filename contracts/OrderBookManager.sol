@@ -2,13 +2,32 @@
 pragma solidity ^0.8.0;
 import "./OrderLibrary.sol";
 import "./OrderBookData.sol";
+import "./TokenManager.sol";
 
 // import "hardhat/console.sol";
 
 contract OrderBookManager {
-    mapping(bytes32 => IOrderBookData) public marketOrderBooks;
-
     event OrderBookCreated(bytes32 indexed marketId, address orderBookAddress);
+
+    mapping(bytes32 => IOrderBookData) public marketOrderBooks;
+    TokenManager public tokenManager;
+    bool private initialized;
+
+    modifier onlyInitialized() {
+        require(initialized, "Not initialized");
+        _;
+    }
+
+    constructor() {
+        initialized = false;
+    }
+
+    function initialize(address _tokenManagerAddr) external {
+        require(!initialized, "Already initialized");
+        require(_tokenManagerAddr != address(0), "Invalid token manager address");
+        tokenManager = TokenManager(_tokenManagerAddr);
+        initialized = true;
+    }
 
     function orderBookExists(bytes32 marketId) public view returns (bool) {
         return address(marketOrderBooks[marketId]) != address(0);
@@ -29,11 +48,11 @@ contract OrderBookManager {
     function createOrder(
         bytes32 _marketId,
         uint256 _amount,
-        uint256 _price,
+        int256 _price,
         address _userAddress,
         OrderLibrary.OrderType _orderType,
         OrderLibrary.OrderNature _orderNature
-    ) public returns (uint256 _orderId) {
+    ) external returns (uint256 _orderId) {
         require(orderBookExists(_marketId), "Order Book does not exist");
         uint256 orderId = marketOrderBooks[_marketId].addOrder(
             _amount,
@@ -48,11 +67,13 @@ contract OrderBookManager {
     function cancelOrder(
         bytes32 _marketId,
         uint256 _orderId,
-        OrderLibrary.OrderType _orderType
-    ) public returns (bool) {
+        OrderLibrary.OrderType _orderType,
+        OrderLibrary.OrderNature _orderNature
+    ) external returns (bool) {
         require(orderBookExists(_marketId), "Order Book does not exist");
         bool removed = marketOrderBooks[_marketId].removeOrder(
             _orderType,
+            _orderNature,
             _orderId
         );
         return removed;
@@ -61,16 +82,18 @@ contract OrderBookManager {
     function matchOrder(
         bytes32 _marketId,
         uint256 _pendingOrderId,
+        uint8 _exchangeTokenId,
         OrderLibrary.OrderType _orderType,
         OrderLibrary.OrderNature _orderNature
     )
-        public
+        external
+        onlyInitialized
         returns (
             uint256,
             address[] memory toBePaid,
             address[] memory toReceive,
             uint256[] memory tokenAmount,
-            uint256[] memory currencyAmount
+            int256[] memory currencyAmount
         )
     {
         IOrderBookData marketOrderBook = marketOrderBooks[_marketId];
@@ -83,45 +106,50 @@ contract OrderBookManager {
             ? OrderLibrary.OrderType.Sell
             : OrderLibrary.OrderType.Buy;
 
-        uint256 matchCount = 0;
         uint256 remainingAmount = pendingOrder.remainingAmount;
 
-        while (remainingAmount > 0) {
-            uint256 tempBestOrderId = marketOrderBook.getBestOrderFromHeap(
-                oppositeOrderType
-            );
-            if (tempBestOrderId == 0) break; // No more orders to match
-
-            OrderLibrary.Order memory tempBestOrder = marketOrderBook
-                .getOrderFromId(oppositeOrderType, tempBestOrderId);
-
-            bool canMatch = _orderNature == OrderLibrary.OrderNature.Market ||
-                (
-                    _orderType == OrderLibrary.OrderType.Buy
-                        ? pendingOrder.price >= tempBestOrder.price
-                        : pendingOrder.price <= tempBestOrder.price
-                );
-            if (!canMatch) break;
-
-            uint256 matchedAmount = remainingAmount <
-                tempBestOrder.remainingAmount
-                ? remainingAmount
-                : tempBestOrder.remainingAmount;
-
-            matchCount++;
-            remainingAmount -= matchedAmount;
-        }
-
         // Initialize arrays with the correct size
-        toBePaid = new address[](matchCount);
-        toReceive = new address[](matchCount);
-        tokenAmount = new uint256[](matchCount);
-        currencyAmount = new uint256[](matchCount);
+        uint256 size = marketOrderBook.getTotalOrderCount(oppositeOrderType);
+        toBePaid = new address[](size);
+        toReceive = new address[](size);
+        tokenAmount = new uint256[](size);
+        currencyAmount = new int256[](size);
 
         uint256 count = 0;
         uint256 pendingOrderNewAmount = pendingOrder.remainingAmount;
 
-        while (pendingOrderNewAmount > 0 && count < matchCount) {
+        if (pendingOrder.nature == OrderLibrary.OrderNature.Market){
+            // get opposite order type's orderbook
+            // go through all the limit orders in the heap, for each order, check if the user has that much balance
+            // satisfy however much is possible and then update the status of all orders involved
+            // For market order, its only executed once, however much it can be executed.
+
+            while(tokenManager.getBalance(pendingOrder.userAddress, _exchangeTokenId) > 0){
+                uint256 bestOrderId = marketOrderBook.getBestOrderFromHeap(oppositeOrderType);
+                //deal with no orders of opposite type
+                if (bestOrderId == 0) break;
+                // if a opposite  order found in heap, use this price and amount to settle current pending market order 
+                OrderLibrary.Order memory bestOrder = marketOrderBook.getOrderFromId(oppositeOrderType, bestOrderId);
+                uint256 availableBalance = tokenManager.getBalance(pendingOrder.userAddress, _exchangeTokenId);
+                int256 settlingPrice = bestOrder.price;
+
+                int256 minAmount = pendingOrderNewAmount < bestOrder.remainingAmount ? int256(pendingOrderNewAmount) : int256(bestOrder.remainingAmount);
+
+                // Insufficient balance 
+                if (int256(availableBalance) < (minAmount * settlingPrice)) {
+                    minAmount = int256(availableBalance) / settlingPrice;
+                }
+
+
+
+            }
+            
+
+
+        }
+
+        while (pendingOrderNewAmount > 0) {
+            // uint256[] memory pendingMarketOrders = marketOrderBook.getAllPendingMarketOrders(oppositeOrderType);
             uint256 bestOrderId = marketOrderBook.getBestOrderFromHeap(
                 oppositeOrderType
             );
@@ -229,10 +257,10 @@ contract OrderBookManager {
         view
         returns (
             uint256[] memory amount,
-            uint256[] memory price,
+            int256[] memory price,
             OrderLibrary.OrderType[] memory orderType,
             OrderLibrary.OrderNature[] memory nature,
-            uint256[][] memory fillsPrice,
+            int256[][] memory fillsPrice,
             uint256[][] memory fillsAmount,
             uint256[][] memory fillsTimestamp
         )

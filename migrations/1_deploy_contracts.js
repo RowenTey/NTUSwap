@@ -17,25 +17,29 @@ module.exports = async function (deployer, network, accounts) {
     const marketData = await MarketData.deployed();
     console.log('MarketData deployed at:', marketData.address);
 
+    
     console.log('Deploying OrderBookManager...');
-    await deployer.deploy(OrderBookManager, accounts[0]);
+    await deployer.deploy(OrderBookManager);
     const orderBookManager = await OrderBookManager.deployed();
     console.log('OrderBookManager deployed at:', orderBookManager.address);
 
     console.log('Deploying MarketManager...');
-    await deployer.deploy(MarketManager, orderBookManager.address);
+    await deployer.deploy(MarketManager);
     const marketManager = await MarketManager.deployed();
     console.log('MarketManager deployed at:', marketManager.address);
-
-    console.log('Initializing MarketManager and MarketData...');
-    await marketManager.initialize(marketData.address);
-    await marketData.initialize(marketManager.address);
-    console.log('Initialization complete');
-
+    
     console.log('Deploying TokenManager...');
-    await deployer.deploy(TokenManager, marketManager.address);
+    await deployer.deploy(TokenManager);
     const tokenManager = await TokenManager.deployed();
     console.log('TokenManager deployed at:', tokenManager.address);
+
+    console.log('Initializing TokenManager, MarketManager, MarketData and OrderBookManager...');
+    await tokenManager.initialize(marketManager.address);
+    await marketData.initialize(marketManager.address);
+    await marketManager.initialize(marketData.address, orderBookManager.address);
+    await orderBookManager.initialize(tokenManager.address);
+    console.log('Initialization complete');
+    
 
     console.log('Deploying Exchange...');
     await deployer.deploy(
