@@ -81,6 +81,7 @@ contract MarketManager {
             isMarketInitialized(tokenId1, tokenId2),
             "Market does not exist for these pairs of tokens"
         );
+
         orderId = orderBookManager.createOrder(
             marketId,
             amount,

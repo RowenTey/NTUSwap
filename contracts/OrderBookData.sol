@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 import "./OrderLibrary.sol";
+
 // import "hardhat/console.sol";
 
 interface IOrderBookData {
@@ -95,7 +96,6 @@ contract OrderBookData is IOrderBookData {
 
     // Adds a new order to the order book
     // NOTE: Use negative values of price to emulate a min-heap (for buy orderbook)
-
     function addOrder(
         uint256 _amount,
         uint256 _price,
@@ -120,6 +120,7 @@ contract OrderBookData is IOrderBookData {
             fillsTimestamp: new uint256[](0)
         });
         book.activeCount++;
+
         // To emulate a min-heap for sell orders to always get the cheapest sell order as the root
         int256 price;
         if (_orderType == OrderLibrary.OrderType.Sell) {

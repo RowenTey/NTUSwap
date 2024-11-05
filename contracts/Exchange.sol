@@ -53,6 +53,7 @@ contract Exchange {
         uint256 amount,
         uint256 timestamp
     );
+
     event OrderCancelled(
         bytes32 indexed marketId,
         uint256 orderId,
@@ -100,20 +101,28 @@ contract Exchange {
     }
 
     function placeBuyOrder(
-        uint8 tokenId1,
-        uint8 tokenId2,
+        uint8 tokenId1, // buy
+        uint8 tokenId2, // sell
         uint256 price,
         uint256 amount,
         OrderLibrary.OrderNature orderNature
     ) external returns (uint256) {
         // Check if buyer has sufficient quote token (currency) balance
-        price /= DECIMALS;
-        amount /= DECIMALS;
-        uint256 totalCost = price * amount;
-        require(
-            tokenManager.getBalance(msg.sender, tokenId2) >= totalCost,
-            "Insufficient balance for buy order"
-        );
+
+        // price /= DECIMALS;
+        // amount /= DECIMALS;
+        // uint256 totalCost = price * amount;
+        // require(
+        //     tokenManager.getBalance(msg.sender, tokenId2) >= totalCost,
+        //     "Insufficient balance for buy order"
+        // );
+
+        if (orderNature == OrderLibrary.OrderNature.Limit) {
+            require(
+                tokenManager.getBalance(msg.sender, tokenId2) >= price * amount,
+                "Insufficient balance for buy order"
+            );
+        }
 
         // Place the order through market manager
         uint256 orderId = marketManager.placeOrder(
@@ -138,20 +147,27 @@ contract Exchange {
     }
 
     function placeSellOrder(
-        uint8 tokenId1,
-        uint8 tokenId2,
+        uint8 tokenId1, // sell
+        uint8 tokenId2, // buy
         uint256 price,
         uint256 amount,
         OrderLibrary.OrderNature orderNature
     ) external returns (uint256) {
         // Check if seller has sufficient base token balance
-        require(
-            tokenManager.getBalance(msg.sender, tokenId1) >= amount,
-            "Insufficient balance for sell order"
-        );
+        if (orderNature == OrderLibrary.OrderNature.Limit) {
+            require(
+                tokenManager.getBalance(msg.sender, tokenId1) >= price * amount,
+                "Insufficient balance for sell order"
+            );
+        }
 
-        price /= DECIMALS;
-        amount /= DECIMALS;
+        // require(
+        //     tokenManager.getBalance(msg.sender, tokenId1) >= amount,
+        //     "Insufficient balance for sell order"
+        // );
+
+        // price /= DECIMALS;
+        // amount /= DECIMALS;
 
         // Place the order through market manager
         uint256 orderId = marketManager.placeOrder(
@@ -281,10 +297,10 @@ contract Exchange {
         uint256 orderId,
         OrderLibrary.OrderType orderType
     ) external {
-        //Get Market Id
+        // Get Market Id
         bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
 
-        //Cancel Order
+        // Cancel Order
         bool success = marketManager.cancelOrder(
             marketId,
             orderId,
@@ -294,15 +310,7 @@ contract Exchange {
 
         require(success, "Order could not be cancelled");
 
-        //Emit successful cancellation event
-        emit OrderCancelled(
-            marketId,
-            orderId,
-            msg.sender,
-            orderType,
-            block.timestamp
-        );
-        //Emit successful cancellation event
+        // Emit successful cancellation event
         emit OrderCancelled(
             marketId,
             orderId,
@@ -369,6 +377,12 @@ contract Exchange {
         uint8 tokenId1 = tokenManager.getTokenId(_token1);
         uint8 tokenId2 = tokenManager.getTokenId(_token2);
         bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
+
+        require(
+            marketManager.isMarketInitialized(tokenId1, tokenId2),
+            "Market does not exist for these pairs of tokens"
+        );
+
         return
             orderBookManager.getAllOrdersForAMarket(
                 marketId,

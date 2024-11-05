@@ -101,7 +101,6 @@ contract OrderBookManager {
                         ? pendingOrder.price >= tempBestOrder.price
                         : pendingOrder.price <= tempBestOrder.price
                 );
-
             if (!canMatch) break;
 
             uint256 matchedAmount = remainingAmount <
@@ -138,7 +137,6 @@ contract OrderBookManager {
                         ? pendingOrder.price >= bestOrder.price
                         : pendingOrder.price <= bestOrder.price
                 );
-
             if (!orderMatched) break;
 
             uint256 matchedAmount = pendingOrderNewAmount <
