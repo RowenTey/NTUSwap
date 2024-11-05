@@ -49,7 +49,7 @@ contract TokenManager is Ownable {
         uint256 timestamp
     );
 
-    constructor(address _marketManagerAddr, address _owner) Ownable(_owner) {
+    constructor(address _marketManagerAddr) Ownable() {
         marketManager = MarketManager(_marketManagerAddr);
     }
 
