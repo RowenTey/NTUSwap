@@ -10,6 +10,7 @@ import React, {
 import Web3 from "web3";
 import { toCamelCase } from "@/lib/utils";
 import { Order } from "@/components/columns/order-book-table";
+import { get } from "http";
 
 interface DEXContract {
 	exchange: any | null;
@@ -20,6 +21,7 @@ interface DEXContract {
 
 interface DEXController {
 	connectWallet: () => Promise<void>;
+	getOwner: () => Promise<string>;
 	fetchBalance: (
 		tokenMap: Map<string, string>
 	) => Promise<InvokeResponse<Map<string, number>>>;
@@ -42,7 +44,7 @@ interface DEXController {
 }
 
 interface Web3ContextType {
-	web3: Web3 | null;
+	web3Obj: Web3 | null;
 	isWalletConnected: boolean;
 	account: string | null;
 	contract: DEXContract | null;
@@ -124,7 +126,7 @@ async function initialiseContracts(
 }
 
 export function Web3Provider({ children }: Web3ProviderProps) {
-	const [web3, setWeb3] = useState<Web3 | null>(null);
+	const [web3Obj, setWeb3Obj] = useState<Web3 | null>(null);
 	const [contract, setContract] = useState<DEXContract | null>(null);
 	const [isWalletConnected, setIsWalletConnected] = useState<boolean>(false);
 
@@ -143,7 +145,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			return;
 		}
 
-		const initialized = isWalletConnected && account && web3 && contract;
+		const initialized = isWalletConnected && account && web3Obj && contract;
 		if (initialized) {
 			console.log("Web3 already initialized!");
 			return;
@@ -153,7 +155,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		const web3Instance = new Web3(window.ethereum);
 		try {
 			await window.ethereum.request({ method: "eth_requestAccounts" });
-			setWeb3(web3Instance);
+			setWeb3Obj(web3Instance);
 
 			const accounts = await web3Instance.eth.getAccounts();
 			console.log("Account:", accounts[0]);
@@ -196,6 +198,59 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		return contract !== null;
 	};
 
+	const getTokenDetails = async (
+		dexContract: DEXContract,
+		symbol: string
+	): Promise<{ tokenId: number; tokenAddr: string }> => {
+		try {
+			const tokenId = Number(
+				await dexContract.tokenManager.methods.getTokenId(symbol).call()
+			);
+
+			const userBalance = await dexContract.tokenManager.methods
+				.getBalance(account, tokenId)
+				.call();
+			console.log("User balance in tokenManager:", userBalance);
+
+			const tokenAddr = await dexContract.tokenManager.methods
+				.getToken(tokenId)
+				.call();
+			return { tokenId, tokenAddr };
+		} catch (error) {
+			throw new Error(`Failed to get token details: ${error}`);
+		}
+	};
+
+	const approveTokenSpending = async (
+		tokenContract: any,
+		spenderAddress: string,
+		amount: number,
+		account: string
+	): Promise<void> => {
+		try {
+			await tokenContract.methods
+				.approve(spenderAddress, Web3.utils.toWei(amount.toString(), "ether"))
+				.send({ from: account });
+		} catch (error) {
+			throw new Error(`Failed to approve token spending: ${error}`);
+		}
+	};
+
+	const getOwner = async (): Promise<string> => {
+		if (!isContractInitialized(contract)) {
+			return "";
+		}
+
+		try {
+			const ownerAddress = await contract.tokenManager.methods.owner().call();
+			console.log("Owner address:", ownerAddress);
+			return ownerAddress;
+		} catch (error) {
+			console.error("Failed to fetch owner address:", error);
+			return "";
+		}
+	};
+
 	const issue = async (
 		name: string,
 		symbol: string,
@@ -227,6 +282,159 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		}
 	};
 
+	// const withdraw = async (
+	// 	symbol: string,
+	// 	amount: number
+	// ): Promise<InvokeResponse<any>> => {
+	// 	if (!isContractInitialized(contract)) {
+	// 		return {
+	// 			status: "Error",
+	// 			message: "Contract not initialized",
+	// 			result: null,
+	// 		};
+	// 	}
+
+	// 	let tokenId;
+	// 	try {
+	// 		const res = await contract.tokenManager.methods.getTokenId(symbol).call();
+	// 		tokenId = Number(res);
+	// 	} catch (error) {
+	// 		console.error(`Failed to get token ID: ${error}`);
+	// 		return {
+	// 			status: "Error",
+	// 			message: `Failed to get token ID: ${error}`,
+	// 			result: null,
+	// 		};
+	// 	}
+
+	// 	let tokenAddr;
+	// 	try {
+	// 		tokenAddr = await contract.tokenManager.methods.getToken(tokenId).call();
+	// 	} catch (error) {
+	// 		console.error(`Failed to get token address: ${error}`);
+	// 		return {
+	// 			status: "Error",
+	// 			message: `Failed to get token address: ${error}`,
+	// 			result: null,
+	// 		};
+	// 	}
+
+	// 	try {
+	// 		const tokenContract = await initializeTokenContract(
+	// 			web3 as Web3,
+	// 			tokenAddr
+	// 		);
+
+	// 		await tokenContract.methods
+	// 			.approve(contract.tokenManager._address, amount)
+	// 			.send({ from: account });
+	// 	} catch (error) {
+	// 		console.error(`Failed to approve token spending: ${error}`);
+	// 		return {
+	// 			status: "Error",
+	// 			message: `Failed to approve token spending: ${error}`,
+	// 			result: null,
+	// 		};
+	// 	}
+
+	// 	try {
+	// 		const result = await contract.tokenManager.methods
+	// 			.withdraw(symbol, amount)
+	// 			.send({ from: account });
+	// 		console.log("Withdrawal result:", result);
+
+	// 		return {
+	// 			status: "Success",
+	// 			message: `Withdrawal successful: ${result.transactionHash}`,
+	// 			result,
+	// 		};
+	// 	} catch (error) {
+	// 		return {
+	// 			status: "Error",
+	// 			message: `Failed to withdraw tokens: ${error}`,
+	// 			result: null,
+	// 		};
+	// 	}
+	// };
+
+	// const deposit = async (
+	// 	symbol: string,
+	// 	amount: number
+	// ): Promise<InvokeResponse<any>> => {
+	// 	if (!isContractInitialized(contract)) {
+	// 		return {
+	// 			status: "Error",
+	// 			message: "Contract not initialized",
+	// 			result: null,
+	// 		};
+	// 	}
+
+	// 	let tokenId;
+	// 	try {
+	// 		const res = await contract.tokenManager.methods.getTokenId(symbol).call();
+	// 		tokenId = Number(res);
+	// 	} catch (error) {
+	// 		console.error(`Failed to get token ID: ${error}`);
+	// 		return {
+	// 			status: "Error",
+	// 			message: `Failed to get token ID: ${error}`,
+	// 			result: null,
+	// 		};
+	// 	}
+
+	// 	let tokenAddr;
+	// 	try {
+	// 		tokenAddr = await contract.tokenManager.methods.getToken(tokenId).call();
+	// 	} catch (error) {
+	// 		console.error(`Failed to get token address: ${error}`);
+	// 		return {
+	// 			status: "Error",
+	// 			message: `Failed to get token address: ${error}`,
+	// 			result: null,
+	// 		};
+	// 	}
+
+	// 	try {
+	// 		const tokenContract = await initializeTokenContract(
+	// 			web3 as Web3,
+	// 			tokenAddr
+	// 		);
+
+	// 		const balance = await tokenContract.methods.balanceOf(account).call();
+	// 		console.log("Token balance:", balance);
+
+	// 		await tokenContract.methods
+	// 			.approve(contract.tokenManager._address, amount)
+	// 			.send({ from: account });
+	// 	} catch (error) {
+	// 		console.error(`Failed to approve token spending: ${error}`);
+	// 		return {
+	// 			status: "Error",
+	// 			message: `Failed to approve token spending: ${error}`,
+	// 			result: null,
+	// 		};
+	// 	}
+
+	// 	try {
+	// 		const result = await contract.tokenManager.methods
+	// 			.deposit(symbol, amount)
+	// 			.send({ from: account });
+	// 		console.log("Deposit result:", result);
+
+	// 		return {
+	// 			status: "Success",
+	// 			message: `Deposit successful: ${result.transactionHash}`,
+	// 			result,
+	// 		};
+	// 	} catch (error) {
+	// 		return {
+	// 			status: "Error",
+	// 			message: `Failed to deposit tokens: ${error}`,
+	// 			result: null,
+	// 		};
+	// 	}
+	// };
+
 	const withdraw = async (
 		symbol: string,
 		amount: number
@@ -239,50 +447,20 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			};
 		}
 
-		let tokenId;
 		try {
-			const res = await contract.tokenManager.methods.getTokenId(symbol).call();
-			tokenId = Number(res);
-		} catch (error) {
-			console.error(`Failed to get token ID: ${error}`);
-			return {
-				status: "Error",
-				message: `Failed to get token ID: ${error}`,
-				result: null,
-			};
-		}
-
-		let tokenAddr;
-		try {
-			tokenAddr = await contract.tokenManager.methods.getToken(tokenId).call();
-		} catch (error) {
-			console.error(`Failed to get token address: ${error}`);
-			return {
-				status: "Error",
-				message: `Failed to get token address: ${error}`,
-				result: null,
-			};
-		}
-
-		try {
+			const { tokenId, tokenAddr } = await getTokenDetails(contract, symbol);
 			const tokenContract = await initializeTokenContract(
-				web3 as Web3,
+				web3Obj as Web3,
 				tokenAddr
 			);
 
-			await tokenContract.methods
-				.approve(contract.tokenManager._address, amount)
-				.send({ from: account });
-		} catch (error) {
-			console.error(`Failed to approve token spending: ${error}`);
-			return {
-				status: "Error",
-				message: `Failed to approve token spending: ${error}`,
-				result: null,
-			};
-		}
+			await approveTokenSpending(
+				tokenContract,
+				contract.tokenManager._address,
+				amount,
+				account
+			);
 
-		try {
 			const result = await contract.tokenManager.methods
 				.withdraw(symbol, amount)
 				.send({ from: account });
@@ -294,9 +472,10 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 				result,
 			};
 		} catch (error) {
+			console.error(error);
 			return {
 				status: "Error",
-				message: `Failed to withdraw tokens: ${error}`,
+				message: error as string,
 				result: null,
 			};
 		}
@@ -314,53 +493,24 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			};
 		}
 
-		let tokenId;
 		try {
-			const res = await contract.tokenManager.methods.getTokenId(symbol).call();
-			tokenId = Number(res);
-		} catch (error) {
-			console.error(`Failed to get token ID: ${error}`);
-			return {
-				status: "Error",
-				message: `Failed to get token ID: ${error}`,
-				result: null,
-			};
-		}
-
-		let tokenAddr;
-		try {
-			tokenAddr = await contract.tokenManager.methods.getToken(tokenId).call();
-		} catch (error) {
-			console.error(`Failed to get token address: ${error}`);
-			return {
-				status: "Error",
-				message: `Failed to get token address: ${error}`,
-				result: null,
-			};
-		}
-
-		try {
+			const { tokenId, tokenAddr } = await getTokenDetails(contract, symbol);
+			console.log("Token details:", tokenId, tokenAddr);
 			const tokenContract = await initializeTokenContract(
-				web3 as Web3,
+				web3Obj as Web3,
 				tokenAddr
 			);
 
 			const balance = await tokenContract.methods.balanceOf(account).call();
 			console.log("Token balance:", balance);
 
-			await tokenContract.methods
-				.approve(contract.tokenManager._address, amount)
-				.send({ from: account });
-		} catch (error) {
-			console.error(`Failed to approve token spending: ${error}`);
-			return {
-				status: "Error",
-				message: `Failed to approve token spending: ${error}`,
-				result: null,
-			};
-		}
+			await approveTokenSpending(
+				tokenContract,
+				contract.tokenManager._address,
+				amount,
+				account
+			);
 
-		try {
 			const result = await contract.tokenManager.methods
 				.deposit(symbol, amount)
 				.send({ from: account });
@@ -372,9 +522,10 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 				result,
 			};
 		} catch (error) {
+			console.error(error);
 			return {
 				status: "Error",
-				message: `Failed to deposit tokens: ${error}`,
+				message: error as string,
 				result: null,
 			};
 		}
@@ -544,6 +695,10 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		try {
 			let result;
 			if (type === "Buy") {
+				console.log(
+					`Creating buy order for ${tokenSymbol1} using currency ${tokenSymbol2}`
+				);
+				await getTokenDetails(contract, tokenSymbol2);
 				result = await contract.exchange.methods
 					.placeBuyOrder(
 						tokenSymbol1,
@@ -554,6 +709,10 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 					)
 					.send({ from: account });
 			} else {
+				console.log(
+					`Creating sell order for ${tokenSymbol1} for currency ${tokenSymbol2}`
+				);
+				await getTokenDetails(contract, tokenSymbol1);
 				result = await contract.exchange.methods
 					.placeSellOrder(
 						tokenSymbol1,
@@ -624,6 +783,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 				result: [],
 			};
 		}
+		console.log("Active orders fetched:", activeOrders);
 
 		const activeOrdersArr: Order[] = [];
 		for (let i = 0; i < activeOrders[0].length; i++) {
@@ -648,30 +808,30 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		};
 	};
 
-	const watchUserWithdrawals = () => {
-		if (!isContractInitialized(contract)) {
-			return {
-				status: "Error",
-				message: "Contract not initialized",
-				result: null,
-			};
-		}
+	// const watchUserWithdrawals = () => {
+	// 	if (!isContractInitialized(contract)) {
+	// 		return {
+	// 			status: "Error",
+	// 			message: "Contract not initialized",
+	// 			result: null,
+	// 		};
+	// 	}
 
-		contract.exchange.events
-			.WithdrawalProcessed({
-				filter: { user: account },
-				fromBlock: "latest",
-			})
-			.on("data", (event: any) => {
-				console.log("User withdrawal:", {
-					tokenId: event.returnValues.tokenId,
-					amount: event.returnValues.amount,
-					timestamp: new Date(
-						event.returnValues.timestamp * 1000
-					).toLocaleString(),
-				});
-			});
-	};
+	// 	contract.exchange.events
+	// 		.WithdrawalProcessed({
+	// 			filter: { user: account },
+	// 			fromBlock: "latest",
+	// 		})
+	// 		.on("data", (event: any) => {
+	// 			console.log("User withdrawal:", {
+	// 				tokenId: event.returnValues.tokenId,
+	// 				amount: event.returnValues.amount,
+	// 				timestamp: new Date(
+	// 					event.returnValues.timestamp * 1000
+	// 				).toLocaleString(),
+	// 			});
+	// 		});
+	// };
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -706,37 +866,40 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		};
 	}, []);
 
-	// useEffect(() => {
-	// 	if (!isContractInitialized(contract)) return;
+	useEffect(() => {
+		if (!isContractInitialized(contract)) return;
 
-	// 	console.log("Listening for DepositEvent...");
-	// 	const subscription = contract.tokenManager.events.DepositEvent(
-	// 		{
-	// 			fromBlock: "latest",
-	// 		},
-	// 		(_, event: any) => {
-	// 			console.log("DepositEvent:", event);
-	// 		}
-	// 	);
+		console.log("Listening for DepositEvent...");
+		const subscription = contract.tokenManager.events.DepositEvent(
+			{
+				filter: { user: account }, // Filter for the user's address
+				fromBlock: "latest",
+			}
+			// },
+			// (_, event: any) => {
+			// 	console.log("DepositEvent:", event);
+			// }
+		);
 
-	// 	subscription.on("data", (event: any) => {
-	// 		console.log("DepositEvent data:", event);
-	// 	});
+		subscription.on("data", (event: any) => {
+			console.log("DepositEvent data:", event);
+		});
 
-	// 	// Cleanup function to unsubscribe from the event
-	// 	return () => {
-	// 		subscription.unsubscribe((error: any, success: any) => {
-	// 			if (success) {
-	// 				console.log("Successfully unsubscribed!");
-	// 			} else {
-	// 				console.error("Error unsubscribing:", error);
-	// 			}
-	// 		});
-	// 	};
-	// }, [contract]);
+		// Cleanup function to unsubscribe from the event
+		return () => {
+			subscription.unsubscribe((error: any, success: any) => {
+				if (success) {
+					console.log("Successfully unsubscribed!");
+				} else {
+					console.error("Error unsubscribing:", error);
+				}
+			});
+		};
+	}, [contract, account]);
 
 	const controller: DEXController = {
 		connectWallet,
+		getOwner,
 		fetchBalance,
 		updateBalance,
 		deposit,
@@ -748,7 +911,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 
 	const contextValue = useMemo<Web3ContextType>(
 		() => ({
-			web3,
+			web3Obj,
 			isWalletConnected,
 			account,
 			contract,
@@ -760,7 +923,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			markets,
 		}),
 		[
-			web3,
+			web3Obj,
 			isWalletConnected,
 			account,
 			contract,

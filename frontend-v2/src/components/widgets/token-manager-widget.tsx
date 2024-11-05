@@ -43,7 +43,14 @@ const TokenManagerWidget: FC = () => {
 		// TODO: Handle errors
 		if (operation === "deposit") {
 			const res = await deposit(selectedToken, Number(quantity));
-			console.log(res);
+			if (res.status !== "Success") {
+				toast({
+					title: "Deposit failed.",
+					variant: "destructive",
+				});
+				return;
+			}
+
 			toast({
 				title: "Deposit successful.",
 			});
@@ -51,7 +58,14 @@ const TokenManagerWidget: FC = () => {
 			updateBalance(selectedToken, Number(quantity));
 		} else {
 			const res = await withdraw(selectedToken, Number(quantity));
-			console.log(res);
+			if (res.status !== "Success") {
+				toast({
+					title: "Withdrawal failed.",
+					variant: "destructive",
+				});
+				return;
+			}
+
 			toast({
 				title: "Withdrawal successful.",
 			});

@@ -33,7 +33,7 @@ const PriceHistoryWidget: FC = () => {
 	};
 
 	return (
-		<div className="w-full flex flex-col gap-4 bg-white p-4 rounded-md border">
+		<div className="w-full flex flex-col gap-2 bg-white p-4 rounded-md border">
 			<div className="flex justify-between items-center px-3 text-lg font-semibold">
 				<div className="flex gap-3 items-center">
 					<p>Market:</p>
