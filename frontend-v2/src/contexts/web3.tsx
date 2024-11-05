@@ -26,6 +26,14 @@ interface DEXController {
 	updateBalance: (symbol: string, amount: number) => void;
 	deposit: (symbol: string, amount: number) => Promise<InvokeResponse<any>>;
 	withdraw: (symbol: string, amount: number) => Promise<InvokeResponse<any>>;
+	createOrder: (
+		tokenSymbol1: string,
+		tokenSymbol2: string,
+		price: number,
+		amount: number,
+		type: OrderType,
+		nature: OrderNature
+	) => Promise<InvokeResponse<any>>;
 	setActiveMarket: React.Dispatch<React.SetStateAction<Market | null>>;
 	fetchActiveOrders: (
 		market: Market,
@@ -518,8 +526,8 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 	};
 
 	const createOrder = async (
-		tokenId1: number,
-		tokenId2: number,
+		tokenSymbol1: string,
+		tokenSymbol2: string,
 		price: number,
 		amount: number,
 		type: OrderType,
@@ -536,14 +544,27 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		try {
 			let result;
 			if (type === "Buy") {
-				result = await contract?.exchange.methods
-					.placeBuyOrder(tokenId1, tokenId2, price, amount, nature)
+				result = await contract.exchange.methods
+					.placeBuyOrder(
+						tokenSymbol1,
+						tokenSymbol2,
+						price,
+						amount,
+						nature === "Market" ? 0 : 1
+					)
 					.send({ from: account });
 			} else {
-				result = await contract?.exchange.methods
-					.placeSellOrder(tokenId2, tokenId1, price, amount, nature)
+				result = await contract.exchange.methods
+					.placeSellOrder(
+						tokenSymbol1,
+						tokenSymbol2,
+						price,
+						amount,
+						nature === "Market" ? 0 : 1
+					)
 					.send({ from: account });
 			}
+			console.log("Order created:", result);
 
 			return {
 				status: "Success",
@@ -720,6 +741,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		updateBalance,
 		deposit,
 		withdraw,
+		createOrder,
 		setActiveMarket,
 		fetchActiveOrders,
 	};
