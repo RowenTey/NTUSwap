@@ -6,7 +6,18 @@ import "./TokenManager.sol";
 import "hardhat/console.sol";
 
 contract OrderBookManager {
-    event OrderBookCreated(bytes32 indexed marketId, address orderBookAddress);
+    event OrderBookCreatedEvent(
+        bytes32 indexed marketId,
+        address orderBookAddress
+    );
+
+    event OrderPlacedEvent(uint256 orderId);
+    event OrderCancelledEvent(uint256 orderId);
+    event OrderFilledEvent(OrderLibrary.OrderType orderType, uint256 orderId);
+    event OrderPartiallyFilledEvent(
+        OrderLibrary.OrderType orderType,
+        uint256 orderId
+    );
 
     mapping(bytes32 => IOrderBookData) public marketOrderBooks;
     TokenManager public tokenManager;
@@ -44,7 +55,7 @@ contract OrderBookManager {
         OrderBookData newOrderBook = new OrderBookData(address(this));
         marketOrderBooks[_marketId] = IOrderBookData(address(newOrderBook));
 
-        emit OrderBookCreated(_marketId, address(newOrderBook));
+        emit OrderBookCreatedEvent(_marketId, address(newOrderBook));
     }
 
     function createOrder(
@@ -63,6 +74,7 @@ contract OrderBookManager {
             _orderType,
             _orderNature
         );
+        emit OrderPlacedEvent(orderId);
         return orderId;
     }
 
@@ -78,6 +90,9 @@ contract OrderBookManager {
             _orderNature,
             _orderId
         );
+        if (removed) {
+            emit OrderCancelledEvent(_orderId);
+        }
         return removed;
     }
 
@@ -201,6 +216,7 @@ contract OrderBookManager {
                         amount: minimumAmount,
                         timestamp: block.timestamp
                     });
+
                 // Update order statuses
                 OrderLibrary.OrderStatus bestOrderNewStatus = bestOrderNewAmount ==
                         0
@@ -218,6 +234,13 @@ contract OrderBookManager {
                         OrderLibrary.OrderNature.Limit,
                         bestOrderId
                     );
+
+                    emit OrderFilledEvent(oppositeOrderType, bestOrderId);
+                } else {
+                    emit OrderPartiallyFilledEvent(
+                        oppositeOrderType,
+                        bestOrderId
+                    );
                 }
 
                 if (pendingOrderNewAmount == 0) {
@@ -226,6 +249,10 @@ contract OrderBookManager {
                         OrderLibrary.OrderNature.Market,
                         _pendingOrderId
                     );
+
+                    emit OrderFilledEvent(_orderType, _pendingOrderId);
+                } else {
+                    emit OrderPartiallyFilledEvent(_orderType, _pendingOrderId);
                 }
 
                 marketOrderBook.updateOrder(
@@ -344,6 +371,17 @@ contract OrderBookManager {
                             marketOrderBook.removeOrder(
                                 oppositeOrderType,
                                 OrderLibrary.OrderNature.Market,
+
+                                pendingMarketOrders[i]
+                            );
+
+                            emit OrderFilledEvent(
+                                oppositeOrderType,
+                                pendingMarketOrders[i]
+                            );
+                        } else {
+                            emit OrderPartiallyFilledEvent(
+                                oppositeOrderType,
                                 pendingMarketOrders[i]
                             );
                         }
@@ -353,6 +391,13 @@ contract OrderBookManager {
                             marketOrderBook.removeOrder(
                                 _orderType,
                                 OrderLibrary.OrderNature.Limit,
+                                _pendingOrderId
+                            );
+
+                            emit OrderFilledEvent(_orderType, _pendingOrderId);
+                        } else {
+                            emit OrderPartiallyFilledEvent(
+                                _orderType,
                                 _pendingOrderId
                             );
                         }
@@ -449,6 +494,13 @@ contract OrderBookManager {
                         OrderLibrary.OrderNature.Limit,
                         bestOrderId
                     );
+
+                    emit OrderFilledEvent(oppositeOrderType, bestOrderId);
+                } else {
+                    emit OrderPartiallyFilledEvent(
+                        oppositeOrderType,
+                        bestOrderId
+                    );
                 }
 
                 if (pendingOrderNewAmount == 0) {
@@ -457,6 +509,9 @@ contract OrderBookManager {
                         OrderLibrary.OrderNature.Limit,
                         _pendingOrderId
                     );
+                    emit OrderFilledEvent(_orderType, _pendingOrderId);
+                } else {
+                    emit OrderPartiallyFilledEvent(_orderType, _pendingOrderId);
                 }
 
                 marketOrderBook.updateOrder(

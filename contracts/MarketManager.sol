@@ -1,14 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
-// import "hardhat/console.sol";
 import "./OrderLibrary.sol";
 import "./MarketData.sol";
 import "./OrderBookManager.sol";
+
+// import "hardhat/console.sol";
 
 contract MarketManager {
     IMarketData public marketData;
     OrderBookManager public orderBookManager;
     bool private initialized;
+
+    event MarketOrderBooksCreatedEvent(
+        bytes32 indexed marketId,
+        uint8 token1,
+        uint8 token2
+    );
 
     event OrderPlacedEvent(
         bytes32 indexed marketId,
@@ -21,17 +28,11 @@ contract MarketManager {
     );
 
     event OrderCancelledEvent(
-        bytes32 indexed marketID,
+        bytes32 indexed marketId,
         uint256 orderId,
         address userAddress,
         OrderLibrary.OrderType orderType,
         uint256 timestamp
-    );
-
-    event MarketOrderBooksCreated(
-        bytes32 indexed marketId,
-        uint8 token1,
-        uint8 token2
     );
 
     modifier onlyInitialized() {
@@ -70,7 +71,7 @@ contract MarketManager {
             // Only create orderbooks if they don't exist
             if (!orderBookManager.orderBookExists(marketId)) {
                 orderBookManager.createMarketOrderBook(marketId);
-                emit MarketOrderBooksCreated(marketId, i, _tokenId);
+                emit MarketOrderBooksCreatedEvent(marketId, i, _tokenId);
             }
         }
     }
