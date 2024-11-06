@@ -351,7 +351,7 @@ contract OrderBookManager {
                         if (marketOrderNewAmount == 0) {
                             marketOrderBook.removeOrder(
                                 oppositeOrderType,
-                                OrderLibrary.OrderNature.Limit,
+                                OrderLibrary.OrderNature.Market,
                                 pendingMarketOrders[i]
                             );
 
@@ -369,17 +369,14 @@ contract OrderBookManager {
                         if (pendingOrderNewAmount == 0) {
                             marketOrderBook.removeOrder(
                                 _orderType,
-                                OrderLibrary.OrderNature.Market,
+                                OrderLibrary.OrderNature.Limit,
                                 _pendingOrderId
                             );
 
-                            emit OrderFilledEvent(
-                                oppositeOrderType,
-                                _pendingOrderId
-                            );
+                            emit OrderFilledEvent(_orderType, _pendingOrderId);
                         } else {
                             emit OrderPartiallyFilledEvent(
-                                oppositeOrderType,
+                                _orderType,
                                 _pendingOrderId
                             );
                         }

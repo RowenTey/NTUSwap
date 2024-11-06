@@ -206,6 +206,50 @@ contract("OrderBookManager", (accounts) => {
         expect(result.nature[1]).to.be.bignumber.equal(new BN(orderNature));
     });
 
+    it("should not match 1 sell limit order", async () => {
+        const { marketId, ethTokenId, usdTokenId } = await setupMarketAndTokens();
+
+        // Create orders
+        const amount1 = new BN(web3.utils.toWei("100", "ether"));
+        const price1 = new BN(1);
+        const amount2 = new BN(web3.utils.toWei("50", "ether"));
+        const price2 = new BN(1);
+
+        const orderTypeBuy = OrderLibrary.OrderType.Buy;
+        const orderTypeSell = OrderLibrary.OrderType.Sell;
+        const orderNature = OrderLibrary.OrderNature.Limit;
+
+        // Add sell limit order (id 1)
+        await orderBookManager.createOrder(
+            marketId,
+            amount2,
+            price2, // Price is 1 USD
+            user2, // User 2 is selling 50 ETH
+            orderTypeSell,
+            orderNature,
+            { from: deployer }
+        );
+
+        // Match orders
+        const matchReceipt = await orderBookManager.matchOrder(
+            marketId,
+            1, // Assuming the pending order ID is 1
+            usdTokenId,
+            orderTypeSell,
+            { from: deployer }
+        );
+
+        // Check created orders
+        const orderBookAddress = await orderBookManager.marketOrderBooks(marketId);
+        const orderBook = await OrderBookData.at(orderBookAddress);
+        const order1 = await orderBook.getOrderFromId(orderTypeSell, 1);
+        // console.log("Order 1 (Buy):", order1);
+
+        expect(order1.remainingAmount).to.be.bignumber.equal(new BN(web3.utils.toWei("50", "ether")));
+
+        expect(Number(order1.status)).to.equal(OrderLibrary.OrderStatus.Active);
+    });
+
     it("should match 1 sell limit order to 1 buy limit order", async () => {
         const { marketId, ethTokenId, usdTokenId } = await setupMarketAndTokens();
 
@@ -265,8 +309,8 @@ contract("OrderBookManager", (accounts) => {
         const orderBook = await OrderBookData.at(orderBookAddress);
         const order1 = await orderBook.getOrderFromId(orderTypeBuy, 1);
         const order2 = await orderBook.getOrderFromId(orderTypeSell, 1);
-        console.log("Order 1 (Buy):", order1);
-        console.log("Order 2 (sell):", order2);
+        // console.log("Order 1 (Buy):", order1);
+        // console.log("Order 2 (sell):", order2);
 
         expect(order1.remainingAmount).to.be.bignumber.equal(new BN(web3.utils.toWei("50", "ether")));
         expect(order2.remainingAmount).to.be.bignumber.equal(new BN(web3.utils.toWei("0", "ether")));
@@ -336,9 +380,9 @@ contract("OrderBookManager", (accounts) => {
         const order1 = await orderBook.getOrderFromId(orderTypeBuy, 1);
         const order2 = await orderBook.getOrderFromId(orderTypeBuy, 2);
         const order3 = await orderBook.getOrderFromId(orderTypeSell, 1);
-        console.log("Order 1 (Buy):", order1);
-        console.log("Order 2 (Buy):", order2);
-        console.log("Order 3 (sell):", order3);
+        // console.log("Order 1 (Buy):", order1);
+        // console.log("Order 2 (Buy):", order2);
+        // console.log("Order 3 (sell):", order3);
 
         expect(order1.remainingAmount).to.be.bignumber.equal(new BN(web3.utils.toWei("0", "ether")));
         expect(order2.remainingAmount).to.be.bignumber.equal(new BN(web3.utils.toWei("0", "ether")));
@@ -347,6 +391,50 @@ contract("OrderBookManager", (accounts) => {
         expect(Number(order1.status)).to.equal(OrderLibrary.OrderStatus.Filled);
         expect(Number(order2.status)).to.equal(OrderLibrary.OrderStatus.Filled);
         expect(Number(order3.status)).to.equal(OrderLibrary.OrderStatus.PartiallyFilled);
+    });
+
+    it("should not match 1 buy limit order", async () => {
+        const { marketId, ethTokenId, usdTokenId } = await setupMarketAndTokens();
+
+        // Create orders
+        const amount1 = new BN(web3.utils.toWei("100", "ether"));
+        const price1 = new BN(1);
+        const amount2 = new BN(web3.utils.toWei("50", "ether"));
+        const price2 = new BN(1);
+
+        const orderTypeBuy = OrderLibrary.OrderType.Buy;
+        const orderTypeSell = OrderLibrary.OrderType.Sell;
+        const orderNature = OrderLibrary.OrderNature.Limit;
+
+        // Add buy limit order (id 1)
+        await orderBookManager.createOrder(
+            marketId,
+            amount2,
+            price2, // Price is 1 ETH
+            user1, // User 1 is buying 50 USD
+            orderTypeBuy,
+            orderNature,
+            { from: deployer }
+        );
+
+        // Match orders
+        const matchReceipt = await orderBookManager.matchOrder(
+            marketId,
+            1, // Assuming the pending order ID is 1
+            usdTokenId,
+            orderTypeBuy,
+            { from: deployer }
+        );
+
+        // Check created orders
+        const orderBookAddress = await orderBookManager.marketOrderBooks(marketId);
+        const orderBook = await OrderBookData.at(orderBookAddress);
+        const order1 = await orderBook.getOrderFromId(orderTypeBuy, 1);
+        // console.log("Order 1 (Buy):", order1);
+
+        expect(order1.remainingAmount).to.be.bignumber.equal(new BN(web3.utils.toWei("50", "ether")));
+
+        expect(Number(order1.status)).to.equal(OrderLibrary.OrderStatus.Active);
     });
 
     it("should match 1 buy limit order to 1 sell limit order", async () => {
@@ -408,8 +496,8 @@ contract("OrderBookManager", (accounts) => {
         const orderBook = await OrderBookData.at(orderBookAddress);
         const order1 = await orderBook.getOrderFromId(orderTypeSell, 1);
         const order2 = await orderBook.getOrderFromId(orderTypeBuy, 1);
-        console.log("Order 1 (Sell):", order1);
-        console.log("Order 2 (Buy):", order2);
+        // console.log("Order 1 (Sell):", order1);
+        // console.log("Order 2 (Buy):", order2);
 
         expect(order1.remainingAmount).to.be.bignumber.equal(new BN(web3.utils.toWei("50", "ether")));
         expect(order2.remainingAmount).to.be.bignumber.equal(new BN(web3.utils.toWei("0", "ether")));
@@ -479,9 +567,9 @@ contract("OrderBookManager", (accounts) => {
         const order1 = await orderBook.getOrderFromId(orderTypeSell, 1);
         const order2 = await orderBook.getOrderFromId(orderTypeSell, 2);
         const order3 = await orderBook.getOrderFromId(orderTypeBuy, 1);
-        console.log("Order 1 (Sell):", order1);
-        console.log("Order 2 (Sell):", order2);
-        console.log("Order 3 (Buy):", order3);
+        // console.log("Order 1 (Sell):", order1);
+        // console.log("Order 2 (Sell):", order2);
+        // console.log("Order 3 (Buy):", order3);
 
         expect(order1.remainingAmount).to.be.bignumber.equal(new BN(web3.utils.toWei("50", "ether")));
         expect(order2.remainingAmount).to.be.bignumber.equal(new BN(web3.utils.toWei("0", "ether")));
@@ -551,13 +639,87 @@ contract("OrderBookManager", (accounts) => {
         const orderBook = await OrderBookData.at(orderBookAddress);
         const order1 = await orderBook.getOrderFromId(orderTypeBuy, 1);
         const order2 = await orderBook.getOrderFromId(orderTypeSell, 1);
-        console.log("Order 1 (Buy):", order1);
-        console.log("Order 2 (sell):", order2);
+        // console.log("Order 1 (Buy):", order1);
+        // console.log("Order 2 (Sell):", order2);
 
         expect(order1.remainingAmount).to.be.bignumber.equal(new BN(web3.utils.toWei("50", "ether")));
         expect(order2.remainingAmount).to.be.bignumber.equal(new BN(web3.utils.toWei("0", "ether")));
 
         expect(Number(order1.status)).to.equal(OrderLibrary.OrderStatus.PartiallyFilled);
         expect(Number(order2.status)).to.equal(OrderLibrary.OrderStatus.Filled);
+    });
+
+    it("should match 1 sell limit order to 2 buy market order", async () => {
+        const { marketId, ethTokenId, usdTokenId } = await setupMarketAndTokens();
+
+        // Create orders
+        const amount1 = new BN(web3.utils.toWei("100", "ether"));
+        const price1 = new BN(1);
+        const amount2 = new BN(web3.utils.toWei("120", "ether"));
+        const price2 = new BN(1);
+
+        const orderTypeBuy = OrderLibrary.OrderType.Buy;
+        const orderTypeSell = OrderLibrary.OrderType.Sell;
+        const orderNature = OrderLibrary.OrderNature.Limit;
+
+        // Add buy market order (id 1)
+        await orderBookManager.createOrder(
+            marketId,
+            amount1,
+            0, // Price doesn't matter for market order
+            user1, // User 1 is buying 100 USD
+            orderTypeBuy,
+            OrderLibrary.OrderNature.Market,
+            { from: deployer }
+        );
+
+        // Add buy market order (id 2)
+        await orderBookManager.createOrder(
+            marketId,
+            new BN(web3.utils.toWei("50", "ether")),
+            0, // Price doesn't matter for market order
+            user1, // User 1 is buying another 50 USD
+            orderTypeBuy,
+            OrderLibrary.OrderNature.Market,
+            { from: deployer }
+        );
+
+        // Add sell limit order (id 1)
+        await orderBookManager.createOrder(
+            marketId,
+            amount2,
+            price2, // Price is 1 ETH
+            user2, // User 2 is selling 120 USD
+            orderTypeSell,
+            orderNature,
+            { from: deployer }
+        );
+
+        // Match orders
+        const matchReceipt = await orderBookManager.matchOrder(
+            marketId,
+            1, // Assuming the pending order ID is 1
+            ethTokenId,
+            orderTypeSell,
+            { from: deployer }
+        );
+
+        // Check created orders
+        const orderBookAddress = await orderBookManager.marketOrderBooks(marketId);
+        const orderBook = await OrderBookData.at(orderBookAddress);
+        const order1 = await orderBook.getOrderFromId(orderTypeBuy, 1);
+        const order2 = await orderBook.getOrderFromId(orderTypeBuy, 2);
+        const order3 = await orderBook.getOrderFromId(orderTypeSell, 1);
+        // console.log("Order 1 (Buy):", order1);
+        // console.log("Order 2 (Buy):", order2);
+        // console.log("Order 3 (Sell):", order3);
+
+        expect(order1.remainingAmount).to.be.bignumber.equal(new BN(web3.utils.toWei("0", "ether")));
+        expect(order2.remainingAmount).to.be.bignumber.equal(new BN(web3.utils.toWei("30", "ether")));
+        expect(order3.remainingAmount).to.be.bignumber.equal(new BN(web3.utils.toWei("0", "ether")));
+
+        expect(Number(order1.status)).to.equal(OrderLibrary.OrderStatus.Filled);
+        expect(Number(order2.status)).to.equal(OrderLibrary.OrderStatus.PartiallyFilled);
+        expect(Number(order3.status)).to.equal(OrderLibrary.OrderStatus.Filled);
     });
 });
