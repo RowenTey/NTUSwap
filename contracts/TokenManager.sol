@@ -52,17 +52,20 @@ contract TokenManager is Ownable {
     bool private initialized;
 
     modifier onlyInitialized() {
-        require(initialized, "Not initialized");
+        require(initialized, "Token manager not initialized");
         _;
     }
-    
+
     constructor() Ownable() {
         initialized = false;
     }
 
     function initialize(address _marketManagerAddr) external {
         require(!initialized, "Already initialized");
-        require(_marketManagerAddr != address(0), "Invalid market manager address");
+        require(
+            _marketManagerAddr != address(0),
+            "Invalid market manager address"
+        );
         marketManager = MarketManager(_marketManagerAddr);
         initialized = true;
     }
