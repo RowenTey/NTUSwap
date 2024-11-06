@@ -129,7 +129,6 @@ contract OrderBookManager {
                 pendingOrder.userAddress,
                 _exchangeTokenId
             );
-            console.log("Original User Balance - ", availableBalance);
             while (flag && pendingOrder.remainingAmount > 0) {
                 uint256 bestOrderId = marketOrderBook.getBestOrderFromHeap(
                     oppositeOrderType
@@ -141,7 +140,7 @@ contract OrderBookManager {
                 OrderLibrary.Order memory bestOrder = marketOrderBook
                     .getOrderFromId(oppositeOrderType, bestOrderId);
 
-                // require(availableBalance > 0, "User has insufficient balance");
+                require(availableBalance > 0, "User has insufficient balance");
 
                 int256 settlingPrice = bestOrder.price;
                 uint256 minimumAmount;
