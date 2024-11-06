@@ -27,7 +27,7 @@ contract("OrderBookData", (accounts) => {
         const orderNature = OrderLibrary.OrderNature.Limit;
 
         const receipt = await orderBookData.addOrder(amount, price, user1, orderType, orderNature, { from: deployer });
-        expectEvent(receipt, "OrderAdded", {
+        expectEvent(receipt, "OrderAddedEvent", {
             orderId: new BN(1),
             amount: amount,
             price: price,
@@ -56,7 +56,7 @@ contract("OrderBookData", (accounts) => {
         };
 
         const updateReceipt = await orderBookData.updateOrder(orderType, orderId, newAmount, newStatus, fillsReceipt, { from: deployer });
-        expectEvent(updateReceipt, "OrderUpdated", {
+        expectEvent(updateReceipt, "OrderUpdatedEvent", {
             orderId: orderId,
             remainingAmount: newAmount,
             status: new BN(newStatus),
@@ -77,12 +77,12 @@ contract("OrderBookData", (accounts) => {
 
         const removeReceipt = await orderBookData.removeOrder(orderType, orderNature, orderId, { from: deployer });
 
-        expectEvent(removeReceipt, "OrderStatusUpdated", {
+        expectEvent(removeReceipt, "OrderStatusUpdatedEvent", {
             orderId: orderId,
             status: new BN(OrderLibrary.OrderStatus.Cancelled),
         });
 
-        expectEvent(removeReceipt, "OrderRemoved", {
+        expectEvent(removeReceipt, "OrderRemovedEvent", {
             orderId: orderId,
             orderType: new BN(orderType),
             orderNature: new BN(orderNature),

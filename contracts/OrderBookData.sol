@@ -5,6 +5,35 @@ import "./OrderLibrary.sol";
 import "hardhat/console.sol";
 
 interface IOrderBookData {
+    event OrderAddedEvent(
+        uint256 orderId,
+        uint256 amount,
+        int256 price,
+        address userAddress,
+        OrderLibrary.OrderType orderType,
+        OrderLibrary.OrderNature orderNature
+    );
+
+    event OrderUpdatedEvent(
+        uint256 orderId,
+        uint256 remainingAmount,
+        OrderLibrary.OrderStatus status,
+        int256 price,
+        uint256 amount,
+        uint256 timestamp
+    );
+
+    event OrderStatusUpdatedEvent(
+        uint256 orderId,
+        OrderLibrary.OrderStatus status
+    );
+
+    event OrderRemovedEvent(
+        uint256 orderId,
+        OrderLibrary.OrderType orderType,
+        OrderLibrary.OrderNature orderNature
+    );
+
     function initializeOrderBooks() external;
 
     function addOrder(
@@ -75,32 +104,6 @@ contract OrderBookData is IOrderBookData {
 
     mapping(OrderLibrary.OrderType => OrderBook) internal orderBooks;
 
-    event OrderAdded(
-        uint256 orderId,
-        uint256 amount,
-        int256 price,
-        address userAddress,
-        OrderLibrary.OrderType orderType,
-        OrderLibrary.OrderNature orderNature
-    );
-
-    event OrderUpdated(
-        uint256 orderId,
-        uint256 remainingAmount,
-        OrderLibrary.OrderStatus status,
-        int256 price,
-        uint256 amount,
-        uint256 timestamp
-    );
-
-    event OrderStatusUpdated(uint256 orderId, OrderLibrary.OrderStatus status);
-
-    event OrderRemoved(
-        uint256 orderId,
-        OrderLibrary.OrderType orderType,
-        OrderLibrary.OrderNature orderNature
-    );
-
     modifier onlyManager() {
         require(
             msg.sender == orderBookManager,
@@ -166,7 +169,7 @@ contract OrderBookData is IOrderBookData {
             console.log("Order added to market orders: %d", orderId);
         }
 
-        emit OrderAdded(
+        emit OrderAddedEvent(
             orderId,
             _amount,
             _price,
@@ -194,7 +197,7 @@ contract OrderBookData is IOrderBookData {
         order.fillsAmount.push(_orderReceipt.amount);
         order.fillsTimestamp.push(_orderReceipt.timestamp);
 
-        emit OrderUpdated(
+        emit OrderUpdatedEvent(
             _orderId,
             _remainingAmount,
             _status,
@@ -219,7 +222,7 @@ contract OrderBookData is IOrderBookData {
         );
         order.status = _newOrderStatus;
 
-        emit OrderStatusUpdated(_orderId, _newOrderStatus);
+        emit OrderStatusUpdatedEvent(_orderId, _newOrderStatus);
     }
 
     // Remove order
@@ -274,7 +277,7 @@ contract OrderBookData is IOrderBookData {
         );
         orderBooks[_orderType].activeCount--;
 
-        emit OrderRemoved(_orderId, _orderType, _orderNature);
+        emit OrderRemovedEvent(_orderId, _orderType, _orderNature);
 
         return true; // Order removed successfully
     }
