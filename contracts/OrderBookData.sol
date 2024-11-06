@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 import "./OrderLibrary.sol";
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 interface IOrderBookData {
     function initializeOrderBooks() external;
@@ -42,7 +42,6 @@ interface IOrderBookData {
         OrderLibrary.Fills memory _orderReceipts
     ) external;
 
-
     function getAllPendingMarketOrders(
         OrderLibrary.OrderType _orderType
     ) external view returns (uint256[] memory);
@@ -75,6 +74,32 @@ contract OrderBookData is IOrderBookData {
     }
 
     mapping(OrderLibrary.OrderType => OrderBook) internal orderBooks;
+
+    event OrderAdded(
+        uint256 orderId,
+        uint256 amount,
+        int256 price,
+        address userAddress,
+        OrderLibrary.OrderType orderType,
+        OrderLibrary.OrderNature orderNature
+    );
+
+    event OrderUpdated(
+        uint256 orderId,
+        uint256 remainingAmount,
+        OrderLibrary.OrderStatus status,
+        int256 price,
+        uint256 amount,
+        uint256 timestamp
+    );
+
+    event OrderStatusUpdated(uint256 orderId, OrderLibrary.OrderStatus status);
+
+    event OrderRemoved(
+        uint256 orderId,
+        OrderLibrary.OrderType orderType,
+        OrderLibrary.OrderNature orderNature
+    );
 
     modifier onlyManager() {
         require(
@@ -135,9 +160,21 @@ contract OrderBookData is IOrderBookData {
                 ? -_price
                 : int256(_price);
             insertHeap(book.heap, orderId, price);
+            console.log("Order added to heap: %d", orderId);
         } else {
             book.marketOrderIds.push(orderId);
+            console.log("Order added to market orders: %d", orderId);
         }
+
+        emit OrderAdded(
+            orderId,
+            _amount,
+            _price,
+            _userAddress,
+            _orderType,
+            _orderNature
+        );
+
         return orderId;
     }
 
@@ -147,7 +184,7 @@ contract OrderBookData is IOrderBookData {
         uint256 _remainingAmount,
         OrderLibrary.OrderStatus _status,
         OrderLibrary.Fills memory _orderReceipt
-    ) public {
+    ) external override onlyManager {
         OrderLibrary.Order storage order = orderBooks[_orderType].orders[
             _orderId
         ];
@@ -156,6 +193,15 @@ contract OrderBookData is IOrderBookData {
         order.fillsPrice.push(_orderReceipt.price);
         order.fillsAmount.push(_orderReceipt.amount);
         order.fillsTimestamp.push(_orderReceipt.timestamp);
+
+        emit OrderUpdated(
+            _orderId,
+            _remainingAmount,
+            _status,
+            _orderReceipt.price,
+            _orderReceipt.amount,
+            _orderReceipt.timestamp
+        );
     }
 
     // Update Order Status (used for cancelling an order as this is just a status change)
@@ -172,6 +218,8 @@ contract OrderBookData is IOrderBookData {
             "Order is already in this status "
         );
         order.status = _newOrderStatus;
+
+        emit OrderStatusUpdated(_orderId, _newOrderStatus);
     }
 
     // Remove order
@@ -179,7 +227,7 @@ contract OrderBookData is IOrderBookData {
         OrderLibrary.OrderType _orderType,
         OrderLibrary.OrderNature _orderNature,
         uint256 _orderId
-    ) external returns (bool) {
+    ) external override onlyManager returns (bool) {
         // Check if order exists
         require(
             orderBooks[_orderType].orders[_orderId].status ==
@@ -188,14 +236,16 @@ contract OrderBookData is IOrderBookData {
                 OrderLibrary.OrderStatus.PartiallyFilled,
             "Order is not Active"
         );
+
         if (_orderNature == OrderLibrary.OrderNature.Limit) {
             // Get Node from heap
             Node memory deletedNode = extractById(
                 orderBooks[_orderType].heap,
                 _orderId
             );
+
             if (deletedNode.id != _orderId) {
-                return false; //Order not in heap
+                return false; // Order not in heap
             }
         } else {
             require(
@@ -223,6 +273,8 @@ contract OrderBookData is IOrderBookData {
             OrderLibrary.OrderStatus.Cancelled
         );
         orderBooks[_orderType].activeCount--;
+
+        emit OrderRemoved(_orderId, _orderType, _orderNature);
 
         return true; // Order removed successfully
     }
