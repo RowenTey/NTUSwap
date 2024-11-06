@@ -35,7 +35,7 @@ contract MarketManager {
     );
 
     modifier onlyInitialized() {
-        require(initialized, "Not initialized");
+        require(initialized, "Market manager not initialized");
         _;
     }
 
@@ -43,10 +43,17 @@ contract MarketManager {
         initialized = false;
     }
 
-    function initialize(address _marketDataAddr, address _orderBookManagerAddr) external {
+    function initialize(
+        address _marketDataAddr,
+        address _orderBookManagerAddr
+    ) external {
         require(!initialized, "Already initialized");
         require(_marketDataAddr != address(0), "Invalid market data address");
-        require(_orderBookManagerAddr != address(0), "Invalid orderbook manager address");
+        require(
+            _orderBookManagerAddr != address(0),
+            "Invalid orderbook manager address"
+        );
+
         marketData = IMarketData(_marketDataAddr);
         orderBookManager = OrderBookManager(_orderBookManagerAddr);
         initialized = true;
@@ -108,7 +115,8 @@ contract MarketManager {
         bytes32 marketId,
         uint256 orderId,
         address userAddress,
-        OrderLibrary.OrderType orderType
+        OrderLibrary.OrderType orderType,
+        OrderLibrary.OrderNature orderNature
     ) external onlyInitialized returns (bool) {
         require(marketData.isMarketPresent(marketId), "Market does not exist");
 
@@ -116,7 +124,8 @@ contract MarketManager {
         bool success = orderBookManager.cancelOrder(
             marketId,
             orderId,
-            orderType
+            orderType,
+            orderNature
         );
         if (success) {
             emit OrderCancelledEvent(
@@ -132,7 +141,7 @@ contract MarketManager {
 
     function getMarketTokens(
         bytes32 _marketId
-    ) external view onlyInitialized() returns (uint8, uint8) {
+    ) external view onlyInitialized returns (uint8, uint8) {
         return marketData.getTokensFromMarketId(_marketId);
     }
 
