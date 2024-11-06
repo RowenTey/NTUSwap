@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Token.sol";
 import "./MarketManager.sol";
+import "hardhat/console.sol";
 
 contract TokenManager is Ownable {
     // Token ID -> Token
@@ -80,9 +81,13 @@ contract TokenManager is Ownable {
         string memory _symbol,
         uint256 _initialSupply
     ) external onlyOwner onlyInitialized {
+        // Log each parameter explicitly
+        console.log("Token Name:", _name);
+        console.log("Token Symbol:", _symbol);
+        console.log("Initial Supply:", _initialSupply);
         require(isToken[_symbol] == 0, "Token already exists!");
         require(_initialSupply > 0, "Initial supply must be greater than 0");
-
+        // console.log('Issuing token:', _name, _symbol, _initialSupply);
         // Create a token
         Token newToken = new Token(_name, _symbol, _initialSupply, msg.sender);
 

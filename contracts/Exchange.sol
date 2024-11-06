@@ -28,7 +28,7 @@ contract Exchange {
         address[] toBePaid,
         address[] toReceive,
         uint256[] tokenAmount,
-        uint256[] currencyAmount,
+        int256[] currencyAmount,
         uint256 timestamp
     );
 
@@ -36,7 +36,7 @@ contract Exchange {
         address indexed from,
         address indexed to,
         uint256 tokenAmount,
-        uint256 currencyAmount,
+        int256 currencyAmount,
         uint256 timestamp
     );
 
@@ -142,8 +142,8 @@ contract Exchange {
         _matchAndSettleOrder(
             marketManager.getMarketId(tokenId1, tokenId2),
             orderId,
-            OrderLibrary.OrderType.Buy,
-            orderNature
+            tokenId1,
+            OrderLibrary.OrderType.Buy
         );
 
         return orderId;
@@ -163,7 +163,7 @@ contract Exchange {
         // Check if seller has sufficient base token balance for a limit order
         if (orderNature == OrderLibrary.OrderNature.Limit) {
             require(
-                tokenManager.getBalance(msg.sender, tokenId1) >= uint256(price) * amount,
+                tokenManager.getBalance(msg.sender, tokenId2) >= uint256(price) * amount,
                 "Insufficient balance for sell order"
             );
         }
@@ -183,8 +183,8 @@ contract Exchange {
         _matchAndSettleOrder(
             marketManager.getMarketId(tokenId1, tokenId2),
             orderId,
-            OrderLibrary.OrderType.Sell,
-            orderNature
+            tokenId1,
+            OrderLibrary.OrderType.Sell
         );
 
         return orderId;
@@ -194,8 +194,8 @@ contract Exchange {
     function _matchAndSettleOrder(
         bytes32 marketId,
         uint256 orderId,
-        OrderLibrary.OrderType orderType,
-        OrderLibrary.OrderNature orderNature
+        uint8 _exchangeTokenId,
+        OrderLibrary.OrderType _orderType
     ) internal {
         // Get matching results from OrderBookManager
         (
@@ -207,8 +207,8 @@ contract Exchange {
         ) = orderBookManager.matchOrder(
                 marketId,
                 orderId,
-                orderType,
-                orderNature
+                _exchangeTokenId,
+                _orderType
             );
 
         // Process settlements
@@ -217,16 +217,17 @@ contract Exchange {
 
             emit OrderMatched(
                 marketId,
-                orderType == OrderLibrary.OrderType.Buy ? orderId : i,
-                orderType == OrderLibrary.OrderType.Sell ? orderId : i,
+                _orderType == OrderLibrary.OrderType.Buy ? orderId : i,
+                _orderType == OrderLibrary.OrderType.Sell ? orderId : i,
                 tokenAmount[i],
-                currencyAmount[i] / tokenAmount[i], // Price per token
+                uint256(currencyAmount[i]) / tokenAmount[i], // Price per token
                 block.timestamp
             );
 
             // Token transfers handling
             _settleTransaction(
                 marketId,
+                _exchangeTokenId,
                 toBePaid[i],
                 toReceive[i],
                 tokenAmount[i],
@@ -248,10 +249,11 @@ contract Exchange {
 
     function _settleTransaction(
         bytes32 marketId,
+        uint8 exchangeTokenId,
         address toBePaid,
         address toReceive,
         uint256 tokenAmount,
-        uint256 currencyAmount
+        int256 currencyAmount
     ) internal {
         require(toBePaid != address(0), "Invalid toBePaid address");
         require(toReceive != address(0), "Invalid toReceive address");
@@ -262,6 +264,10 @@ contract Exchange {
         (uint8 baseTokenId, uint8 quoteTokenId) = marketManager.getMarketTokens(
             marketId
         );
+
+        if(baseTokenId == exchangeTokenId) {
+            (baseTokenId, quoteTokenId) = (quoteTokenId, baseTokenId);
+        }
 
         // Transfer base token from seller to buyer
         bool baseTokenTransferred = tokenManager.transferFrom(
@@ -277,7 +283,7 @@ contract Exchange {
             toReceive, // buyer
             toBePaid, // seller
             quoteTokenId,
-            currencyAmount
+            uint256(currencyAmount)
         );
         require(quoteTokenTransferred, "Quote token transfer failed");
 
@@ -295,7 +301,8 @@ contract Exchange {
         uint8 tokenId1,
         uint8 tokenId2,
         uint256 orderId,
-        OrderLibrary.OrderType orderType
+        OrderLibrary.OrderType orderType,
+        OrderLibrary.OrderNature orderNature
     ) external {
         // Get Market Id
         bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
@@ -305,7 +312,8 @@ contract Exchange {
             marketId,
             orderId,
             msg.sender,
-            orderType
+            orderType,
+            orderNature
         );
 
         require(success, "Order could not be cancelled");

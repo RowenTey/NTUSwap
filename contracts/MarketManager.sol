@@ -108,7 +108,9 @@ contract MarketManager {
         bytes32 marketId,
         uint256 orderId,
         address userAddress,
-        OrderLibrary.OrderType orderType
+        OrderLibrary.OrderType orderType,
+        OrderLibrary.OrderNature orderNature
+
     ) external onlyInitialized returns (bool) {
         require(marketData.isMarketPresent(marketId), "Market does not exist");
 
@@ -116,7 +118,8 @@ contract MarketManager {
         bool success = orderBookManager.cancelOrder(
             marketId,
             orderId,
-            orderType
+            orderType,
+            orderNature
         );
         if (success) {
             emit OrderCancelledEvent(

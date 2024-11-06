@@ -86,8 +86,7 @@ contract OrderBookManager {
         bytes32 _marketId,
         uint256 _pendingOrderId,
         uint8 _exchangeTokenId,
-        OrderLibrary.OrderType _orderType,
-        OrderLibrary.OrderNature _orderNature
+        OrderLibrary.OrderType _orderType
     )
         external
         onlyInitialized
@@ -104,6 +103,7 @@ contract OrderBookManager {
             _orderType,
             _pendingOrderId
         );
+        require(pendingOrder.remainingAmount > 0, "Pending order is fully filled");
         OrderLibrary.OrderType oppositeOrderType = _orderType ==
             OrderLibrary.OrderType.Buy
             ? OrderLibrary.OrderType.Sell
@@ -155,7 +155,7 @@ contract OrderBookManager {
                 } else {
                     minimumAmount = bestOrder.remainingAmount;
                     if (
-                        minimumAmount * uint256(settlingPrice) >        
+                        minimumAmount * uint256(settlingPrice) >
                         availableBalance
                     ) {
                         minimumAmount =
@@ -163,11 +163,13 @@ contract OrderBookManager {
                             availableBalance;
                         flag = false; // Market Order will get partially filled but Limit Order will also get partially filled. Thus, market order will not be able to satisfy any more limit orders because of lack of user balance
                     } else {
-                        availableBalance -= minimumAmount * uint256(settlingPrice); // Limit Order is fully satisfied but Market order is only partially filled and will continue to look for next best order, so user balance is updated
+                        availableBalance -=
+                            minimumAmount *
+                            uint256(settlingPrice); // Limit Order is fully satisfied but Market order is only partially filled and will continue to look for next best order, so user balance is updated
                     }
                 }
 
-                uint256 matchedAmount = minimumAmount * uint256(settlingPrice);
+                uint256 matchedAmount = minimumAmount * uint256(settlingPrice); //TODO: Show varsha if this makes sense
                 toBePaid[count] = _orderType == OrderLibrary.OrderType.Buy
                     ? bestOrder.userAddress
                     : pendingOrder.userAddress;
@@ -177,9 +179,9 @@ contract OrderBookManager {
                 tokenAmount[count] = minimumAmount;
                 currencyAmount[count] = int256(matchedAmount);
 
-                pendingOrderNewAmount -= matchedAmount;
+                pendingOrderNewAmount -= minimumAmount;
                 uint256 bestOrderNewAmount = bestOrder.remainingAmount -
-                    matchedAmount;
+                    minimumAmount;
 
                 // Update fills for both matched orders
                 OrderLibrary.Fills memory pendingOrderNewReceipts = OrderLibrary
@@ -240,21 +242,121 @@ contract OrderBookManager {
                 count++;
             }
         } else {
+            uint256[] memory pendingMarketOrders = marketOrderBook
+                .getAllPendingMarketOrders(oppositeOrderType);
+            uint i = 0;
             while (pendingOrderNewAmount > 0) {
-                uint256[] memory pendingMarketOrders = marketOrderBook.getAllPendingMarketOrders(oppositeOrderType);
-                for(uint i = 0; i < pendingMarketOrders.length; i++) {
-                    OrderLibrary.Order memory marketOrder = marketOrderBook.getOrderFromId(oppositeOrderType, pendingMarketOrders[i]);
-                    uint256 userBalance = tokenManager.getBalance(marketOrder.userAddress, _exchangeTokenId);
-                    int256 settlingPrice = pendingOrder.price;
-                    uint256 minimumAmount;
+                if (i == 0) {
+                    while (
+                        i < pendingMarketOrders.length &&
+                        pendingOrderNewAmount > 0
+                    ) {
+                        OrderLibrary.Order memory marketOrder = marketOrderBook
+                            .getOrderFromId(
+                                oppositeOrderType,
+                                pendingMarketOrders[i]
+                            );
+                        uint256 userBalance = tokenManager.getBalance(
+                            marketOrder.userAddress,
+                            _exchangeTokenId
+                        );
+                        int256 settlingPrice = pendingOrder.price;
+                        uint256 minimumAmount = pendingOrderNewAmount <
+                            marketOrder.remainingAmount
+                            ? pendingOrderNewAmount
+                            : marketOrder.remainingAmount;
 
-                    if(pendingOrderNewAmount <= marketOrder.remainingAmount) {
-                        
+                        if (
+                            userBalance <
+                            (minimumAmount * uint256(settlingPrice))
+                        ) {
+                            minimumAmount =
+                                (minimumAmount * uint256(settlingPrice)) /
+                                userBalance;
+                        }
+
+                        uint256 amountToMatch = minimumAmount *
+                            uint256(settlingPrice);
+                        toBePaid[count] = _orderType ==
+                            OrderLibrary.OrderType.Buy
+                            ? marketOrder.userAddress
+                            : pendingOrder.userAddress;
+                        toReceive[count] = _orderType ==
+                            OrderLibrary.OrderType.Buy
+                            ? pendingOrder.userAddress
+                            : marketOrder.userAddress;
+                        tokenAmount[count] = minimumAmount;
+                        currencyAmount[count] = int256(amountToMatch);
+
+                        pendingOrderNewAmount -= minimumAmount;
+                        uint256 marketOrderNewAmount = marketOrder
+                            .remainingAmount - minimumAmount;
+
+                        // Update fills for both matched orders
+                        OrderLibrary.Fills
+                            memory newPendingOrderReceipts = OrderLibrary
+                                .Fills({
+                                    price: settlingPrice,
+                                    amount: minimumAmount,
+                                    timestamp: block.timestamp
+                                });
+                        OrderLibrary.Fills
+                            memory marketOrderNewReceipts = OrderLibrary.Fills({
+                                price: settlingPrice,
+                                amount: minimumAmount,
+                                timestamp: block.timestamp
+                            });
+                        // Update order statuses
+                        OrderLibrary.OrderStatus marketOrderNewStatus = marketOrderNewAmount ==
+                                0
+                                ? OrderLibrary.OrderStatus.Filled
+                                : OrderLibrary.OrderStatus.PartiallyFilled;
+
+                        OrderLibrary.OrderStatus newPendingOrderStatus = pendingOrderNewAmount ==
+                                0
+                                ? OrderLibrary.OrderStatus.Filled
+                                : OrderLibrary.OrderStatus.PartiallyFilled;
+
+                        if (marketOrderNewAmount == 0) {
+                            marketOrderBook.removeOrder(
+                                oppositeOrderType,
+                                OrderLibrary.OrderNature.Limit,
+                                pendingMarketOrders[i]
+                            );
+                        }
+
+                        if (pendingOrderNewAmount == 0) {
+                            marketOrderBook.removeOrder(
+                                _orderType,
+                                OrderLibrary.OrderNature.Market,
+                                _pendingOrderId
+                            );
+                        }
+
+                        marketOrderBook.updateOrder(
+                            _orderType,
+                            _pendingOrderId,
+                            pendingOrderNewAmount,
+                            newPendingOrderStatus,
+                            newPendingOrderReceipts
+                        );
+
+                        marketOrderBook.updateOrder(
+                            oppositeOrderType,
+                            pendingMarketOrders[i],
+                            marketOrderNewAmount,
+                            marketOrderNewStatus,
+                            marketOrderNewReceipts
+                        );
+
+                        count++;
+                        i++;
                     }
-
                 }
 
-
+                if (pendingOrderNewAmount == 0) {
+                    break;
+                }
 
                 uint256 bestOrderId = marketOrderBook.getBestOrderFromHeap(
                     oppositeOrderType
@@ -264,13 +366,9 @@ contract OrderBookManager {
                 OrderLibrary.Order memory bestOrder = marketOrderBook
                     .getOrderFromId(oppositeOrderType, bestOrderId);
 
-                bool orderMatched = _orderNature ==
-                    OrderLibrary.OrderNature.Market ||
-                    (
-                        _orderType == OrderLibrary.OrderType.Buy
-                            ? pendingOrder.price >= bestOrder.price
-                            : pendingOrder.price <= bestOrder.price
-                    );
+                bool orderMatched = _orderType == OrderLibrary.OrderType.Buy
+                    ? pendingOrder.price >= bestOrder.price
+                    : pendingOrder.price <= bestOrder.price;
                 if (!orderMatched) break;
 
                 uint256 matchedAmount = pendingOrderNewAmount <
@@ -288,7 +386,9 @@ contract OrderBookManager {
                 }
 
                 tokenAmount[count] = matchedAmount;
-                currencyAmount[count] = matchedAmount * bestOrder.price;
+                currencyAmount[count] = int256(
+                    matchedAmount * uint256(bestOrder.price)
+                );
 
                 pendingOrderNewAmount -= matchedAmount;
                 uint256 bestOrderNewAmount = bestOrder.remainingAmount -
@@ -320,11 +420,19 @@ contract OrderBookManager {
                         : OrderLibrary.OrderStatus.PartiallyFilled;
 
                 if (bestOrderNewAmount == 0) {
-                    marketOrderBook.removeOrder(oppositeOrderType, bestOrderId);
+                    marketOrderBook.removeOrder(
+                        oppositeOrderType,
+                        OrderLibrary.OrderNature.Limit,
+                        bestOrderId
+                    );
                 }
 
                 if (pendingOrderNewAmount == 0) {
-                    marketOrderBook.removeOrder(_orderType, _pendingOrderId);
+                    marketOrderBook.removeOrder(
+                        _orderType,
+                        OrderLibrary.OrderNature.Limit,
+                        _pendingOrderId
+                    );
                 }
 
                 marketOrderBook.updateOrder(

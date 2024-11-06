@@ -134,7 +134,7 @@ contract OrderBookData is IOrderBookData {
             int256 price = _orderType == OrderLibrary.OrderType.Sell
                 ? -_price
                 : int256(_price);
-            insertHeap(book.heap, orderId, price);
+            insertHeap(book.heap, orderId, price, book.orders[orderId].timestamp);
         } else {
             book.marketOrderIds.push(orderId);
         }
@@ -202,9 +202,15 @@ contract OrderBookData is IOrderBookData {
                 orderBooks[_orderType].marketOrderIds.length > 0,
                 "Array is empty"
             );
-
+            uint idx;
+            for(uint i = 0; i < orderBooks[_orderType].marketOrderIds.length; i++) {
+                if(orderBooks[_orderType].marketOrderIds[i] == _orderId) {
+                    idx = i;
+                    break;
+                }
+            }
             for (
-                uint i = 0;
+                uint i = idx;
                 i < orderBooks[_orderType].marketOrderIds.length - 1;
                 i++
             ) {
@@ -415,30 +421,33 @@ contract OrderBookData is IOrderBookData {
         uint256 idCount;
         Node[] nodes; // root is index 1; index 0 not used
         mapping(uint256 => uint) indices; // unique id => node index
-    }
+    }   
 
     struct Node {
         uint256 id; // use with another mapping to store arbitrary object types
-        int256 priority;
+        int256 price;
+        uint256 timestamp; //timestamp to decide priority of older unfulfilled orders in the heap 
     }
 
     // Call init before anything else
     function heapInit(Data storage data) private {
-        if (data.nodes.length == 0) data.nodes.push(Node(0, 0));
+        if (data.nodes.length == 0) data.nodes.push(Node(0, 0, 0));
     }
 
     function insertHeap(
         Data storage data,
         uint256 orderId,
-        int256 priority
+        int256 price,
+        uint256 timestamp
     ) private returns (Node memory) {
         if (data.nodes.length == 0) heapInit(data);
         data.idCount++;
-        Node memory n = Node(orderId, priority);
+        Node memory n = Node(orderId, price, timestamp);
         data.nodes.push(n);
         _bubbleUp(data, n, data.nodes.length - 1);
         return n;
     }
+
 
     function extractMax(Data storage data) private returns (Node memory) {
         return _extract(data, ROOT_INDEX);
@@ -467,7 +476,7 @@ contract OrderBookData is IOrderBookData {
         Data storage data,
         uint256 i
     ) private view returns (Node memory) {
-        return data.nodes.length > i ? data.nodes[i] : Node(0, 0);
+        return data.nodes.length > i ? data.nodes[i] : Node(0, 0 , 0);
     }
 
     function getMax(Data storage data) private view returns (Node memory) {
@@ -486,7 +495,7 @@ contract OrderBookData is IOrderBookData {
         Data storage data,
         uint256 i
     ) private returns (Node memory) {
-        if (data.nodes.length <= i || i <= 0) return Node(0, 0);
+        if (data.nodes.length <= i || i <= 0) return Node(0, 0, 0);
 
         Node memory extractedNode = data.nodes[i];
         delete data.indices[extractedNode.id];
@@ -503,13 +512,18 @@ contract OrderBookData is IOrderBookData {
     }
 
     function _bubbleUp(Data storage data, Node memory n, uint i) private {
-        if (i == ROOT_INDEX || n.priority <= data.nodes[i / 2].priority) {
+        if (
+            i == ROOT_INDEX || 
+            (n.price < data.nodes[i / 2].price || 
+            (n.price == data.nodes[i / 2].price && n.timestamp >= data.nodes[i / 2].timestamp))
+        ) {
             _insertHeap(data, n, i);
         } else {
             _insertHeap(data, data.nodes[i / 2], i);
             _bubbleUp(data, n, i / 2);
         }
     }
+
 
     function _bubbleDown(Data storage data, Node memory n, uint i) private {
         uint length = data.nodes.length;
@@ -518,26 +532,33 @@ contract OrderBookData is IOrderBookData {
         if (length <= cIndex) {
             _insertHeap(data, n, i);
         } else {
-            Node memory largestChild = data.nodes[cIndex];
+            Node memory highestPriorityChild = data.nodes[cIndex];
 
             if (
                 length > cIndex + 1 &&
-                data.nodes[cIndex + 1].priority > largestChild.priority
+                (data.nodes[cIndex + 1].price > highestPriorityChild.price || 
+                (data.nodes[cIndex + 1].price == highestPriorityChild.price &&
+                data.nodes[cIndex + 1].timestamp < highestPriorityChild.timestamp))
             ) {
-                largestChild = data.nodes[++cIndex];
+                highestPriorityChild = data.nodes[++cIndex];
             }
 
-            if (largestChild.priority <= n.priority) {
+            if (
+                highestPriorityChild.price < n.price ||
+                (highestPriorityChild.price == n.price && highestPriorityChild.timestamp >= n.timestamp)
+            ) {
                 _insertHeap(data, n, i);
             } else {
-                _insertHeap(data, largestChild, i);
+                _insertHeap(data, highestPriorityChild, i);
                 _bubbleDown(data, n, cIndex);
             }
         }
     }
 
+
     function _insertHeap(Data storage data, Node memory n, uint i) private {
         data.nodes[i] = n;
         data.indices[n.id] = i;
     }
+
 }
