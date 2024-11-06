@@ -7,7 +7,13 @@ import "./TokenManager.sol";
 // import "hardhat/console.sol";
 
 contract OrderBookManager {
-    event OrderBookCreated(bytes32 indexed marketId, address orderBookAddress);
+    event OrderBookCreatedEvent(
+        bytes32 indexed marketId,
+        address orderBookAddress
+    );
+
+    event OrderPlacedEvent(uint256 orderId);
+    event OrderCancelledEvent(uint256 orderId);
 
     mapping(bytes32 => IOrderBookData) public marketOrderBooks;
     TokenManager public tokenManager;
@@ -45,7 +51,7 @@ contract OrderBookManager {
         OrderBookData newOrderBook = new OrderBookData(address(this));
         marketOrderBooks[_marketId] = IOrderBookData(address(newOrderBook));
 
-        emit OrderBookCreated(_marketId, address(newOrderBook));
+        emit OrderBookCreatedEvent(_marketId, address(newOrderBook));
     }
 
     function createOrder(
@@ -64,6 +70,7 @@ contract OrderBookManager {
             _orderType,
             _orderNature
         );
+        emit OrderPlacedEvent(orderId);
         return orderId;
     }
 
@@ -79,6 +86,9 @@ contract OrderBookManager {
             _orderNature,
             _orderId
         );
+        if (removed) {
+            emit OrderCancelledEvent(_orderId);
+        }
         return removed;
     }
 
@@ -103,7 +113,10 @@ contract OrderBookManager {
             _orderType,
             _pendingOrderId
         );
-        require(pendingOrder.remainingAmount > 0, "Pending order is fully filled");
+        require(
+            pendingOrder.remainingAmount > 0,
+            "Pending order is fully filled"
+        );
         OrderLibrary.OrderType oppositeOrderType = _orderType ==
             OrderLibrary.OrderType.Buy
             ? OrderLibrary.OrderType.Sell
