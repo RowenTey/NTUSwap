@@ -43,22 +43,4 @@ library OrderLibrary {
         address userAddress;
         bool filterByUser;
     }
-
-    // struct PlaceOrderParams {
-    //     uint8 tokenIndex1;
-    //     uint8 tokenIndex2;
-    //     uint256 price;
-    //     uint256 amount;
-    //     address userAddress;
-    //     OrderLibrary.OrderType orderType;
-    //     OrderLibrary.OrderNature orderNature;
-    // }
-
-    // struct PlaceOrderResults {
-    //     uint256 orderId;
-    //     address[] toPay;
-    //     address[] toReceive;
-    //     uint256[] tokenAmount;
-    //     uint256[] currencyAmount;
-    // }
 }

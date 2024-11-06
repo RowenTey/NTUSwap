@@ -126,8 +126,6 @@ contract MarketManager {
             orderId,
             orderType,
             orderNature
-            orderType,
-            orderNature
         );
         if (success) {
             emit OrderCancelledEvent(
