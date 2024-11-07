@@ -122,7 +122,7 @@ contract Exchange {
         // Check if buyer has sufficient quote token (currency) balance for a limit order
         if (orderNature == OrderLibrary.OrderNature.Limit) {
             require(
-                tokenManager.getBalance(msg.sender, tokenId2) >= uint256(price) * amount,
+                tokenManager.getBalance(msg.sender, tokenId2) >= (uint256(price) * amount) / 1 ether,
                 "Insufficient balance for buy order"
             );
         }
@@ -163,7 +163,7 @@ contract Exchange {
         // Check if seller has sufficient base token balance for a limit order
         if (orderNature == OrderLibrary.OrderNature.Limit) {
             require(
-                tokenManager.getBalance(msg.sender, tokenId2) >= uint256(price) * amount,
+                tokenManager.getBalance(msg.sender, tokenId2) >= (uint256(price) * amount) / 1 ether,
                 "Insufficient balance for sell order"
             );
         }

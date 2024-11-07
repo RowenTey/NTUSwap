@@ -3,8 +3,7 @@ pragma solidity ^0.8.0;
 import "./OrderLibrary.sol";
 import "./OrderBookData.sol";
 import "./TokenManager.sol";
-
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 contract OrderBookManager {
     event OrderBookCreatedEvent(
@@ -141,6 +140,10 @@ contract OrderBookManager {
 
         if (pendingOrder.nature == OrderLibrary.OrderNature.Market) {
             bool flag = true;
+            uint256 availableBalance = tokenManager.getBalance(
+                pendingOrder.userAddress,
+                _exchangeTokenId
+            );
             while (flag && pendingOrder.remainingAmount > 0) {
                 uint256 bestOrderId = marketOrderBook.getBestOrderFromHeap(
                     oppositeOrderType
@@ -151,43 +154,42 @@ contract OrderBookManager {
                 }
                 OrderLibrary.Order memory bestOrder = marketOrderBook
                     .getOrderFromId(oppositeOrderType, bestOrderId);
-                uint256 availableBalance = tokenManager.getBalance(
-                    pendingOrder.userAddress,
-                    _exchangeTokenId
-                );
+
+                require(availableBalance > 0, "User has insufficient balance");
+
                 int256 settlingPrice = bestOrder.price;
                 uint256 minimumAmount;
                 if (pendingOrderNewAmount <= bestOrder.remainingAmount) {
                     minimumAmount = pendingOrderNewAmount;
                     if (
                         availableBalance >=
-                        (minimumAmount * uint256(settlingPrice))
+                        ((minimumAmount * uint256(settlingPrice)) / 1 ether)
                     ) {
                         flag = false; // Market Order will get fully satisfied so no reason to look for more orders
                     } else {
                         minimumAmount =
                             (minimumAmount * uint256(settlingPrice)) /
-                            availableBalance;
+                            (availableBalance * 1 ether);
                         flag = false; // Market Order will get partially filled but Limit Order will also get partially filled. Thus, market order will not be able to satisfy any more limit orders because of lack of user balance
                     }
                 } else {
                     minimumAmount = bestOrder.remainingAmount;
                     if (
-                        minimumAmount * uint256(settlingPrice) >
+                        (minimumAmount * uint256(settlingPrice)) / 1 ether >
                         availableBalance
                     ) {
                         minimumAmount =
                             (minimumAmount * uint256(settlingPrice)) /
-                            availableBalance;
+                            (availableBalance * 1 ether);
                         flag = false; // Market Order will get partially filled but Limit Order will also get partially filled. Thus, market order will not be able to satisfy any more limit orders because of lack of user balance
                     } else {
                         availableBalance -=
-                            minimumAmount *
-                            uint256(settlingPrice); // Limit Order is fully satisfied but Market order is only partially filled and will continue to look for next best order, so user balance is updated
+                            (minimumAmount *
+                            uint256(settlingPrice)) / 1 ether; // Limit Order is fully satisfied but Market order is only partially filled and will continue to look for next best order, so user balance is updated
                     }
                 }
 
-                uint256 matchedAmount = minimumAmount * uint256(settlingPrice); //TODO: Show varsha if this makes sense
+                uint256 matchedAmount = (minimumAmount * uint256(settlingPrice)) / 1 ether;
                 toBePaid[count] = _orderType == OrderLibrary.OrderType.Buy
                     ? bestOrder.userAddress
                     : pendingOrder.userAddress;
@@ -281,6 +283,11 @@ contract OrderBookManager {
                         i < pendingMarketOrders.length &&
                         pendingOrderNewAmount > 0
                     ) {
+                        console.log("Market Order: ", pendingMarketOrders[i]);
+                        console.log(
+                            "Pending Amount of the order: ",
+                            pendingOrderNewAmount
+                        );
                         OrderLibrary.Order memory marketOrder = marketOrderBook
                             .getOrderFromId(
                                 oppositeOrderType,
@@ -290,23 +297,33 @@ contract OrderBookManager {
                             marketOrder.userAddress,
                             _exchangeTokenId
                         );
+                        console.log("User balance: ", userBalance);
+                        require(userBalance > 0, "User balance is zero!");
+
                         int256 settlingPrice = pendingOrder.price;
                         uint256 minimumAmount = pendingOrderNewAmount <
                             marketOrder.remainingAmount
                             ? pendingOrderNewAmount
                             : marketOrder.remainingAmount;
-
+                        console.log("Minimum Amount = ", minimumAmount);
+                        console.log("Initial Amount to match = ", (minimumAmount *
+                            uint256(settlingPrice)) / 1 ether);
                         if (
                             userBalance <
-                            (minimumAmount * uint256(settlingPrice))
+                            (minimumAmount * uint256(settlingPrice) / 1 ether)
                         ) {
+                            console.log("Entering if condition: Reducing Balance");
                             minimumAmount =
                                 (minimumAmount * uint256(settlingPrice)) /
-                                userBalance;
+                                (userBalance * 1 ether);
                         }
+                        console.log("Minimum Amount = ", minimumAmount);
 
-                        uint256 amountToMatch = minimumAmount *
-                            uint256(settlingPrice);
+                        uint256 amountToMatch = (minimumAmount *
+                            uint256(settlingPrice)) / 1 ether;
+                        
+                        console.log("Final Amount to match = ", amountToMatch);
+                        
                         toBePaid[count] = _orderType ==
                             OrderLibrary.OrderType.Buy
                             ? marketOrder.userAddress
@@ -322,6 +339,7 @@ contract OrderBookManager {
                         uint256 marketOrderNewAmount = marketOrder
                             .remainingAmount - minimumAmount;
 
+                        console.log("Market Order New Amount = ", marketOrderNewAmount);
                         // Update fills for both matched orders
                         OrderLibrary.Fills
                             memory newPendingOrderReceipts = OrderLibrary
@@ -349,9 +367,11 @@ contract OrderBookManager {
                                 : OrderLibrary.OrderStatus.PartiallyFilled;
 
                         if (marketOrderNewAmount == 0) {
+                            console.log("Removing Market Order");
                             marketOrderBook.removeOrder(
                                 oppositeOrderType,
                                 OrderLibrary.OrderNature.Market,
+
                                 pendingMarketOrders[i]
                             );
 
@@ -367,6 +387,7 @@ contract OrderBookManager {
                         }
 
                         if (pendingOrderNewAmount == 0) {
+                            console.log("Removing Pending Order");
                             marketOrderBook.removeOrder(
                                 _orderType,
                                 OrderLibrary.OrderNature.Limit,
@@ -435,7 +456,7 @@ contract OrderBookManager {
 
                 tokenAmount[count] = matchedAmount;
                 currencyAmount[count] = int256(
-                    matchedAmount * uint256(bestOrder.price)
+                    (matchedAmount * uint256(bestOrder.price)) / 1 ether
                 );
 
                 pendingOrderNewAmount -= matchedAmount;
