@@ -98,7 +98,7 @@ contract("OrderBookManager", (accounts) => {
       from: deployer,
     });
 
-    expectEvent(receipt, "OrderBookCreated", {
+    expectEvent(receipt, "OrderBookCreatedEvent", {
       marketId: marketId,
       orderBookAddress: receipt.logs[0].args.orderBookAddress,
     });

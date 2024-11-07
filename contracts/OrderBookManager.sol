@@ -371,7 +371,6 @@ contract OrderBookManager {
                             marketOrderBook.removeOrder(
                                 oppositeOrderType,
                                 OrderLibrary.OrderNature.Market,
-
                                 pendingMarketOrders[i]
                             );
 
