@@ -1,0 +1,680 @@
+{
+  "contractName": "OrderLibrary",
+  "abi": [],
+  "metadata": "{\"compiler\":{\"version\":\"0.8.13+commit.abaa5c0e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/OrderLibrary.sol\":\"OrderLibrary\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[],\"viaIR\":true},\"sources\":{\"project:/contracts/OrderLibrary.sol\":{\"keccak256\":\"0x9d393630639d16c7b2f95c11fbc4205f8f015fe2221fe77d2c4e973b446ab7e6\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://49a69b3452f8a6bd97a0b678c0b0f3ba2cd49e6f7d62282090f8699cc2ad5f3b\",\"dweb:/ipfs/QmPJGKRAbERhFLdywJCVAmUeuP8X4DUSD9u5TQsh6T2X7t\"]}},\"version\":1}",
+  "bytecode": "0x60808060405234601757603a9081601d823930815050f35b600080fdfe600080fdfea2646970667358221220c00c31bba21d0793dbf6a12f0277847220abeaac864e15739e08c0c14f117bea64736f6c634300080d0033",
+  "deployedBytecode": "0x600080fdfea2646970667358221220c00c31bba21d0793dbf6a12f0277847220abeaac864e15739e08c0c14f117bea64736f6c634300080d0033",
+  "immutableReferences": {},
+  "generatedSources": [],
+  "deployedGeneratedSources": [],
+  "sourceMap": "64:795:11:-:0;;;;;;;;;;;;;;;;;;;;;",
+  "deployedSourceMap": "64:795:11:-:0;;",
+  "source": "// SPDX-License-Identifier: UNLICENSED\npragma solidity ^0.8.0;\n\nlibrary OrderLibrary {\n    enum OrderType {\n        Buy,\n        Sell\n    }\n\n    enum OrderNature {\n        Market,\n        Limit\n    }\n\n    enum OrderStatus {\n        Active,\n        PartiallyFilled,\n        Filled,\n        Cancelled\n    }\n\n    struct Order {\n        uint256 totalAmount;\n        uint256 remainingAmount;\n        int256 price;\n        uint256 timestamp;\n        address userAddress;\n        OrderStatus status;\n        OrderNature nature;\n        int256[] fillsPrice;\n        uint256[] fillsAmount;\n        uint256[] fillsTimestamp;\n    }\n\n    struct Fills {\n        int256 price;\n        uint256 amount;\n        uint256 timestamp;\n    }\n\n    struct AllOrdersQueryParams {\n        OrderLibrary.OrderStatus status;\n        address userAddress;\n        bool filterByUser;\n    }\n}\n",
+  "sourcePath": "C:\\Users\\kaise\\OneDrive\\Desktop\\Codebase\\NTU\\sc4053-blockchain-technology\\contracts\\OrderLibrary.sol",
+  "ast": {
+    "absolutePath": "project:/contracts/OrderLibrary.sol",
+    "exportedSymbols": {
+      "OrderLibrary": [
+        14286
+      ]
+    },
+    "id": 14287,
+    "license": "UNLICENSED",
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 14233,
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "39:23:11"
+      },
+      {
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "OrderLibrary",
+        "contractDependencies": [],
+        "contractKind": "library",
+        "fullyImplemented": true,
+        "id": 14286,
+        "linearizedBaseContracts": [
+          14286
+        ],
+        "name": "OrderLibrary",
+        "nameLocation": "72:12:11",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "canonicalName": "OrderLibrary.OrderType",
+            "id": 14236,
+            "members": [
+              {
+                "id": 14234,
+                "name": "Buy",
+                "nameLocation": "116:3:11",
+                "nodeType": "EnumValue",
+                "src": "116:3:11"
+              },
+              {
+                "id": 14235,
+                "name": "Sell",
+                "nameLocation": "129:4:11",
+                "nodeType": "EnumValue",
+                "src": "129:4:11"
+              }
+            ],
+            "name": "OrderType",
+            "nameLocation": "96:9:11",
+            "nodeType": "EnumDefinition",
+            "src": "91:48:11"
+          },
+          {
+            "canonicalName": "OrderLibrary.OrderNature",
+            "id": 14239,
+            "members": [
+              {
+                "id": 14237,
+                "name": "Market",
+                "nameLocation": "172:6:11",
+                "nodeType": "EnumValue",
+                "src": "172:6:11"
+              },
+              {
+                "id": 14238,
+                "name": "Limit",
+                "nameLocation": "188:5:11",
+                "nodeType": "EnumValue",
+                "src": "188:5:11"
+              }
+            ],
+            "name": "OrderNature",
+            "nameLocation": "150:11:11",
+            "nodeType": "EnumDefinition",
+            "src": "145:54:11"
+          },
+          {
+            "canonicalName": "OrderLibrary.OrderStatus",
+            "id": 14244,
+            "members": [
+              {
+                "id": 14240,
+                "name": "Active",
+                "nameLocation": "232:6:11",
+                "nodeType": "EnumValue",
+                "src": "232:6:11"
+              },
+              {
+                "id": 14241,
+                "name": "PartiallyFilled",
+                "nameLocation": "248:15:11",
+                "nodeType": "EnumValue",
+                "src": "248:15:11"
+              },
+              {
+                "id": 14242,
+                "name": "Filled",
+                "nameLocation": "273:6:11",
+                "nodeType": "EnumValue",
+                "src": "273:6:11"
+              },
+              {
+                "id": 14243,
+                "name": "Cancelled",
+                "nameLocation": "289:9:11",
+                "nodeType": "EnumValue",
+                "src": "289:9:11"
+              }
+            ],
+            "name": "OrderStatus",
+            "nameLocation": "210:11:11",
+            "nodeType": "EnumDefinition",
+            "src": "205:99:11"
+          },
+          {
+            "canonicalName": "OrderLibrary.Order",
+            "id": 14270,
+            "members": [
+              {
+                "constant": false,
+                "id": 14246,
+                "mutability": "mutable",
+                "name": "totalAmount",
+                "nameLocation": "341:11:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14270,
+                "src": "333:19:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 14245,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "333:7:11",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 14248,
+                "mutability": "mutable",
+                "name": "remainingAmount",
+                "nameLocation": "370:15:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14270,
+                "src": "362:23:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 14247,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "362:7:11",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 14250,
+                "mutability": "mutable",
+                "name": "price",
+                "nameLocation": "402:5:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14270,
+                "src": "395:12:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_int256",
+                  "typeString": "int256"
+                },
+                "typeName": {
+                  "id": 14249,
+                  "name": "int256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "395:6:11",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int256",
+                    "typeString": "int256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 14252,
+                "mutability": "mutable",
+                "name": "timestamp",
+                "nameLocation": "425:9:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14270,
+                "src": "417:17:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 14251,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "417:7:11",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 14254,
+                "mutability": "mutable",
+                "name": "userAddress",
+                "nameLocation": "452:11:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14270,
+                "src": "444:19:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                },
+                "typeName": {
+                  "id": 14253,
+                  "name": "address",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "444:7:11",
+                  "stateMutability": "nonpayable",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 14257,
+                "mutability": "mutable",
+                "name": "status",
+                "nameLocation": "485:6:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14270,
+                "src": "473:18:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_enum$_OrderStatus_$14244",
+                  "typeString": "enum OrderLibrary.OrderStatus"
+                },
+                "typeName": {
+                  "id": 14256,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 14255,
+                    "name": "OrderStatus",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 14244,
+                    "src": "473:11:11"
+                  },
+                  "referencedDeclaration": 14244,
+                  "src": "473:11:11",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_OrderStatus_$14244",
+                    "typeString": "enum OrderLibrary.OrderStatus"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 14260,
+                "mutability": "mutable",
+                "name": "nature",
+                "nameLocation": "513:6:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14270,
+                "src": "501:18:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_enum$_OrderNature_$14239",
+                  "typeString": "enum OrderLibrary.OrderNature"
+                },
+                "typeName": {
+                  "id": 14259,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 14258,
+                    "name": "OrderNature",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 14239,
+                    "src": "501:11:11"
+                  },
+                  "referencedDeclaration": 14239,
+                  "src": "501:11:11",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_OrderNature_$14239",
+                    "typeString": "enum OrderLibrary.OrderNature"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 14263,
+                "mutability": "mutable",
+                "name": "fillsPrice",
+                "nameLocation": "538:10:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14270,
+                "src": "529:19:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_array$_t_int256_$dyn_storage_ptr",
+                  "typeString": "int256[]"
+                },
+                "typeName": {
+                  "baseType": {
+                    "id": 14261,
+                    "name": "int256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "529:6:11",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_int256",
+                      "typeString": "int256"
+                    }
+                  },
+                  "id": 14262,
+                  "nodeType": "ArrayTypeName",
+                  "src": "529:8:11",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_int256_$dyn_storage_ptr",
+                    "typeString": "int256[]"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 14266,
+                "mutability": "mutable",
+                "name": "fillsAmount",
+                "nameLocation": "568:11:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14270,
+                "src": "558:21:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                  "typeString": "uint256[]"
+                },
+                "typeName": {
+                  "baseType": {
+                    "id": 14264,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "558:7:11",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 14265,
+                  "nodeType": "ArrayTypeName",
+                  "src": "558:9:11",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                    "typeString": "uint256[]"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 14269,
+                "mutability": "mutable",
+                "name": "fillsTimestamp",
+                "nameLocation": "599:14:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14270,
+                "src": "589:24:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                  "typeString": "uint256[]"
+                },
+                "typeName": {
+                  "baseType": {
+                    "id": 14267,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "589:7:11",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 14268,
+                  "nodeType": "ArrayTypeName",
+                  "src": "589:9:11",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
+                    "typeString": "uint256[]"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "Order",
+            "nameLocation": "317:5:11",
+            "nodeType": "StructDefinition",
+            "scope": 14286,
+            "src": "310:310:11",
+            "visibility": "public"
+          },
+          {
+            "canonicalName": "OrderLibrary.Fills",
+            "id": 14277,
+            "members": [
+              {
+                "constant": false,
+                "id": 14272,
+                "mutability": "mutable",
+                "name": "price",
+                "nameLocation": "656:5:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14277,
+                "src": "649:12:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_int256",
+                  "typeString": "int256"
+                },
+                "typeName": {
+                  "id": 14271,
+                  "name": "int256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "649:6:11",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int256",
+                    "typeString": "int256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 14274,
+                "mutability": "mutable",
+                "name": "amount",
+                "nameLocation": "679:6:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14277,
+                "src": "671:14:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 14273,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "671:7:11",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 14276,
+                "mutability": "mutable",
+                "name": "timestamp",
+                "nameLocation": "703:9:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14277,
+                "src": "695:17:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 14275,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "695:7:11",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "Fills",
+            "nameLocation": "633:5:11",
+            "nodeType": "StructDefinition",
+            "scope": 14286,
+            "src": "626:93:11",
+            "visibility": "public"
+          },
+          {
+            "canonicalName": "OrderLibrary.AllOrdersQueryParams",
+            "id": 14285,
+            "members": [
+              {
+                "constant": false,
+                "id": 14280,
+                "mutability": "mutable",
+                "name": "status",
+                "nameLocation": "788:6:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14285,
+                "src": "763:31:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_enum$_OrderStatus_$14244",
+                  "typeString": "enum OrderLibrary.OrderStatus"
+                },
+                "typeName": {
+                  "id": 14279,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 14278,
+                    "name": "OrderLibrary.OrderStatus",
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 14244,
+                    "src": "763:24:11"
+                  },
+                  "referencedDeclaration": 14244,
+                  "src": "763:24:11",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_OrderStatus_$14244",
+                    "typeString": "enum OrderLibrary.OrderStatus"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 14282,
+                "mutability": "mutable",
+                "name": "userAddress",
+                "nameLocation": "812:11:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14285,
+                "src": "804:19:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                },
+                "typeName": {
+                  "id": 14281,
+                  "name": "address",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "804:7:11",
+                  "stateMutability": "nonpayable",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 14284,
+                "mutability": "mutable",
+                "name": "filterByUser",
+                "nameLocation": "838:12:11",
+                "nodeType": "VariableDeclaration",
+                "scope": 14285,
+                "src": "833:17:11",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bool",
+                  "typeString": "bool"
+                },
+                "typeName": {
+                  "id": 14283,
+                  "name": "bool",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "833:4:11",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "AllOrdersQueryParams",
+            "nameLocation": "732:20:11",
+            "nodeType": "StructDefinition",
+            "scope": 14286,
+            "src": "725:132:11",
+            "visibility": "public"
+          }
+        ],
+        "scope": 14287,
+        "src": "64:795:11",
+        "usedErrors": []
+      }
+    ],
+    "src": "39:821:11"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.8.13+commit.abaa5c0e.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.4.16",
+  "updatedAt": "2024-11-07T08:25:46.834Z",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  }
+}
