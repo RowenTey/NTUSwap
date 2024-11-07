@@ -228,105 +228,150 @@ contract("Exchange", (accounts) => {
     );
   });
 
-  //   it("should cancel an order", async () => {
-  //     const token1 = "BTC";
-  //     const token2 = "USD";
-  //     const amount = new BN(50);
-  //     const price = new BN(30);
+  it("should place and match a sell limit order with market buy order", async () => {
+    const { marketId, ethTokenId, usdTokenId } = await setupMarketAndTokens();
 
-  //     await tokenManager.issueToken(
-  //       token1,
-  //       token1,
-  //       new BN(web3.utils.toWei("500", "ether")),
-  //       { from: deployer }
-  //     );
-  //     await tokenManager.issueToken(
-  //       token2,
-  //       token2,
-  //       new BN(web3.utils.toWei("500", "ether")),
-  //       { from: deployer }
-  //     );
-  //     const orderId = await exchange.placeLimitOrder(
-  //       token1,
-  //       token2,
-  //       price,
-  //       amount,
-  //       OrderLibrary.OrderType.Sell,
-  //       { from: user2 }
-  //     );
+    // Deposit tokens through the exchange contract
+    const ethDepositReceipt = await exchange.depositTokens(
+      "ETH",
+      new BN(web3.utils.toWei("500", "ether")),
+      { from: user1 }
+    );
+    const usdDepositReceipt = await exchange.depositTokens(
+      "USD",
+      new BN(web3.utils.toWei("600", "ether")),
+      { from: user2 }
+    );
 
-  //     const marketId = await marketManager.getMarketId(
-  //       await tokenManager.getTokenId(token1),
-  //       await tokenManager.getTokenId(token2)
-  //     );
-  //     const receipt = await exchange.cancelOrder(
-  //       marketId,
-  //       orderId,
-  //       OrderLibrary.OrderType.Sell,
-  //       OrderLibrary.OrderNature.Limit,
-  //       { from: user2 }
-  //     );
+    // Verify deposit events
+    expectEvent(ethDepositReceipt, "DepositReceived", {
+      user: user1,
+      tokenId: ethTokenId,
+      amount: new BN(web3.utils.toWei("500", "ether")),
+    });
+    expectEvent(usdDepositReceipt, "DepositReceived", {
+      user: user2,
+      tokenId: usdTokenId,
+      amount: new BN(web3.utils.toWei("600", "ether")),
+    });
 
-  //     expectEvent(receipt, "OrderCancelled", {
-  //       marketId: marketId,
-  //       orderId: orderId,
-  //       userAddress: user2,
-  //     });
-  //   });
+    const token1 = "ETH";
+    const token2 = "USD";
+    const price = new BN(web3.utils.toWei("2", "ether"));
+    const amount = new BN(web3.utils.toWei("20", "ether"));
 
-  //   it("should match buy and sell limit orders", async () => {
-  //     const token1 = "ETH";
-  //     const token2 = "USD";
-  //     const buyAmount = new BN(100);
-  //     const sellAmount = new BN(100);
-  //     const price = new BN(50);
+    await exchange.placeMarketOrder(
+      token1, // want
+      token2, // give
+      amount,
+      OrderLibrary.OrderType.Buy,
+      { from: user2 }
+    );
+    await exchange.placeLimitOrder(
+      token1, // want
+      token2, // give
+      new BN(web3.utils.toWei("2", "ether")),
+      amount,
+      OrderLibrary.OrderType.Buy,
+      { from: user2 }
+    );
 
-  //     await tokenManager.issueToken(
-  //       token1,
-  //       token1,
-  //       new BN(web3.utils.toWei("1000", "ether")),
-  //       { from: deployer }
-  //     );
-  //     await tokenManager.issueToken(
-  //       token2,
-  //       token2,
-  //       new BN(web3.utils.toWei("1000", "ether")),
-  //       { from: deployer }
-  //     );
+    await exchange.placeLimitOrder(
+      token2, // want
+      token1, // give
+      new BN(web3.utils.toWei("1", "ether")), // User 1 wants to sell 10 ETH at a price of 1 USD per unit
+      new BN(web3.utils.toWei("30", "ether")),
+      OrderLibrary.OrderType.Sell,
+      { from: user1 }
+    );
 
-  //     await tokenManager.transfer(
-  //       user1,
-  //       new BN(web3.utils.toWei("500", "ether")),
-  //       { from: deployer }
-  //     );
-  //     await tokenManager.transfer(
-  //       user2,
-  //       new BN(web3.utils.toWei("500", "ether")),
-  //       { from: deployer }
-  //     );
+    const orderBookAddress = await orderBookManager.marketOrderBooks(marketId);
+    const orderBook = await OrderBookData.at(orderBookAddress);
+    const order1 = await orderBook.getOrderFromId(
+      OrderLibrary.OrderType.Buy,
+      new BN(1)
+    );
+    const order2 = await orderBook.getOrderFromId(
+      OrderLibrary.OrderType.Buy,
+      new BN(2)
+    );
+    const order3 = await orderBook.getOrderFromId(
+      OrderLibrary.OrderType.Sell,
+      new BN(1)
+    );
 
-  //     await exchange.placeLimitOrder(
-  //       token1,
-  //       token2,
-  //       price,
-  //       buyAmount,
-  //       OrderLibrary.OrderType.Buy,
-  //       { from: user1 }
-  //     );
-  //     const receipt = await exchange.placeLimitOrder(
-  //       token2,
-  //       token1,
-  //       price,
-  //       sellAmount,
-  //       OrderLibrary.OrderType.Sell,
-  //       { from: user2 }
-  //     );
+    expect(order1.remainingAmount).to.be.bignumber.equal(
+      new BN(web3.utils.toWei("0", "ether"))
+    );
+    expect(order2.remainingAmount).to.be.bignumber.equal(
+      new BN(web3.utils.toWei("10", "ether"))
+    );
+    expect(order3.remainingAmount).to.be.bignumber.equal(
+      new BN(web3.utils.toWei("0", "ether"))
+    );
+    expect(Number(order1.status)).to.equal(OrderLibrary.OrderStatus.Filled);
+    expect(Number(order2.status)).to.equal(
+      OrderLibrary.OrderStatus.PartiallyFilled
+    );
+    expect(Number(order3.status)).to.equal(OrderLibrary.OrderStatus.Filled);
+  });
 
-  //     expectEvent(receipt, "OrderMatched", {
-  //       matchedAmount: sellAmount,
-  //       executionPrice: price,
-  //     });
-  //   });
+  it("should cancel an order", async () => {
+    const { marketId, ethTokenId, usdTokenId } = await setupMarketAndTokens();
+
+    // Deposit tokens through the exchange contract
+    const ethDepositReceipt = await exchange.depositTokens(
+      "ETH",
+      new BN(web3.utils.toWei("500", "ether")),
+      { from: user1 }
+    );
+    const usdDepositReceipt = await exchange.depositTokens(
+      "USD",
+      new BN(web3.utils.toWei("600", "ether")),
+      { from: user2 }
+    );
+
+    // Verify deposit events
+    expectEvent(ethDepositReceipt, "DepositReceived", {
+      user: user1,
+      tokenId: ethTokenId,
+      amount: new BN(web3.utils.toWei("500", "ether")),
+    });
+    expectEvent(usdDepositReceipt, "DepositReceived", {
+      user: user2,
+      tokenId: usdTokenId,
+      amount: new BN(web3.utils.toWei("600", "ether")),
+    });
+
+    const token1 = "ETH";
+    const token2 = "USD";
+    const amount = new BN(web3.utils.toWei("50", "ether"));
+    const price = new BN(web3.utils.toWei("1", "ether"));
+
+    await exchange.placeLimitOrder(
+      token1,
+      token2,
+      price,
+      amount,
+      OrderLibrary.OrderType.Sell,
+      { from: user2 }
+    );
+
+    const receipt = await exchange.cancelOrder(
+      ethTokenId,
+      usdTokenId,
+      new BN(1),
+      OrderLibrary.OrderType.Sell,
+      OrderLibrary.OrderNature.Limit,
+      { from: user2 }
+    );
+
+    expectEvent(receipt, "OrderCancelled", {
+      marketId: marketId,
+      orderId: new BN(1),
+      userAddress: user2,
+    });
+  });
 
   it("should retrieve all active orders for a market", async () => {
     const { marketId, ethTokenId, usdTokenId } = await setupMarketAndTokens();
