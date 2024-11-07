@@ -371,7 +371,6 @@ contract OrderBookManager {
                             marketOrderBook.removeOrder(
                                 oppositeOrderType,
                                 OrderLibrary.OrderNature.Market,
-
                                 pendingMarketOrders[i]
                             );
 
@@ -453,7 +452,6 @@ contract OrderBookManager {
                     toBePaid[count] = pendingOrder.userAddress;
                     toReceive[count] = bestOrder.userAddress;
                 }
-
                 tokenAmount[count] = matchedAmount;
                 currencyAmount[count] = int256(
                     (matchedAmount * uint256(bestOrder.price)) / 1 ether
@@ -552,6 +550,7 @@ contract OrderBookManager {
         returns (
             uint256[] memory amount,
             int256[] memory price,
+            uint256[] memory orderIds,
             OrderLibrary.OrderType[] memory orderType,
             OrderLibrary.OrderNature[] memory nature,
             int256[][] memory fillsPrice,
@@ -559,6 +558,7 @@ contract OrderBookManager {
             uint256[][] memory fillsTimestamp
         )
     {
-        return marketOrderBooks[_marketId].getAllOrdersWithFilters(params);
+        IOrderBookData orderBook = marketOrderBooks[_marketId];
+        return orderBook.getAllOrdersWithFilters(params);
     }
 }
