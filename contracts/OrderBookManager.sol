@@ -551,6 +551,7 @@ contract OrderBookManager {
         returns (
             uint256[] memory amount,
             int256[] memory price,
+            uint256[] memory orderIds,
             OrderLibrary.OrderType[] memory orderType,
             OrderLibrary.OrderNature[] memory nature,
             int256[][] memory fillsPrice,

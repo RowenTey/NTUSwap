@@ -114,12 +114,14 @@ contract TokenManager is Ownable {
 
     function deposit(
         string memory _symbol,
-        uint256 _amount
+        uint256 _amount,
+        address _userAddress
     ) external returns (uint256 tokenBalance) {
         require(isToken[_symbol] > 0, "Token hasn't been issued");
         require(_amount > 0, "Amount must be greater than zero");
+        console.log("Message sender - ", _userAddress);
 
-        uint256 userBalance = getUserTokenBalance(_symbol);
+        uint256 userBalance = getUserTokenBalance(_userAddress, _symbol);
         require(userBalance + _amount > userBalance, "User balance overflow");
 
         uint8 _tokenId = isToken[_symbol];
@@ -127,26 +129,27 @@ contract TokenManager is Ownable {
 
         // Deposit "amount" number of a particular token from sender to contract
         require(
-            token.transferFrom(msg.sender, address(this), _amount),
+            token.transferFrom(_userAddress, address(this), _amount),
             "Failed to transfer amount"
         );
 
         // Ledger update
-        userBalances[msg.sender][_tokenId] += _amount;
+        userBalances[_userAddress][_tokenId] += _amount;
 
-        emit DepositEvent(_symbol, msg.sender, _amount, block.timestamp);
+        emit DepositEvent(_symbol, _userAddress, _amount, block.timestamp);
 
-        return userBalances[msg.sender][_tokenId];
+        return userBalances[_userAddress][_tokenId];
     }
 
     function withdraw(
         string memory _symbol,
-        uint256 _amount
+        uint256 _amount,
+        address _userAddress
     ) external returns (uint256 tokenBalance) {
         require(isToken[_symbol] > 0, "Token hasn't been issued");
         require(_amount > 0, "Amount must be greater than zero");
 
-        uint256 userBalance = getUserTokenBalance(_symbol);
+        uint256 userBalance = getUserTokenBalance(_userAddress, _symbol);
         require(userBalance >= _amount, "Insufficient balance");
 
         uint8 _tokenId = isToken[_symbol];
@@ -154,23 +157,24 @@ contract TokenManager is Ownable {
 
         // Send "amount" number of a particular token from contract to sender
         require(
-            token.transfer(msg.sender, _amount),
+            token.transfer(_userAddress, _amount),
             "Failed to transfer amount"
         );
 
         // Update ledger
-        userBalances[msg.sender][_tokenId] -= _amount;
+        userBalances[_userAddress][_tokenId] -= _amount;
 
-        emit WithdrawalEvent(_symbol, msg.sender, _amount, block.timestamp);
+        emit WithdrawalEvent(_symbol, _userAddress, _amount, block.timestamp);
 
-        return userBalances[msg.sender][_tokenId];
+        return userBalances[_userAddress][_tokenId];
     }
 
     function getUserTokenBalance(
+        address _userAddress,
         string memory _symbol
     ) public view returns (uint256 tokenBalance) {
         uint8 _tokenId = isToken[_symbol];
-        return userBalances[msg.sender][_tokenId];
+        return userBalances[_userAddress][_tokenId];
     }
 
     function transferFrom(
