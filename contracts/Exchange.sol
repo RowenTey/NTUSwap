@@ -5,10 +5,9 @@ import "./MarketManager.sol";
 import "./OrderBookManager.sol";
 import "./TokenManager.sol";
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 contract Exchange {
-    uint256 public constant DECIMALS = 1e18;
     MarketManager public immutable marketManager;
     OrderBookManager public immutable orderBookManager;
     TokenManager public immutable tokenManager;
@@ -78,7 +77,7 @@ contract Exchange {
         // This is done outside the contract using the token's approve() function
 
         // Perform the deposit
-        uint256 newBalance = tokenManager.deposit(symbol, amount);
+        uint256 newBalance = tokenManager.deposit(symbol, amount, msg.sender);
 
         emit DepositReceived(
             msg.sender,
@@ -90,7 +89,11 @@ contract Exchange {
 
     // Function to withdraw tokens after trading
     function withdrawTokens(string memory symbol, uint256 amount) external {
-        uint256 remainingBalance = tokenManager.withdraw(symbol, amount);
+        uint256 remainingBalance = tokenManager.withdraw(
+            symbol,
+            amount,
+            msg.sender
+        );
 
         emit WithdrawalProcessed(
             msg.sender,
@@ -100,29 +103,76 @@ contract Exchange {
         );
     }
 
-    function placeMarketOrder(string memory token1, string memory token2, uint256 amount, OrderLibrary.OrderNature orderNature, OrderLibrary.OrderType orderType) external returns (uint256) {
-        return orderType == OrderLibrary.OrderType.Buy ? placeBuyOrder(token1, token2, 0, amount, orderNature) : placeSellOrder(token1, token2, 0, amount, orderNature);
+    // FIXME: Check if the order of tokens being passed is correct?
+    function placeMarketOrder(
+        string memory token1,
+        string memory token2,
+        uint256 amount,
+        OrderLibrary.OrderType orderType
+    ) external returns (uint256) {
+        return
+            orderType == OrderLibrary.OrderType.Buy
+                ? placeBuyOrder(
+                    token1,
+                    token2,
+                    0,
+                    amount,
+                    OrderLibrary.OrderNature.Market,
+                    msg.sender
+                )
+                : placeSellOrder(
+                    token1,
+                    token2,
+                    0,
+                    amount,
+                    OrderLibrary.OrderNature.Market,
+                    msg.sender
+                );
     }
 
-    function placeLimitOrder(string memory token1, string memory token2, int256 price, uint256 amount, OrderLibrary.OrderNature orderNature, OrderLibrary.OrderType orderType) external returns (uint256) {
-        return orderType == OrderLibrary.OrderType.Buy ? placeBuyOrder(token1, token2, price, amount, orderNature) : placeSellOrder(token1, token2, price, amount, orderNature);
+    function placeLimitOrder(
+        string memory token1,
+        string memory token2,
+        int256 price,
+        uint256 amount,
+        OrderLibrary.OrderType orderType
+    ) external returns (uint256) {
+        return
+            orderType == OrderLibrary.OrderType.Buy
+                ? placeBuyOrder(
+                    token1,
+                    token2,
+                    price,
+                    amount,
+                    OrderLibrary.OrderNature.Limit,
+                    msg.sender
+                )
+                : placeSellOrder(
+                    token1,
+                    token2,
+                    price,
+                    amount,
+                    OrderLibrary.OrderNature.Limit,
+                    msg.sender
+                );
     }
 
     function placeBuyOrder(
-        string memory token1, // buy
-        string memory token2, // sell
+        string memory token1, // want
+        string memory token2, // give
         int256 price,
         uint256 amount,
-        OrderLibrary.OrderNature orderNature
+        OrderLibrary.OrderNature orderNature,
+        address _userAddress
     ) private returns (uint256) {
-
         uint8 tokenId1 = tokenManager.getTokenId(token1);
         uint8 tokenId2 = tokenManager.getTokenId(token2);
 
         // Check if buyer has sufficient quote token (currency) balance for a limit order
         if (orderNature == OrderLibrary.OrderNature.Limit) {
             require(
-                tokenManager.getBalance(msg.sender, tokenId2) >= (uint256(price) * amount) / 1 ether,
+                tokenManager.getBalance(_userAddress, tokenId2) >=
+                    (uint256(price) * amount) / 1 ether,
                 "Insufficient balance for buy order"
             );
         }
@@ -133,16 +183,20 @@ contract Exchange {
             tokenId2,
             price,
             amount,
-            msg.sender,
+            _userAddress,
             OrderLibrary.OrderType.Buy,
             orderNature
         );
+
+        uint8 exchangeTokenId = orderNature == OrderLibrary.OrderNature.Market
+            ? tokenId1
+            : tokenId2;
 
         // Try to match the order immediately
         _matchAndSettleOrder(
             marketManager.getMarketId(tokenId1, tokenId2),
             orderId,
-            tokenId1,
+            exchangeTokenId,
             OrderLibrary.OrderType.Buy
         );
 
@@ -150,20 +204,21 @@ contract Exchange {
     }
 
     function placeSellOrder(
-        string memory token1, // sell
-        string memory token2, // buy
+        string memory token1, // want
+        string memory token2, // give
         int256 price,
         uint256 amount,
-        OrderLibrary.OrderNature orderNature
+        OrderLibrary.OrderNature orderNature,
+        address _userAddress
     ) private returns (uint256) {
-
         uint8 tokenId1 = tokenManager.getTokenId(token1);
         uint8 tokenId2 = tokenManager.getTokenId(token2);
 
         // Check if seller has sufficient base token balance for a limit order
         if (orderNature == OrderLibrary.OrderNature.Limit) {
             require(
-                tokenManager.getBalance(msg.sender, tokenId2) >= (uint256(price) * amount) / 1 ether,
+                tokenManager.getBalance(_userAddress, tokenId2) >=
+                    ((uint256(price) * amount) / 1 ether),
                 "Insufficient balance for sell order"
             );
         }
@@ -174,22 +229,25 @@ contract Exchange {
             tokenId2,
             price,
             amount,
-            msg.sender,
+            _userAddress,
             OrderLibrary.OrderType.Sell,
             orderNature
         );
+
+        uint8 exchangeTokenId = orderNature == OrderLibrary.OrderNature.Market
+            ? tokenId2
+            : tokenId1;
 
         // Try to match the order immediately
         _matchAndSettleOrder(
             marketManager.getMarketId(tokenId1, tokenId2),
             orderId,
-            tokenId1,
+            exchangeTokenId,
             OrderLibrary.OrderType.Sell
         );
 
         return orderId;
     }
-
 
     function _matchAndSettleOrder(
         bytes32 marketId,
@@ -235,7 +293,7 @@ contract Exchange {
             );
         }
 
-        if (tokenAmount.length > 0) {
+        if (tokenAmount.length > 0 && tokenAmount[0] != 0) {
             emit SettlementCompleted(
                 marketId,
                 toBePaid,
@@ -264,8 +322,7 @@ contract Exchange {
         (uint8 baseTokenId, uint8 quoteTokenId) = marketManager.getMarketTokens(
             marketId
         );
-
-        if(baseTokenId == exchangeTokenId) {
+        if (baseTokenId == exchangeTokenId) {
             (baseTokenId, quoteTokenId) = (quoteTokenId, baseTokenId);
         }
 
@@ -375,6 +432,7 @@ contract Exchange {
         returns (
             uint256[] memory amount,
             int256[] memory price,
+            uint256[] memory orderIds,
             OrderLibrary.OrderType[] memory orderType,
             OrderLibrary.OrderNature[] memory nature,
             int256[][] memory fillsPrice,
@@ -411,6 +469,7 @@ contract Exchange {
         returns (
             uint256[] memory amount,
             int256[] memory price,
+            uint256[] memory orderIds,
             OrderLibrary.OrderType[] memory orderType,
             OrderLibrary.OrderNature[] memory nature,
             int256[][] memory fillsPrice,
@@ -442,6 +501,7 @@ contract Exchange {
         returns (
             uint256[] memory amount,
             int256[] memory price,
+            uint256[] memory orderIds,
             OrderLibrary.OrderType[] memory orderType,
             OrderLibrary.OrderNature[] memory nature,
             int256[][] memory fillsPrice,
@@ -479,6 +539,7 @@ contract Exchange {
         returns (
             uint256[] memory amount,
             int256[] memory price,
+            uint256[] memory orderIds,
             OrderLibrary.OrderType[] memory orderType,
             OrderLibrary.OrderNature[] memory nature,
             int256[][] memory fillsPrice,
@@ -510,6 +571,7 @@ contract Exchange {
         returns (
             uint256[] memory amount,
             int256[] memory price,
+            uint256[] memory orderIds,
             OrderLibrary.OrderType[] memory orderType,
             OrderLibrary.OrderNature[] memory nature,
             int256[][] memory fillsPrice,
@@ -530,7 +592,6 @@ contract Exchange {
                 })
             );
     }
-
 
     // Helper functions
     function getTokenBalance(

@@ -77,11 +77,13 @@ contract("OrderBookManager", (accounts) => {
     await tokenManager.deposit(
       "ETH",
       new BN(web3.utils.toWei("500", "ether")),
+      user1,
       { from: user1 }
     );
     await tokenManager.deposit(
       "USD",
       new BN(web3.utils.toWei("600", "ether")),
+      user2,
       { from: user2 }
     );
 
@@ -98,7 +100,7 @@ contract("OrderBookManager", (accounts) => {
       from: deployer,
     });
 
-    expectEvent(receipt, "OrderBookCreated", {
+    expectEvent(receipt, "OrderBookCreatedEvent", {
       marketId: marketId,
       orderBookAddress: receipt.logs[0].args.orderBookAddress,
     });
@@ -1135,5 +1137,79 @@ contract("OrderBookManager", (accounts) => {
       OrderLibrary.OrderStatus.PartiallyFilled
     );
     expect(Number(order3.status)).to.equal(OrderLibrary.OrderStatus.Filled);
+  });
+
+
+  it("should retrieve all active orders for a market", async () => {
+    const { marketId, ethTokenId, usdTokenId  } = await setupMarketAndTokens();
+
+    // // Creating market order book
+    // await orderBookManager.createMarketOrderBook(marketId, { from: deployer });
+
+    // Place multiple orders
+    await orderBookManager.createOrder(
+      marketId,
+      new BN(100),
+      new BN(50),
+      user1,
+      OrderLibrary.OrderType.Buy,
+      OrderLibrary.OrderNature.Limit,
+      { from: deployer }
+    );
+    await orderBookManager.createOrder(
+      marketId,
+      new BN(200),
+      new BN(60),
+      user2,
+      OrderLibrary.OrderType.Sell,
+      OrderLibrary.OrderNature.Limit,
+      { from: deployer }
+    );
+    await orderBookManager.createOrder(
+      marketId,
+      new BN(150),
+      new BN(55),
+      user1,
+      OrderLibrary.OrderType.Buy,
+      OrderLibrary.OrderNature.Limit,
+      { from: deployer }
+    );
+
+    // Define parameters for active order retrieval
+    const params = {
+      status: OrderLibrary.OrderStatus.Active,
+      filterByUser: false,
+      userAddress: user1,
+    };
+
+    // Retrieve all active orders for the market
+    const result = await orderBookManager.getAllOrdersForAMarket(
+      marketId,
+      params
+    );
+
+    expect(result.amount.length).to.equal(3);
+    expect(result.price.length).to.equal(3);
+    expect(result.orderType.length).to.equal(3);
+    expect(result.nature.length).to.equal(3);
+
+    // Verify the details of each retrieved order
+    expect(result.amount[0]).to.be.bignumber.equal(new BN(100));
+    expect(result.price[0]).to.be.bignumber.equal(new BN(50));
+    expect(result.orderType[0]).to.be.bignumber.equal(
+      new BN(OrderLibrary.OrderType.Buy)
+    );
+
+    expect(result.amount[1]).to.be.bignumber.equal(new BN(150));
+    expect(result.price[1]).to.be.bignumber.equal(new BN(55));
+    expect(result.orderType[1]).to.be.bignumber.equal(
+      new BN(OrderLibrary.OrderType.Buy)
+    );
+
+    expect(result.amount[2]).to.be.bignumber.equal(new BN(200));
+    expect(result.price[2]).to.be.bignumber.equal(new BN(60));
+    expect(result.orderType[2]).to.be.bignumber.equal(
+      new BN(OrderLibrary.OrderType.Sell)
+    );
   });
 });
