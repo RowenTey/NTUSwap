@@ -333,6 +333,7 @@ contract OrderBookData is IOrderBookData {
         returns (
             uint256[] memory amount,
             int256[] memory price,
+            uint256[] memory orderIds,
             OrderLibrary.OrderType[] memory orderType,
             OrderLibrary.OrderNature[] memory nature,
             int256[][] memory fillsPrice,
@@ -380,6 +381,7 @@ contract OrderBookData is IOrderBookData {
         }
 
         amount = new uint256[](matchingOrders);
+        orderIds = new uint256[](matchingOrders);
         price = new int256[](matchingOrders);
         orderType = new OrderLibrary.OrderType[](matchingOrders);
         nature = new OrderLibrary.OrderNature[](matchingOrders);
@@ -404,6 +406,7 @@ contract OrderBookData is IOrderBookData {
                     params.userAddress == order.userAddress)
             ) {
                 amount[currentIndex] = order.remainingAmount;
+                orderIds[currentIndex] = i;
                 price[currentIndex] = order.price;
                 orderType[currentIndex] = OrderLibrary.OrderType.Buy;
                 nature[currentIndex] = order.nature;
@@ -443,6 +446,7 @@ contract OrderBookData is IOrderBookData {
                     params.userAddress == order.userAddress)
             ) {
                 amount[currentIndex] = order.remainingAmount;
+                orderIds[currentIndex] = i;
                 price[currentIndex] = order.price;
                 orderType[currentIndex] = OrderLibrary.OrderType.Sell;
                 nature[currentIndex] = order.nature;
@@ -470,6 +474,7 @@ contract OrderBookData is IOrderBookData {
         return (
             amount,
             price,
+            orderIds,
             orderType,
             nature,
             fillsPrice,
