@@ -79,8 +79,8 @@ const TokenManagerWidget: FC = () => {
 	};
 
 	return (
-		<div className="w-full flex flex-col gap-3 bg-slate-300 p-4 items-center rounded-md border">
-			<p className="text-2xl font-bold">Manage Token</p>
+		<div className="w-full flex flex-col gap-3 bg-zinc-300 p-4 items-center rounded-md border">
+			<p className="text-xl font-bold">Manage Token</p>
 			<form
 				onSubmit={handleSubmit}
 				className="flex flex-col gap-2 items-center"
@@ -115,6 +115,7 @@ const TokenManagerWidget: FC = () => {
 						type="number"
 						id="quantity"
 						placeholder="Quantity"
+						className="border-zinc-700"
 						value={quantity}
 						onChange={handleQuantityChange}
 					/>

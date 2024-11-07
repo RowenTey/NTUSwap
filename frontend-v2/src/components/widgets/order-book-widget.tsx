@@ -30,8 +30,8 @@ const OrderBookWidget: FC = () => {
 	}, [activeMarket]);
 
 	return (
-		<div className="w-full flex flex-col gap-4 bg-white p-4 items-center rounded-md border">
-			<p className="text-2xl font-bold">Order Book</p>
+		<div className="w-full flex flex-col gap-4 bg-zinc-300 p-4 items-center rounded-md border">
+			<p className="text-xl font-bold">Order Book</p>
 
 			<div className="container mx-auto pb-4">
 				<p className="text-center text-xl font-semibold text-green-500 mb-3">

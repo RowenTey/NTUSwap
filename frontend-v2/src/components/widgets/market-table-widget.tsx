@@ -70,7 +70,7 @@ const MarketTableWidget: FC = () => {
 
 	return (
 		<div className="w-full flex flex-col gap-2 bg-zinc-300 p-4 items-center rounded-md border">
-			<p className="text-2xl font-bold">Market Overview</p>
+			<p className="text-xl font-bold">Overview</p>
 
 			<Tabs
 				defaultValue="open-orders"

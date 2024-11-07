@@ -18,14 +18,14 @@ const UserBalanceWidget: FC = () => {
 
 	if (balance.size === 0) {
 		return (
-			<div className="w-full flex justify-center items-center h-[20%] bg-white p-4 rounded-md border">
+			<div className="w-full flex justify-center items-center h-[20%] bg-zinc-300 p-4 rounded-md border">
 				<LoadingSpinner size={36} />
 			</div>
 		);
 	}
 
 	return (
-		<div className="w-full flex flex-col gap-1 bg-white p-4 items-center rounded-md border">
+		<div className="w-full flex flex-col gap-1 bg-zinc-300 p-4 items-center rounded-md border">
 			<p className="text-xl font-bold">Account Balance</p>
 			<DataTable columns={columns} data={tableData} />
 		</div>

@@ -20,7 +20,7 @@ const PriceHistoryWidget: FC = () => {
 
 	if (markets.length === 0) {
 		return (
-			<div className="w-full flex justify-center items-center h-[40%] bg-white p-4 rounded-md border">
+			<div className="w-full flex justify-center items-center h-[40%] bg-zinc-300 p-4 rounded-md border">
 				<LoadingSpinner size={36} />
 			</div>
 		);
@@ -33,7 +33,7 @@ const PriceHistoryWidget: FC = () => {
 	};
 
 	return (
-		<div className="w-full flex flex-col gap-2 bg-white p-4 rounded-md border">
+		<div className="w-full flex flex-col gap-2 bg-zinc-300 p-4 rounded-md border">
 			<div className="flex justify-between items-center px-3 text-lg font-semibold">
 				<div className="flex gap-3 items-center">
 					<p>Market:</p>

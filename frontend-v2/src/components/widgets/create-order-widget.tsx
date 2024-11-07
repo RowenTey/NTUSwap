@@ -75,7 +75,7 @@ const CreateOrderWidget: FC = () => {
 			orderNature
 		);
 
-		if (res.result === "error") {
+		if (res.status === "Error") {
 			toast({
 				title: res.message,
 				variant: "destructive",
@@ -90,8 +90,8 @@ const CreateOrderWidget: FC = () => {
 	};
 
 	return (
-		<div className="w-full flex flex-col gap-3 bg-slate-300 p-4 items-center rounded-md border">
-			<p className="text-2xl font-bold">Create Order</p>
+		<div className="w-full flex flex-col gap-3 bg-zinc-300 p-4 items-center rounded-md border">
+			<p className="text-xl font-bold">Create Order</p>
 			<form
 				onSubmit={handleSubmit}
 				className="flex flex-col gap-2 items-center"
@@ -123,6 +123,7 @@ const CreateOrderWidget: FC = () => {
 						id="price"
 						placeholder="Price"
 						value={price}
+						className="border-zinc-700"
 						onChange={handlePriceChange}
 						// Disable price input for market orders
 						disabled={orderNature === "Market"}
@@ -132,6 +133,7 @@ const CreateOrderWidget: FC = () => {
 						id="quantity"
 						placeholder="Quantity"
 						value={quantity}
+						className="border-zinc-700"
 						onChange={handleQuantityChange}
 					/>
 				</div>
