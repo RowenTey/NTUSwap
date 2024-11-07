@@ -5,7 +5,7 @@ import "./MarketManager.sol";
 import "./OrderBookManager.sol";
 import "./TokenManager.sol";
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 contract Exchange {
     MarketManager public immutable marketManager;
@@ -89,7 +89,11 @@ contract Exchange {
 
     // Function to withdraw tokens after trading
     function withdrawTokens(string memory symbol, uint256 amount) external {
-        uint256 remainingBalance = tokenManager.withdraw(symbol, amount, msg.sender);
+        uint256 remainingBalance = tokenManager.withdraw(
+            symbol,
+            amount,
+            msg.sender
+        );
 
         emit WithdrawalProcessed(
             msg.sender,
@@ -113,14 +117,16 @@ contract Exchange {
                     token2,
                     0,
                     amount,
-                    OrderLibrary.OrderNature.Market
+                    OrderLibrary.OrderNature.Market,
+                    msg.sender
                 )
                 : placeSellOrder(
                     token1,
                     token2,
                     0,
                     amount,
-                    OrderLibrary.OrderNature.Market
+                    OrderLibrary.OrderNature.Market,
+                    msg.sender
                 );
     }
 
@@ -138,14 +144,16 @@ contract Exchange {
                     token2,
                     price,
                     amount,
-                    OrderLibrary.OrderNature.Limit
+                    OrderLibrary.OrderNature.Limit,
+                    msg.sender
                 )
                 : placeSellOrder(
                     token1,
                     token2,
                     price,
                     amount,
-                    OrderLibrary.OrderNature.Limit
+                    OrderLibrary.OrderNature.Limit,
+                    msg.sender
                 );
     }
 
@@ -154,7 +162,8 @@ contract Exchange {
         string memory token2, // give
         int256 price,
         uint256 amount,
-        OrderLibrary.OrderNature orderNature
+        OrderLibrary.OrderNature orderNature,
+        address _userAddress
     ) private returns (uint256) {
         uint8 tokenId1 = tokenManager.getTokenId(token1);
         uint8 tokenId2 = tokenManager.getTokenId(token2);
@@ -162,7 +171,7 @@ contract Exchange {
         // Check if buyer has sufficient quote token (currency) balance for a limit order
         if (orderNature == OrderLibrary.OrderNature.Limit) {
             require(
-                tokenManager.getBalance(msg.sender, tokenId2) >=
+                tokenManager.getBalance(_userAddress, tokenId2) >=
                     (uint256(price) * amount) / 1 ether,
                 "Insufficient balance for buy order"
             );
@@ -174,12 +183,14 @@ contract Exchange {
             tokenId2,
             price,
             amount,
-            msg.sender,
+            _userAddress,
             OrderLibrary.OrderType.Buy,
             orderNature
         );
 
-        uint8 exchangeTokenId = orderNature == OrderLibrary.OrderNature.Market ? tokenId1 : tokenId2;
+        uint8 exchangeTokenId = orderNature == OrderLibrary.OrderNature.Market
+            ? tokenId1
+            : tokenId2;
 
         // Try to match the order immediately
         _matchAndSettleOrder(
@@ -197,17 +208,16 @@ contract Exchange {
         string memory token2, // give
         int256 price,
         uint256 amount,
-        OrderLibrary.OrderNature orderNature
+        OrderLibrary.OrderNature orderNature,
+        address _userAddress
     ) private returns (uint256) {
         uint8 tokenId1 = tokenManager.getTokenId(token1);
         uint8 tokenId2 = tokenManager.getTokenId(token2);
 
         // Check if seller has sufficient base token balance for a limit order
         if (orderNature == OrderLibrary.OrderNature.Limit) {
-            console.log("User Balance for sell limit order - ", tokenManager.getBalance(msg.sender, tokenId2));
-            console.log("Amount required for sell limit order - ", ((uint256(price) * amount) / 1 ether));
             require(
-                tokenManager.getBalance(msg.sender, tokenId2) >=
+                tokenManager.getBalance(_userAddress, tokenId2) >=
                     ((uint256(price) * amount) / 1 ether),
                 "Insufficient balance for sell order"
             );
@@ -219,12 +229,14 @@ contract Exchange {
             tokenId2,
             price,
             amount,
-            msg.sender,
+            _userAddress,
             OrderLibrary.OrderType.Sell,
             orderNature
         );
 
-        uint8 exchangeTokenId = orderNature == OrderLibrary.OrderNature.Market ? tokenId2 : tokenId1;
+        uint8 exchangeTokenId = orderNature == OrderLibrary.OrderNature.Market
+            ? tokenId2
+            : tokenId1;
 
         // Try to match the order immediately
         _matchAndSettleOrder(
@@ -310,7 +322,6 @@ contract Exchange {
         (uint8 baseTokenId, uint8 quoteTokenId) = marketManager.getMarketTokens(
             marketId
         );
-
         if (baseTokenId == exchangeTokenId) {
             (baseTokenId, quoteTokenId) = (quoteTokenId, baseTokenId);
         }
