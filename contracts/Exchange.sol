@@ -593,6 +593,36 @@ contract Exchange {
             );
     }
 
+    function getAllMarkets() external view returns (bytes32[] memory, uint8[] memory, uint8[] memory) {
+        (
+            string[] memory tokenNames,
+            string[] memory tokenSymbols
+        ) = tokenManager.getAllTokens();
+        uint count = 0;
+        bytes32[] memory marketIds = new bytes32[]((tokenSymbols.length * (tokenSymbols.length - 1)) / 2);
+        uint8[] memory token1Ids = new uint8[]((tokenSymbols.length * (tokenSymbols.length - 1)) / 2);
+        uint8[] memory token2Ids = new uint8[]((tokenSymbols.length * (tokenSymbols.length - 1)) / 2);
+        for (uint i = 0; i < tokenSymbols.length - 1; i++) {
+            uint8 tokenId1 = tokenManager.getTokenId(tokenSymbols[i]);
+            for (uint j = i + 1; j < tokenSymbols.length; j++) {
+                uint8 tokenId2 = tokenManager.getTokenId(tokenSymbols[j]);
+                bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
+                marketIds[count] = marketId;
+                token1Ids[count] = tokenId1;
+                token2Ids[count] = tokenId2;
+                count++;
+            }
+        }
+        return (marketIds, token1Ids, token2Ids);
+    }
+
+    function getBestPriceInMarket(OrderLibrary.OrderType _orderType, string memory _token1, string memory _token2) external view returns (int256) {
+        uint8 token1Id = tokenManager.getTokenId(_token1);
+        uint8 token2Id = tokenManager.getTokenId(_token2);
+        bytes32 marketId = marketManager.getMarketId(token1Id, token2Id);
+        return orderBookManager.getBestPriceInMarket(_orderType, marketId);
+    }
+
     // Helper functions
     function getTokenBalance(
         address _userAddr,
