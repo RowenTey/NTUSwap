@@ -561,4 +561,10 @@ contract OrderBookManager {
         IOrderBookData orderBook = marketOrderBooks[_marketId];
         return orderBook.getAllOrdersWithFilters(params);
     }
+
+    function getBestPriceInMarket(OrderLibrary.OrderType _orderType, bytes32 _marketId) external view returns (int256) {
+        IOrderBookData marketOrderBook = marketOrderBooks[_marketId];
+        uint256 orderId = marketOrderBook.getBestOrderFromHeap(_orderType);
+        return marketOrderBook.getOrderFromId(_orderType, orderId).price;
+    }
 }
