@@ -189,8 +189,8 @@ contract Exchange {
         );
 
         uint8 exchangeTokenId = orderNature == OrderLibrary.OrderNature.Market
-            ? tokenId1
-            : tokenId2;
+            ? tokenId2
+            : tokenId1;
 
         // Try to match the order immediately
         _matchAndSettleOrder(
