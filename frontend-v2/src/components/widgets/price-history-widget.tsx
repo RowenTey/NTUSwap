@@ -43,6 +43,14 @@ const PriceHistoryWidget: FC = () => {
 	const fetchMarketPrice = async (market: Market) => {
 		const res = await getMarketPrice(market);
 		console.log("[PriceHistoryWidget] Market price: ", res);
+
+		// set to last price if no price data available
+		if (res.result[0] === 0 && res.result[1] === 0) {
+			setBuyMarketPrice(marketData.at(-1)?.price || 0);
+			setSellMarketPrice(marketData.at(-1)?.price || 0);
+			return;
+		}
+
 		setBuyMarketPrice(res.result[0]);
 		setSellMarketPrice(res.result[1]);
 	};

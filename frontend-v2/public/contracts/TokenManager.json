@@ -9828,12 +9828,12 @@
         }
       },
       "links": {},
-      "address": "0x07d549A182dba5bFb5132A5E6970051D116c2590",
-      "transactionHash": "0x7dcfcbd1f8e9df0a758b17bc91a77902b14415f49ce98823124628aba1d5f6d7"
+      "address": "0x52133F49FCF3264d91126864e232A9bcA2D1F33d",
+      "transactionHash": "0xc9400b1e35ce04813de7b69cb6d437aab6f82aef6a6eb83429477e2939527c99"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2024-11-09T05:40:51.113Z",
+  "updatedAt": "2024-11-09T09:27:03.564Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",

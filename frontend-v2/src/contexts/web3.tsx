@@ -62,6 +62,7 @@ interface DEXController {
 	>;
 	getMarketPrice: (market: Market) => Promise<InvokeResponse<[number, number]>>;
 	setMatched: React.Dispatch<React.SetStateAction<string>>;
+	setRefresh: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface Web3ContextType {
@@ -169,6 +170,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 	const [balance, setBalance] = useState<Map<string, number>>(new Map());
 	const [activeMarket, setActiveMarket] = useState<Market | null>(null);
 
+	const [refresh, setRefresh] = useState<boolean>(false);
 	const [refetchOrders, setRefetchOrders] = useState<{
 		marketTable: boolean;
 		orderBookTable: boolean;
@@ -496,14 +498,6 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 				status: "Error",
 				message: "Contract not initialized",
 				result: new Map(),
-			};
-		}
-
-		if (tokens.size > 0) {
-			return {
-				status: "Success",
-				message: "Tokens already fetched",
-				result: tokens,
 			};
 		}
 
@@ -938,15 +932,32 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		};
 	};
 
-	useEffect(() => {
-		const fetchData = async () => {
-			const tokenRes = await fetchTokens();
-			await fetchMarkets(tokenRes.result);
-			await fetchBalance(tokenRes.result);
-		};
+	const checkUserInvolvedInSettlement = (
+		userAddr: string,
+		from: string,
+		to: string
+	): boolean => {
+		return (
+			userAddr.toLowerCase() === from.toLowerCase() ||
+			userAddr.toLowerCase() === to.toLowerCase()
+		);
+	};
 
+	const fetchData = async () => {
+		const tokenRes = await fetchTokens();
+		await fetchMarkets(tokenRes.result);
+		await fetchBalance(tokenRes.result);
+	};
+
+	useEffect(() => {
 		fetchData();
 	}, [contract, account]);
+
+	useEffect(() => {
+		if (!refresh) return;
+		fetchData();
+		setRefresh(false);
+	}, [refresh]);
 
 	useEffect(() => {
 		if (window.ethereum) {
@@ -970,17 +981,6 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			}
 		};
 	}, []);
-
-	const checkUserInvolvedInSettlement = (
-		userAddr: string,
-		from: string,
-		to: string
-	): boolean => {
-		return (
-			userAddr.toLowerCase() === from.toLowerCase() ||
-			userAddr.toLowerCase() === to.toLowerCase()
-		);
-	};
 
 	useEffect(() => {
 		if (!contract || !activeMarket || tokens.size === 0) return;
@@ -1046,6 +1046,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		setRefetchOrders,
 		getMarketPrice,
 		setMatched,
+		setRefresh,
 	};
 
 	const contextValue = useMemo<Web3ContextType>(

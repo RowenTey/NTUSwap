@@ -19,8 +19,7 @@ const Hero: FC = () => {
 			console.log("Wallet connected!");
 			return;
 		}
-
-		connectWallet();
+		// connectWallet();
 	}, []);
 
 	const navigate = () => {

@@ -10,7 +10,7 @@ const IssuePage: FC = () => {
 	const router = useRouter();
 	const { toast } = useToast();
 	const { isWalletConnected, controller } = useWeb3();
-	const { issueToken } = controller;
+	const { issueToken, setRefresh } = controller;
 	const [name, setName] = useState<string>("");
 	const [symbol, setSymbol] = useState<string>("");
 	const [quantity, setQuantity] = useState<number | string>("");
@@ -69,6 +69,7 @@ const IssuePage: FC = () => {
 			description: "Token issued successfully",
 		});
 		resetForm();
+		setRefresh(true);
 		router.push("/dashboard");
 	};
 
