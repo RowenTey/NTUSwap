@@ -1,794 +1,699 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
+import "./OrderLibrary.sol";
+import "./MarketManager.sol";
+import "./OrderBookManager.sol";
+import "./TokenManager.sol";
 
-import "truffle/console.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/interfaces/IERC20.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import "hardhat/console.sol";
 
-contract Exchange is Ownable {
-    /* Entities */
+contract Exchange {
+    MarketManager public immutable marketManager;
+    OrderBookManager public immutable orderBookManager;
+    TokenManager public immutable tokenManager;
 
-    enum OrderType {
-        Buy,
-        Sell
-    }
+    // Events for tracking order lifecycle
+    event OrderMatched(
+        bytes32 indexed marketId,
+        uint256 indexed buyOrderId,
+        uint256 indexed sellOrderId,
+        uint256 matchedAmount,
+        uint256 executionPrice,
+        uint256 timestamp
+    );
 
-    enum OrderNature {
-        Market,
-        Limit
-    }
+    event SettlementCompleted(
+        bytes32 indexed marketId,
+        address[] toBePaid,
+        address[] toReceive,
+        uint256[] tokenAmount,
+        int256[] currencyAmount,
+        uint256 timestamp
+    );
 
-    enum OrderStatus {
-        Active,
-        Filled,
-        Cancelled
-    }
+    event TransferProcessed(
+        address indexed from,
+        address indexed to,
+        uint256 tokenAmount,
+        int256 currencyAmount,
+        uint256 timestamp
+    );
 
-    struct Order {
-        uint256 amount;
-        uint256 price;
-        uint256 timestamp;
-        address userAddress;
-        OrderStatus status;
-    }
-
-    struct OrderBook {
-        // Track total number of orders
-        uint256 totalOrders;
-        // Map orderId to Order
-        mapping(uint256 => Order) orders;
-        // Track number of active orders
-        uint256 activeCount;
-        // Queue of IDs of active orders
-        uint256[] queue;
-    }
-
-    struct Market {
-        // Map to buy and sell OrderBook
-        mapping(OrderType => OrderBook) orderBooks;
-    }
-
-    // Map token index to ERC20 token
-    mapping(uint8 => ERC20Token) tokens;
-    /*
-     * We can have 1 market for each combinations of buy and sell tokens
-     */
-    mapping(uint8 => Market) exchangeMarkets;
-    // Map market index to buy and sell token index
-    mapping(uint8 => uint8[]) buyToSell;
-    // Map user address to user balances per token
-    mapping(address => mapping(uint8 => uint256)) userBalances;
-
-    // Track number of tokens
-    uint8 tokenIndex;
-    // Track number of exchange markets
-    uint8 marketIndex;
-
-    /* Events */
-
-    event DepositEvent(
-        string symbol,
-        address userAddress,
+    event DepositReceived(
+        address indexed user,
+        uint8 tokenId,
         uint256 amount,
         uint256 timestamp
     );
 
-    event WithdrawalEvent(
-        string symbol,
-        address userAddress,
+    event WithdrawalProcessed(
+        address indexed user,
+        uint8 tokenId,
         uint256 amount,
         uint256 timestamp
     );
 
-    event IssueTokenEvent(
-        uint8 tokenIndex,
-        string name,
-        string symbol,
-        uint256 initialSupply,
-        uint256 timestamp
-    );
-
-    event MarketCreatedEvent(
-        uint256 marketIndex,
-        string symbol1,
-        string symbol2,
-        uint256 timestamp
-    );
-
-    event OrderCreatedEvent(
-        string symbol1,
-        string symbol2,
-        uint256 price,
-        uint256 amount,
+    event OrderCancelled(
+        bytes32 indexed marketId,
+        uint256 orderId,
         address userAddress,
-        OrderType orderType,
-        OrderNature orderNature,
+        OrderLibrary.OrderType orderType,
         uint256 timestamp
     );
 
-    event OrderFilledEvent(
-        string symbol1,
-        string symbol2,
-        uint256 price,
-        uint256 amount,
-        OrderType orderType,
-        OrderNature orderNature,
-        uint256 timestamp
-    );
+    constructor(
+        address _marketManager,
+        address _orderBookManager,
+        address _tokenManager
+    ) {
+        marketManager = MarketManager(_marketManager);
+        orderBookManager = OrderBookManager(_orderBookManager);
+        tokenManager = TokenManager(_tokenManager);
+    }
 
-    event OrderCancelledEvent(
-        uint256 orderIndex,
-        string symbol1,
-        string symbol2,
-        OrderType orderType,
-        address userAddress,
-        uint256 timestamp
-    );
+    // Function to deposit tokens before trading
+    function depositTokens(string memory symbol, uint256 amount) external {
+        // First, user must have approved this contract to spend their tokens
+        // This is done outside the contract using the token's approve() function
 
-    /* Functionalities */
+        // Perform the deposit
+        uint256 newBalance = tokenManager.deposit(symbol, amount, msg.sender);
 
-    // Owner -> Issue new tokens
-    function issueToken(
-        string memory name,
-        string memory symbol,
-        uint256 initialSupply
-    ) public onlyOwner {
-        require(!hasToken(symbol), "Token already exists");
-        require(tokenIndex + 1 > tokenIndex, "Token index overflow");
-
-        tokenIndex++;
-        tokens[tokenIndex] = new ERC20Token(
-            name,
-            symbol,
-            initialSupply,
-            msg.sender
-        );
-
-        // Second token -> create market
-        if (tokenIndex > 1) {
-            createMarket();
-        }
-
-        emit IssueTokenEvent(
-            tokenIndex,
-            name,
-            symbol,
-            initialSupply,
+        emit DepositReceived(
+            msg.sender,
+            tokenManager.getTokenId(symbol),
+            amount,
             block.timestamp
         );
     }
 
-    // Owner -> Create new market (Triggered when a new token is issued)
-    // TODO: How to correctly create the exchange market?
-    function createMarket() public onlyOwner {
-        require(marketIndex + 1 > marketIndex, "Market index overflow");
+    // Function to withdraw tokens after trading
+    function withdrawTokens(string memory symbol, uint256 amount) external {
+        uint256 remainingBalance = tokenManager.withdraw(
+            symbol,
+            amount,
+            msg.sender
+        );
 
-        for (uint8 i = 1; i <= tokenIndex; i++) {
+        emit WithdrawalProcessed(
+            msg.sender,
+            tokenManager.getTokenId(symbol),
+            amount,
+            block.timestamp
+        );
+    }
+
+    // FIXME: Check if the order of tokens being passed is correct?
+    function placeMarketOrder(
+        string memory token1,
+        string memory token2,
+        uint256 amount,
+        OrderLibrary.OrderType orderType
+    ) external returns (uint256) {
+        return
+            orderType == OrderLibrary.OrderType.Buy
+                ? placeBuyOrder(
+                    token1,
+                    token2,
+                    0,
+                    amount,
+                    OrderLibrary.OrderNature.Market,
+                    msg.sender
+                )
+                : placeSellOrder(
+                    token1,
+                    token2,
+                    0,
+                    amount,
+                    OrderLibrary.OrderNature.Market,
+                    msg.sender
+                );
+    }
+
+    function placeLimitOrder(
+        string memory token1,
+        string memory token2,
+        int256 price,
+        uint256 amount,
+        OrderLibrary.OrderType orderType
+    ) external returns (uint256) {
+        return
+            orderType == OrderLibrary.OrderType.Buy
+                ? placeBuyOrder(
+                    token1,
+                    token2,
+                    price,
+                    amount,
+                    OrderLibrary.OrderNature.Limit,
+                    msg.sender
+                )
+                : placeSellOrder(
+                    token1,
+                    token2,
+                    price,
+                    amount,
+                    OrderLibrary.OrderNature.Limit,
+                    msg.sender
+                );
+    }
+
+    function placeBuyOrder(
+        string memory token1, // want
+        string memory token2, // give
+        int256 price,
+        uint256 amount,
+        OrderLibrary.OrderNature orderNature,
+        address _userAddress
+    ) private returns (uint256) {
+        uint8 tokenId1 = tokenManager.getTokenId(token1);
+        uint8 tokenId2 = tokenManager.getTokenId(token2);
+
+        // Check if buyer has sufficient quote token (currency) balance for a limit order
+        if (orderNature == OrderLibrary.OrderNature.Limit) {
             console.log(
-                "Adding market: %s and %s",
-                tokens[tokenIndex].symbol(),
-                tokens[i].symbol()
+                "Checking balance for buy order - ",
+                tokenManager.getBalance(_userAddress, tokenId2),
+                ((uint256(price) * amount) / 1 ether)
             );
-            marketIndex++;
-            buyToSell[marketIndex] = [tokenIndex, i];
+            require(
+                tokenManager.getBalance(_userAddress, tokenId2) >=
+                    (uint256(price) * amount) / 1 ether,
+                "Insufficient balance for buy order"
+            );
+        }
 
-            emit MarketCreatedEvent(
-                marketIndex,
-                tokens[tokenIndex].symbol(),
-                tokens[i].symbol(),
+        // Place the order through market manager
+        uint256 orderId = marketManager.placeOrder(
+            tokenId1,
+            tokenId2,
+            price,
+            amount,
+            _userAddress,
+            OrderLibrary.OrderType.Buy,
+            orderNature
+        );
+
+        uint8 exchangeTokenId = orderNature == OrderLibrary.OrderNature.Market
+            ? tokenId2
+            : tokenId1;
+
+        // Try to match the order immediately
+        _matchAndSettleOrder(
+            marketManager.getMarketId(tokenId1, tokenId2),
+            orderId,
+            exchangeTokenId,
+            OrderLibrary.OrderType.Buy,
+            orderNature
+        );
+
+        return orderId;
+    }
+
+    function placeSellOrder(
+        string memory token1, // want
+        string memory token2, // give`
+        int256 price,
+        uint256 amount,
+        OrderLibrary.OrderNature orderNature,
+        address _userAddress
+    ) private returns (uint256) {
+        uint8 tokenId1 = tokenManager.getTokenId(token1);
+        uint8 tokenId2 = tokenManager.getTokenId(token2);
+
+        // Check if seller has sufficient base token balance for a limit order
+        if (orderNature == OrderLibrary.OrderNature.Limit) {
+            console.log(
+                "Checking balance for sell order - ",
+                tokenManager.getBalance(_userAddress, tokenId2),
+                ((uint256(price) * amount) / 1 ether)
+            );
+            require(
+                tokenManager.getBalance(_userAddress, tokenId2) >=
+                    ((uint256(price) * amount) / 1 ether),
+                "Insufficient balance for sell order"
+            );
+        }
+
+        // Place the order through market manager
+        uint256 orderId = marketManager.placeOrder(
+            tokenId1,
+            tokenId2,
+            price,
+            amount,
+            _userAddress,
+            OrderLibrary.OrderType.Sell,
+            orderNature
+        );
+
+        uint8 exchangeTokenId = orderNature == OrderLibrary.OrderNature.Market
+            ? tokenId2
+            : tokenId1;
+
+        // Try to match the order immediately
+        _matchAndSettleOrder(
+            marketManager.getMarketId(tokenId1, tokenId2),
+            orderId,
+            exchangeTokenId,
+            OrderLibrary.OrderType.Sell,
+            orderNature
+        );
+
+        return orderId;
+    }
+
+    function _matchAndSettleOrder(
+        bytes32 marketId,
+        uint256 orderId,
+        uint8 _exchangeTokenId,
+        OrderLibrary.OrderType _orderType,
+        OrderLibrary.OrderNature _orderNature
+    ) internal {
+        // Get matching results from OrderBookManager
+        (
+            uint256 remainingAmount,
+            address[] memory toBePaid,
+            address[] memory toReceive,
+            uint256[] memory tokenAmount,
+            int256[] memory currencyAmount
+        ) = orderBookManager.matchOrder(
+                marketId,
+                orderId,
+                _exchangeTokenId,
+                _orderType
+            );
+
+        // Process settlements
+        for (uint256 i = 0; i < toBePaid.length; i++) {
+            if (tokenAmount[i] == 0) continue; // Skips empty matches
+
+            emit OrderMatched(
+                marketId,
+                _orderType == OrderLibrary.OrderType.Buy ? orderId : i,
+                _orderType == OrderLibrary.OrderType.Sell ? orderId : i,
+                tokenAmount[i],
+                uint256(currencyAmount[i]) / tokenAmount[i], // Price per token
+                block.timestamp
+            );
+
+            // Token transfers handling
+            _settleTransaction(
+                marketId,
+                _exchangeTokenId,
+                toBePaid[i],
+                toReceive[i],
+                tokenAmount[i],
+                currencyAmount[i],
+                _orderType,
+                _orderNature
+            );
+        }
+
+        if (tokenAmount.length > 0 && tokenAmount[0] != 0) {
+            emit SettlementCompleted(
+                marketId,
+                toBePaid,
+                toReceive,
+                tokenAmount,
+                currencyAmount,
                 block.timestamp
             );
         }
-
-        console.log("Total markets: ", marketIndex);
     }
 
-    // User -> Transfer from wallet to contract
-    function depositToken(
-        string memory symbol,
-        uint256 amount
-    ) public returns (uint256 tokenBalance) {
-        require(hasToken(symbol), "Token does not exist");
-        require(amount > 0, "Amount must be greater than zero");
+    function _settleTransaction(
+        bytes32 marketId,
+        uint8 exchangeTokenId,
+        address toBePaid,
+        address toReceive,
+        uint256 tokenAmount,
+        int256 currencyAmount,
+        OrderLibrary.OrderType orderType,
+        OrderLibrary.OrderNature orderNature
+    ) internal {
+        require(toBePaid != address(0), "Invalid toBePaid address");
+        require(toReceive != address(0), "Invalid toReceive address");
+        require(tokenAmount > 0, "Invalid token amount");
+        require(currencyAmount > 0, "Invalid currency amount");
 
-        uint256 userBalance = getTokenBalanceForUser(symbol);
-        require(userBalance + amount > userBalance, "User balance overflow");
-
-        uint8 symbolTokenIndex = getTokenIndex(symbol);
-
-        // Transfer from user wallet to token balance in contract
-        IERC20 token = tokens[symbolTokenIndex];
-        require(
-            token.transferFrom(msg.sender, address(this), amount) == true,
-            "Transfer failed"
+        (uint8 token1Id, uint8 token2Id) = marketManager.getMarketTokens(
+            marketId
         );
 
-        // Update ledger
-        userBalances[msg.sender][symbolTokenIndex] += amount;
+        uint8 baseTokenId;
+        uint8 quoteTokenId;
 
-        emit DepositEvent(symbol, msg.sender, amount, block.timestamp);
-        return userBalances[msg.sender][symbolTokenIndex];
-    }
-
-    function withdrawToken(
-        string memory symbol,
-        uint256 amount
-    ) public returns (uint256 tokenBalance) {
-        require(hasToken(symbol), "Token does not exist");
-        require(amount > 0, "Amount must be greater than zero");
-
-        uint256 userBalance = getTokenBalanceForUser(symbol);
-        require(userBalance - amount >= 0, "Insufficient balance");
-
-        uint8 symbolTokenIndex = getTokenIndex(symbol);
-
-        // Transfer from token balance in contract to user wallet
-        IERC20 token = tokens[symbolTokenIndex];
-        require(token.transfer(msg.sender, amount) == true, "Transfer failed");
-
-        // Update ledger
-        userBalances[msg.sender][symbolTokenIndex] -= amount;
-
-        emit WithdrawalEvent(symbol, msg.sender, amount, block.timestamp);
-        return userBalances[msg.sender][symbolTokenIndex];
-    }
-
-    function addOrder(
-        uint8 _marketIndex,
-        uint256 orderId,
-        OrderType orderType
-    ) private {
-        uint256 newOrdersCount = ++exchangeMarkets[_marketIndex]
-            .orderBooks[orderType]
-            .activeCount;
-        uint256[] memory updatedOrdersQueue = new uint256[](newOrdersCount);
-        bool isOrderAdded = false;
-
-        if (newOrdersCount == 1) {
-            updatedOrdersQueue[0] = orderId;
-            isOrderAdded = true;
-        } else {
-            // Insert in sorted position
-            Order memory newOrder = exchangeMarkets[_marketIndex]
-                .orderBooks[orderType]
-                .orders[orderId];
-            uint256 newOrdersQueueIndex = 0;
-            for (uint256 i = 0; i < newOrdersCount - 1; i++) {
-                uint256 existingOrderId = exchangeMarkets[_marketIndex]
-                    .orderBooks[orderType]
-                    .queue[i];
-
-                Order memory existingOrder = exchangeMarkets[_marketIndex]
-                    .orderBooks[orderType]
-                    .orders[existingOrderId];
-
-                if (newOrder.price < existingOrder.price) {
-                    updatedOrdersQueue[newOrdersQueueIndex++] = orderId;
-                    isOrderAdded = true;
-                }
-                updatedOrdersQueue[newOrdersQueueIndex++] = existingOrderId;
+        if (orderNature == OrderLibrary.OrderNature.Market) {
+            // For market orders, exchangeTokenId is the token being given
+            if (orderType == OrderLibrary.OrderType.Buy) {
+                // Market Buy: exchangeTokenId is quote token (what buyer pays with)
+                quoteTokenId = exchangeTokenId;
+                baseTokenId = (token1Id == exchangeTokenId)
+                    ? token2Id
+                    : token1Id;
+            } else {
+                // Market Sell: exchangeTokenId is base token (what seller gives)
+                baseTokenId = exchangeTokenId;
+                quoteTokenId = (token1Id == exchangeTokenId)
+                    ? token2Id
+                    : token1Id;
             }
-            if (!isOrderAdded)
-                updatedOrdersQueue[newOrdersQueueIndex] = orderId;
+        } else {
+            // For limit orders, exchangeTokenId is the token being wanted
+            if (orderType == OrderLibrary.OrderType.Buy) {
+                // Limit Buy: exchangeTokenId is base token (what buyer wants)
+                baseTokenId = exchangeTokenId;
+                quoteTokenId = (token1Id == exchangeTokenId)
+                    ? token2Id
+                    : token1Id;
+            } else {
+                // Limit Sell: exchangeTokenId is quote token (what seller wants)
+                quoteTokenId = exchangeTokenId;
+                baseTokenId = (token1Id == exchangeTokenId)
+                    ? token2Id
+                    : token1Id;
+            }
         }
 
-        exchangeMarkets[_marketIndex]
-            .orderBooks[orderType]
-            .queue = updatedOrdersQueue;
+        // Transfer base token from seller to buyer
+        bool baseTokenTransferred = tokenManager.transferFrom(
+            toBePaid, // seller
+            toReceive, // buyer
+            baseTokenId,
+            tokenAmount
+        );
+        require(baseTokenTransferred, "Base token transfer failed");
+
+        // Transfer quote token (currency) from buyer to seller
+        bool quoteTokenTransferred = tokenManager.transferFrom(
+            toReceive, // buyer
+            toBePaid, // seller
+            quoteTokenId,
+            uint256(currencyAmount)
+        );
+        require(quoteTokenTransferred, "Quote token transfer failed");
+
+        // Emit transfer processed event
+        emit TransferProcessed(
+            toBePaid,
+            toReceive,
+            tokenAmount,
+            currencyAmount,
+            block.timestamp
+        );
     }
 
-    /*
-     * BUY -> 1: buySymbol, 2: sellSymbol
-     * SELL -> 1: sellSymbol, 2: buySymbol
-     */
-    function createOrder(
-        string memory symbol1,
-        string memory symbol2,
-        uint256 price,
-        uint256 amount,
-        OrderType orderType,
-        OrderNature orderNature
-    ) public {
-        require(hasToken(symbol1), "Token does not exist");
-        require(hasToken(symbol2), "Token does not exist");
-        require(price > 0, "Price must be greater than zero");
-        require(amount > 0, "Amount must be greater than zero");
+    function cancelOrder(
+        uint8 tokenId1,
+        uint8 tokenId2,
+        uint256 orderId,
+        OrderLibrary.OrderType orderType,
+        OrderLibrary.OrderNature orderNature
+    ) external {
+        // Get Market Id
+        bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
 
-        uint256 balance;
-        uint8 _marketIndex;
-        uint8 tokenIndex1 = getTokenIndex(symbol1);
-        uint8 tokenIndex2 = getTokenIndex(symbol2);
-
-        // Check user balance depending on order type
-        if (orderType == OrderType.Buy) {
-            require(
-                orderNature == OrderNature.Market ||
-                    (orderNature == OrderNature.Limit &&
-                        userBalances[msg.sender][tokenIndex1] >=
-                        price * amount),
-                "Insufficient balance"
-            );
-
-            _marketIndex = getMarketIndexByTokenIndex(tokenIndex1, tokenIndex2);
-        } else {
-            require(
-                orderNature == OrderNature.Market ||
-                    (orderNature == OrderNature.Limit &&
-                        userBalances[msg.sender][tokenIndex2] >=
-                        price * amount),
-                "Insufficient balance"
-            );
-
-            _marketIndex = getMarketIndexByTokenIndex(tokenIndex2, tokenIndex1);
-        }
-
-        // Add order to order book
-        uint256 _newOrderIndex = ++exchangeMarkets[_marketIndex]
-            .orderBooks[orderType]
-            .totalOrders;
-        exchangeMarkets[_marketIndex].orderBooks[orderType].orders[
-            _newOrderIndex
-        ] = Order({
-            amount: amount,
-            price: price,
-            timestamp: block.timestamp,
-            userAddress: msg.sender,
-            status: OrderStatus.Active
-        });
-
-        balance = fulfillOrder(
-            tokenIndex1,
-            tokenIndex2,
-            _marketIndex,
-            exchangeMarkets[_marketIndex].orderBooks[orderType].orders[
-                _newOrderIndex
-            ],
+        // Cancel Order
+        bool success = marketManager.cancelOrder(
+            marketId,
+            orderId,
+            msg.sender,
             orderType,
             orderNature
         );
 
-        emit OrderCreatedEvent(
-            getTokenSymbol(tokenIndex1),
-            getTokenSymbol(tokenIndex2),
-            price,
-            amount,
+        require(success, "Order could not be cancelled");
+
+        // Emit successful cancellation event
+        emit OrderCancelled(
+            marketId,
+            orderId,
             msg.sender,
             orderType,
-            orderNature,
             block.timestamp
         );
-
-        if (balance > 0 && balance < amount) {
-            // Update existing order as filled
-            // Create a new order for the remaining balance
-            exchangeMarkets[_marketIndex]
-                .orderBooks[orderType]
-                .orders[_newOrderIndex]
-                .status = OrderStatus.Filled;
-
-            _newOrderIndex = ++exchangeMarkets[_marketIndex]
-                .orderBooks[orderType]
-                .totalOrders;
-            exchangeMarkets[_marketIndex].orderBooks[orderType].orders[
-                    _newOrderIndex
-                ] = Order({
-                amount: amount - balance,
-                price: price,
-                timestamp: block.timestamp,
-                userAddress: msg.sender,
-                status: OrderStatus.Active
-            });
-
-            emit OrderCreatedEvent(
-                getTokenSymbol(tokenIndex1),
-                getTokenSymbol(tokenIndex2),
-                price,
-                amount - balance,
-                msg.sender,
-                orderType,
-                orderNature,
-                block.timestamp
-            );
-
-            // Add to active order queue
-            // TODO: Why did senior only add for LIMIT orders?
-            addOrder(_marketIndex, _newOrderIndex, orderType);
-        } else if (balance == 0) {
-            exchangeMarkets[_marketIndex]
-                .orderBooks[orderType]
-                .orders[_newOrderIndex]
-                .status = OrderStatus.Filled;
-        } else {
-            // Not filled at all
-            // Add to active order queue
-            // TODO: Why did senior only add for LIMIT orders?
-            addOrder(_marketIndex, _newOrderIndex, orderType);
-        }
     }
 
-    /*
-     * BUY -> 1: buySymbol, 2: sellSymbol
-     * SELL -> 1: sellSymbol, 2: buySymbol
-     */
-    function fulfillOrder(
-        uint8 tokenIndex1,
-        uint8 tokenIndex2,
-        uint8 _marketIndex,
-        Order memory pendingOrder,
-        OrderType orderType,
-        OrderNature orderNature
-    ) private returns (uint256 balance) {
-        OrderType oppositeOrderType = orderType == OrderType.Buy
-            ? OrderType.Sell
-            : OrderType.Buy;
-        uint256 oppositeOrderCount = exchangeMarkets[_marketIndex]
-            .orderBooks[oppositeOrderType]
-            .activeCount;
-        uint256 fulfilledOrdersCount = 0;
+    function getUserTokenBalance(
+        address _userAddr,
+        string memory _symbol
+    ) external view returns (uint256) {
+        return getTokenBalance(_userAddr, _symbol);
+    }
 
-        if (orderType == OrderType.Buy) {
-            // Buy -> Match from lowest price
-            for (uint256 i = 0; i < oppositeOrderCount; i++) {
-                if (pendingOrder.amount == 0) break;
+    function getAllAvailableTokens()
+        external
+        view
+        returns (string[] memory, string[] memory)
+    {
+        return tokenManager.getAllTokens();
+    }
 
-                uint256 orderId = exchangeMarkets[_marketIndex]
-                    .orderBooks[oppositeOrderType]
-                    .queue[i];
+    function getAllUserTokenBalance(
+        address _userAddr
+    )
+        external
+        view
+        returns (uint256[] memory userTokenBalances, string[] memory tokenNames)
+    {
+        // Retrieve all token names and symbols from the token manager
+        string[] memory tokenSymbols;
+        (tokenNames, tokenSymbols) = tokenManager.getAllTokens();
 
-                Order memory activeOrder = exchangeMarkets[_marketIndex]
-                    .orderBooks[oppositeOrderType]
-                    .orders[orderId];
+        // Initialize the userTokenBalances array with the correct length
+        userTokenBalances = new uint256[](tokenSymbols.length);
 
-                // Array is sorted by price
-                // -> smaller means we have matched all possible orders for a LIMIT order
-                // -> we only want to buy at this price or less
-                if (
-                    orderNature == OrderNature.Limit &&
-                    pendingOrder.price < activeOrder.price
-                ) break;
-
-                uint256 matchedAmount = Math.min(
-                    pendingOrder.amount,
-                    activeOrder.amount
-                );
-
-                pendingOrder.amount -= matchedAmount;
-                activeOrder.amount -= matchedAmount;
-
-                // Transfer of bought tokens
-                userBalances[msg.sender][tokenIndex1] += matchedAmount;
-                userBalances[activeOrder.userAddress][
-                    tokenIndex2
-                ] -= matchedAmount;
-
-                // Transfer of "currency" (Bought at other's sell price)
-                userBalances[msg.sender][tokenIndex2] -=
-                    matchedAmount *
-                    activeOrder.price;
-                userBalances[activeOrder.userAddress][tokenIndex1] +=
-                    matchedAmount *
-                    activeOrder.price;
-
-                if (activeOrder.amount == 0) {
-                    activeOrder.status = OrderStatus.Filled;
-                    fulfilledOrdersCount++;
-                }
-
-                emit OrderFilledEvent(
-                    getTokenSymbol(tokenIndex1),
-                    getTokenSymbol(tokenIndex2),
-                    activeOrder.price,
-                    matchedAmount,
-                    orderType,
-                    orderNature,
-                    block.timestamp
-                );
-            }
-        } else {
-            // Sell -> Match from highest price
-            for (uint256 i = oppositeOrderCount - 1; i >= 0; i--) {
-                if (pendingOrder.amount == 0) break;
-
-                uint256 orderId = exchangeMarkets[_marketIndex]
-                    .orderBooks[oppositeOrderType]
-                    .queue[i];
-
-                Order memory activeOrder = exchangeMarkets[_marketIndex]
-                    .orderBooks[oppositeOrderType]
-                    .orders[orderId];
-
-                // Array is sorted by price
-                // -> bigger means we have matched all possible orders for a LIMIT order
-                // -> we only want to sell at this price or more
-                if (
-                    orderNature == OrderNature.Limit &&
-                    pendingOrder.price > activeOrder.price
-                ) break;
-
-                uint256 matchedAmount = Math.min(
-                    pendingOrder.amount,
-                    activeOrder.amount
-                );
-
-                pendingOrder.amount -= matchedAmount;
-                activeOrder.amount -= matchedAmount;
-
-                // Transfer of sold tokens
-                userBalances[msg.sender][tokenIndex2] -= matchedAmount;
-                userBalances[activeOrder.userAddress][
-                    tokenIndex1
-                ] += matchedAmount;
-
-                // Transfer of "currency" (Sold at other's buy price)
-                userBalances[msg.sender][tokenIndex1] +=
-                    matchedAmount *
-                    activeOrder.price;
-                userBalances[activeOrder.userAddress][tokenIndex2] -=
-                    matchedAmount *
-                    activeOrder.price;
-
-                if (activeOrder.amount == 0) {
-                    activeOrder.status = OrderStatus.Filled;
-                    fulfilledOrdersCount++;
-                }
-
-                emit OrderFilledEvent(
-                    getTokenSymbol(tokenIndex1),
-                    getTokenSymbol(tokenIndex2),
-                    activeOrder.price,
-                    matchedAmount,
-                    orderType,
-                    orderNature,
-                    block.timestamp
-                );
-            }
+        // Loop through each token and get the balance for the user
+        for (uint256 i = 0; i < tokenSymbols.length; i++) {
+            uint256 tokenBalance = getTokenBalance(_userAddr, tokenSymbols[i]);
+            userTokenBalances[i] = tokenBalance;
         }
 
-        updateOrderBook(
-            _marketIndex,
-            oppositeOrderType,
-            oppositeOrderCount,
-            fulfilledOrdersCount
+        return (userTokenBalances, tokenNames);
+    }
+
+    function getAllActiveOrdersForAMarket(
+        string memory _token1,
+        string memory _token2
+    )
+        external
+        view
+        returns (
+            uint256[] memory amount,
+            int256[] memory price,
+            uint256[] memory orderIds,
+            OrderLibrary.OrderType[] memory orderType,
+            OrderLibrary.OrderNature[] memory nature,
+            int256[][] memory fillsPrice,
+            uint256[][] memory fillsAmount,
+            uint256[][] memory fillsTimestamp
+        )
+    {
+        uint8 tokenId1 = tokenManager.getTokenId(_token1);
+        uint8 tokenId2 = tokenManager.getTokenId(_token2);
+        bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
+
+        require(
+            marketManager.isMarketInitialized(tokenId1, tokenId2),
+            "Market does not exist for these pairs of tokens"
         );
 
-        return pendingOrder.amount;
-    }
-
-    function updateOrderBook(
-        uint8 _marketIndex,
-        OrderType orderType,
-        uint256 currentOrderCount,
-        uint256 fulfilledOrderCount
-    ) private {
-        uint256[] memory currentOrdersQueue = exchangeMarkets[_marketIndex]
-            .orderBooks[orderType]
-            .queue;
-
-        uint256 updatedOrderCount = currentOrderCount - fulfilledOrderCount;
-        uint256[] memory updatedOrdersQueue = new uint256[](updatedOrderCount);
-        for (uint256 i = 0; i < currentOrderCount; i++) {
-            updatedOrdersQueue[i] = currentOrdersQueue[i + fulfilledOrderCount];
-        }
-
-        exchangeMarkets[_marketIndex]
-            .orderBooks[orderType]
-            .queue = updatedOrdersQueue;
-        exchangeMarkets[_marketIndex]
-            .orderBooks[orderType]
-            .activeCount = updatedOrderCount;
-    }
-
-    /*
-     * BUY -> 1: buySymbol, 2: sellSymbol
-     * SELL -> 1: sellSymbol, 2: buySymbol
-     */
-    function cancelOrder(
-        string memory symbol1,
-        string memory symbol2,
-        OrderType orderType,
-        uint256 orderId
-    ) private {
-        require(hasToken(symbol1), "Token does not exist");
-        require(hasToken(symbol2), "Token does not exist");
-
-        uint8 _marketIndex;
-        uint8 tokenIndex1 = getTokenIndex(symbol1);
-        uint8 tokenIndex2 = getTokenIndex(symbol2);
-
-        if (orderType == OrderType.Buy) {
-            _marketIndex = getMarketIndexByTokenIndex(tokenIndex1, tokenIndex2);
-        } else {
-            _marketIndex = getMarketIndexByTokenIndex(tokenIndex2, tokenIndex1);
-        }
-
-        uint256 currentActiveCount = exchangeMarkets[_marketIndex]
-            .orderBooks[orderType]
-            .activeCount;
-        require(currentActiveCount > 0, "No active orders for this order type");
-
-        bool isOrderRemoved = false;
-        uint256 newQueueIndex = 0;
-        uint256[] memory updatedQueue = new uint256[](currentActiveCount - 1);
-
-        for (uint256 i = 0; i < currentActiveCount; i++) {
-            if (
-                exchangeMarkets[_marketIndex].orderBooks[orderType].queue[i] !=
-                orderId
-            ) {
-                updatedQueue[newQueueIndex++] = exchangeMarkets[_marketIndex]
-                    .orderBooks[orderType]
-                    .queue[i];
-                continue;
-            }
-
-            isOrderRemoved = true;
-        }
-
-        exchangeMarkets[_marketIndex]
-            .orderBooks[orderType]
-            .queue = updatedQueue;
-        exchangeMarkets[_marketIndex]
-            .orderBooks[orderType]
-            .activeCount = newQueueIndex;
-
-        // TODO: Do I need to refund to user?
-
-        if (isOrderRemoved) {
-            exchangeMarkets[_marketIndex]
-                .orderBooks[orderType]
-                .orders[orderId]
-                .status = OrderStatus.Cancelled;
-            emit OrderCancelledEvent(
-                orderId,
-                symbol1,
-                symbol2,
-                orderType,
-                msg.sender,
-                block.timestamp
+        return
+            orderBookManager.getAllOrdersForAMarket(
+                marketId,
+                OrderLibrary.AllOrdersQueryParams({
+                    status: OrderLibrary.OrderStatus.Active,
+                    userAddress: msg.sender,
+                    filterByUser: false
+                })
             );
-        }
     }
 
-    /* Read-only utility methods */
-
-    function hasToken(string memory symbol) public view returns (bool) {
-        for (uint8 i = 0; i <= tokenIndex; i++) {
-            if (
-                keccak256(abi.encodePacked(tokens[i].symbol)) ==
-                keccak256(abi.encodePacked(symbol))
-            ) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function getActiveOrdersForOrderBook(
-        uint8 buyTokenIndex,
-        uint8 sellTokenIndex,
-        OrderType orderType
-    ) public view returns (Order[] memory activeOrders) {
-        uint8 _marketIndex = getMarketIndexByTokenIndex(buyTokenIndex, sellTokenIndex);
-        uint256 currentActiveCount = exchangeMarkets[_marketIndex]
-            .orderBooks[orderType]
-            .activeCount;
-            
-        for (uint8 i = 0; i <= currentActiveCount; i++) {
-            uint256 orderId = exchangeMarkets[
-                _marketIndex
-            ].orderBooks[orderType].queue[i];
-            
-            activeOrders[i] = exchangeMarkets[_marketIndex].orderBooks[orderType].orders[orderId];
-        }
-        
-        return activeOrders;
-    }
-
-    function getTokenIndex(
-        string memory symbol
-    ) public view returns (uint8 foundTokenIndex) {
-        for (uint8 i = 0; i <= tokenIndex; i++) {
-            if (
-                keccak256(bytes(tokens[i].symbol())) == keccak256(bytes(symbol))
-            ) {
-                return i;
-            }
-        }
-        return 0;
-    }
-
-    function getTokenSymbol(
-        uint8 tokenIndex
-    ) public view returns (string memory) {
-        return tokens[tokenIndex].symbol();
-    }
-
-    function getMarketIndexBySymbol(
-        string memory buyTokenSymbol,
-        string memory sellTokenSymbol
-    ) public view returns (uint8 foundMarketIndex) {
-        uint8 buyTokenIndex = getTokenIndex(buyTokenSymbol);
-        uint8 sellTokenIndex = getTokenIndex(sellTokenSymbol);
-        for (uint8 i = 0; i <= marketIndex; i++) {
-            if (
-                buyToSell[i][0] == buyTokenIndex &&
-                buyToSell[i][1] == sellTokenIndex
-            ) {
-                return i;
-            }
-        }
-        return 0;
-    }
-
-    function getMarketIndexByTokenIndex(
-        uint8 buyTokenIndex,
-        uint8 sellTokenIndex
-    ) public view returns (uint8 foundMarketIndex) {
-        for (uint8 i = 0; i <= marketIndex; i++) {
-            if (
-                buyTokenIndex == buyToSell[i][0] &&
-                sellTokenIndex == buyToSell[i][1]
-            ) {
-                return i;
-            }
-        }
-        return 0;
-    }
-
-    function getTokenBalanceForUser(
-        string memory symbol
-    ) public view returns (uint256 tokenBalance) {
-        return userBalances[msg.sender][getTokenIndex(symbol)];
-    }
-
-    function getAllTokenBalanceForUser()
-        public
+    function getAllFulfilledOrdersOfAMarket(
+        string memory _token1,
+        string memory _token2
+    )
+        external
         view
-        returns (string[] memory tokenSymbol, uint256[] memory tokenBalance)
+        returns (
+            uint256[] memory amount,
+            int256[] memory price,
+            uint256[] memory orderIds,
+            OrderLibrary.OrderType[] memory orderType,
+            OrderLibrary.OrderNature[] memory nature,
+            int256[][] memory fillsPrice,
+            uint256[][] memory fillsAmount,
+            uint256[][] memory fillsTimestamp
+        )
     {
-        for (uint8 i = 0; i <= tokenIndex; i++) {
-            tokenSymbol[i] = tokens[i].symbol();
-            tokenBalance[i] = userBalances[msg.sender][i];
-        }
-
-        return (tokenSymbol, tokenBalance);
+        uint8 tokenId1 = tokenManager.getTokenId(_token1);
+        uint8 tokenId2 = tokenManager.getTokenId(_token2);
+        bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
+        return
+            orderBookManager.getAllOrdersForAMarket(
+                marketId,
+                OrderLibrary.AllOrdersQueryParams({
+                    status: OrderLibrary.OrderStatus.Filled,
+                    userAddress: msg.sender,
+                    filterByUser: false
+                })
+            );
     }
 
-    function getAllTokens() public view returns (string[] memory tokenSymbol) {
-        for (uint8 i = 0; i <= tokenIndex; i++) {
-            tokenSymbol[i] = tokens[i].symbol();
-        }
+    function getAllActiveUserOrdersForAMarket(
+        string memory _token1,
+        string memory _token2,
+        address _userAddress
+    )
+        external
+        view
+        returns (
+            uint256[] memory amount,
+            int256[] memory price,
+            uint256[] memory orderIds,
+            OrderLibrary.OrderType[] memory orderType,
+            OrderLibrary.OrderNature[] memory nature,
+            int256[][] memory fillsPrice,
+            uint256[][] memory fillsAmount,
+            uint256[][] memory fillsTimestamp
+        )
+    {
+        uint8 tokenId1 = tokenManager.getTokenId(_token1);
+        uint8 tokenId2 = tokenManager.getTokenId(_token2);
+        bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
 
-        return tokenSymbol;
+        require(
+            marketManager.isMarketInitialized(tokenId1, tokenId2),
+            "Market does not exist for these pairs of tokens"
+        );
+
+        return
+            orderBookManager.getAllOrdersForAMarket(
+                marketId,
+                OrderLibrary.AllOrdersQueryParams({
+                    status: OrderLibrary.OrderStatus.Active,
+                    userAddress: _userAddress,
+                    filterByUser: true
+                })
+            );
     }
 
-    function getMarketIndex() public view returns (uint8) {
-        return marketIndex;
+    function getAllFulfilledUserOrdersForAMarket(
+        string memory _token1,
+        string memory _token2,
+        address _userAddress
+    )
+        external
+        view
+        returns (
+            uint256[] memory amount,
+            int256[] memory price,
+            uint256[] memory orderIds,
+            OrderLibrary.OrderType[] memory orderType,
+            OrderLibrary.OrderNature[] memory nature,
+            int256[][] memory fillsPrice,
+            uint256[][] memory fillsAmount,
+            uint256[][] memory fillsTimestamp
+        )
+    {
+        uint8 tokenId1 = tokenManager.getTokenId(_token1);
+        uint8 tokenId2 = tokenManager.getTokenId(_token2);
+        bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
+        return
+            orderBookManager.getAllOrdersForAMarket(
+                marketId,
+                OrderLibrary.AllOrdersQueryParams({
+                    status: OrderLibrary.OrderStatus.Filled,
+                    userAddress: _userAddress,
+                    filterByUser: true
+                })
+            );
+    }
+
+    function getAllCancelledUserOrdersForAMarket(
+        string memory _token1,
+        string memory _token2,
+        address _userAddress
+    )
+        external
+        view
+        returns (
+            uint256[] memory amount,
+            int256[] memory price,
+            uint256[] memory orderIds,
+            OrderLibrary.OrderType[] memory orderType,
+            OrderLibrary.OrderNature[] memory nature,
+            int256[][] memory fillsPrice,
+            uint256[][] memory fillsAmount,
+            uint256[][] memory fillsTimestamp
+        )
+    {
+        uint8 tokenId1 = tokenManager.getTokenId(_token1);
+        uint8 tokenId2 = tokenManager.getTokenId(_token2);
+        bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
+        return
+            orderBookManager.getAllOrdersForAMarket(
+                marketId,
+                OrderLibrary.AllOrdersQueryParams({
+                    status: OrderLibrary.OrderStatus.Cancelled,
+                    userAddress: _userAddress,
+                    filterByUser: true
+                })
+            );
     }
 
     function getAllMarkets()
-        public
+        external
         view
-        returns (string[] memory buySymbolName, string[] memory sellSymbolName)
+        returns (bytes32[] memory, uint8[] memory, uint8[] memory)
     {
-        for (uint8 i = 0; i <= marketIndex; i++) {
-            buySymbolName[i] = tokens[buyToSell[i][0]].symbol();
-            sellSymbolName[i] = tokens[buyToSell[i][1]].symbol();
+        (
+            string[] memory tokenNames,
+            string[] memory tokenSymbols
+        ) = tokenManager.getAllTokens();
+        uint count = 0;
+        bytes32[] memory marketIds = new bytes32[](
+            (tokenSymbols.length * (tokenSymbols.length - 1)) / 2
+        );
+        uint8[] memory token1Ids = new uint8[](
+            (tokenSymbols.length * (tokenSymbols.length - 1)) / 2
+        );
+        uint8[] memory token2Ids = new uint8[](
+            (tokenSymbols.length * (tokenSymbols.length - 1)) / 2
+        );
+        for (uint i = 0; i < tokenSymbols.length - 1; i++) {
+            uint8 tokenId1 = tokenManager.getTokenId(tokenSymbols[i]);
+            for (uint j = i + 1; j < tokenSymbols.length; j++) {
+                uint8 tokenId2 = tokenManager.getTokenId(tokenSymbols[j]);
+                bytes32 marketId = marketManager.getMarketId(
+                    tokenId1,
+                    tokenId2
+                );
+                marketIds[count] = marketId;
+                token1Ids[count] = tokenId1;
+                token2Ids[count] = tokenId2;
+                count++;
+            }
         }
-
-        return (buySymbolName, sellSymbolName);
+        return (marketIds, token1Ids, token2Ids);
     }
-}
 
-contract ERC20Token is ERC20 {
-    constructor(
-        string memory name,
-        string memory symbol,
-        uint256 initialSupply,
-        address owner
-    ) ERC20(name, symbol) {
-        _mint(owner, initialSupply);
+    function getBestPriceInMarket(
+        OrderLibrary.OrderType _orderType,
+        string memory _token1,
+        string memory _token2
+    ) external view returns (int256) {
+        uint8 token1Id = tokenManager.getTokenId(_token1);
+        uint8 token2Id = tokenManager.getTokenId(_token2);
+        bytes32 marketId = marketManager.getMarketId(token1Id, token2Id);
+        return orderBookManager.getBestPriceInMarket(_orderType, marketId);
+    }
+
+    // Helper functions
+    function getTokenBalance(
+        address _userAddr,
+        string memory _symbol
+    ) private view returns (uint256) {
+        uint8 tokenId = tokenManager.getTokenId(_symbol);
+        return tokenManager.getBalance(_userAddr, tokenId);
     }
 }
