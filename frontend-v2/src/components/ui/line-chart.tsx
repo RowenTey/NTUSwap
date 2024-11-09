@@ -113,32 +113,47 @@ const chartData = [
 	{ date: "2024-06-30", desktop: 446, mobile: 400 },
 ];
 
+export interface MarketData {
+	timestamp: number;
+	price: number;
+	quantity: number;
+}
+
 // TODO: change to apr
 const chartConfig = {
-	views: {
+	price: {
 		label: "Price",
-	},
-	desktop: {
-		label: "Desktop",
 		color: "hsl(var(--chart-1))",
 	},
-	mobile: {
-		label: "Mobile",
+	quantity: {
+		label: "Volume",
 		color: "hsl(var(--chart-2))",
 	},
 } satisfies ChartConfig;
 
-export function InteractiveLineChart() {
-	const [activeChart, setActiveChart] =
-		React.useState<keyof typeof chartConfig>("desktop");
+interface InteractiveLineChartProps {
+	data: MarketData[];
+}
 
-	const total = React.useMemo(
-		() => ({
-			desktop: chartData.reduce((acc, curr) => acc + curr.desktop, 0),
-			mobile: chartData.reduce((acc, curr) => acc + curr.mobile, 0),
-		}),
-		[]
-	);
+export function InteractiveLineChart({ data }: InteractiveLineChartProps) {
+	const [activeChart, setActiveChart] =
+		React.useState<keyof typeof chartConfig>("price");
+
+	const filteredData = React.useMemo(() => {
+		const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+		return data.filter((entry) => entry.timestamp * 1000 >= oneDayAgo);
+	}, [data]);
+
+	const ticks = React.useMemo(() => {
+		const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+		const now = Date.now();
+		const interval = 5 * 60 * 1000; // 5 minutes in milliseconds
+		const result = [];
+		for (let i = oneDayAgo; i <= now; i += interval) {
+			result.push(i);
+		}
+		return result;
+	}, []);
 
 	return (
 		<Card className="w-full">
@@ -150,37 +165,36 @@ export function InteractiveLineChart() {
 					</CardDescription>
 				</div>
 
-				{/* <div className="flex">
-					{["desktop", "mobile"].map((key) => {
+				<div className="flex">
+					{["price", "quantity"].map((key) => {
 						const chart = key as keyof typeof chartConfig;
 						return (
 							<button
 								key={chart}
 								data-active={activeChart === chart}
-								className="flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l data-[active=true]:bg-muted/50 sm:border-l sm:border-t-0 sm:px-8 sm:py-6"
+								className="flex flex-1 flex-col justify-center gap-1 border-t px-2 py-1 text-left even:border-l data-[active=true]:bg-muted/50 sm:border-l sm:border-t-0"
 								onClick={() => setActiveChart(chart)}
 							>
 								<span className="text-xs text-muted-foreground">
 									{chartConfig[chart].label}
 								</span>
-								<span className="text-lg font-bold leading-none sm:text-3xl">
+								{/* <span className="text-md font-bold leading-none sm:text-3xl">
 									{total[key as keyof typeof total].toLocaleString()}
-								</span>
+								</span> */}
 							</button>
 						);
 					})}
-				</div> */}
+				</div>
 			</CardHeader>
 
-			{/* <CardContent className="px-2 sm:p-6"> */}
-			<CardContent className="pt-0 pb-1">
+			<CardContent className="py-3">
 				<ChartContainer
 					config={chartConfig}
 					className="aspect-auto h-[250px] w-full"
 				>
 					<LineChart
 						accessibilityLayer
-						data={chartData}
+						data={filteredData}
 						margin={{
 							left: 12,
 							right: 12,
@@ -188,16 +202,17 @@ export function InteractiveLineChart() {
 					>
 						<CartesianGrid vertical={false} />
 						<XAxis
-							dataKey="date"
+							dataKey="timestamp"
 							tickLine={false}
 							axisLine={false}
-							tickMargin={8}
-							minTickGap={32}
+							// tickMargin={8}
+							// minTickGap={32}
+							// ticks={ticks}
 							tickFormatter={(value) => {
-								const date = new Date(value);
-								return date.toLocaleDateString("en-US", {
-									month: "short",
-									day: "numeric",
+								const date = new Date(value * 1000);
+								return date.toLocaleTimeString("en-US", {
+									hour: "2-digit",
+									minute: "2-digit",
 								});
 							}}
 						/>
@@ -205,12 +220,13 @@ export function InteractiveLineChart() {
 							content={
 								<ChartTooltipContent
 									className="w-[150px]"
-									nameKey="views"
-									labelFormatter={(value) => {
-										return new Date(value).toLocaleDateString("en-US", {
-											month: "short",
-											day: "numeric",
-											year: "numeric",
+									nameKey={activeChart}
+									labelFormatter={(_label, payload) => {
+										return new Date(
+											payload[0].payload.timestamp * 1000
+										).toLocaleTimeString("en-US", {
+											hour: "2-digit",
+											minute: "2-digit",
 										});
 									}}
 								/>

@@ -4,12 +4,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useWeb3 } from "@/contexts/web3";
 import Link from "next/link";
 import { formatAddress } from "@/lib/utils";
+import { usePathname } from "next/navigation";
 
 const Navbar: FC = () => {
 	const { account, contract, controller } = useWeb3();
 	const { getOwner } = controller;
 	const [owner, setOwner] = useState<string>("");
 	const [activeTab, setActiveTab] = useState<string>("");
+	const pathname = usePathname();
 
 	useEffect(() => {
 		const fetchOwner = async () => {
@@ -19,6 +21,10 @@ const Navbar: FC = () => {
 
 		fetchOwner();
 	}, [account, contract]);
+
+	useEffect(() => {
+		setActiveTab(pathname.slice(1));
+	}, [pathname]);
 
 	const handleTabClick = (tab: string) => {
 		if (!tab) {

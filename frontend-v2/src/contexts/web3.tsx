@@ -9,7 +9,8 @@ import React, {
 } from "react";
 import Web3 from "web3";
 import { toCamelCase } from "@/lib/utils";
-import { Order } from "@/components/columns/order-book-table";
+import { Fill, Order } from "@/components/columns/order-book-table";
+import { useToast } from "@/hooks/use-toast";
 
 interface DEXContract {
 	exchange: any | null;
@@ -22,7 +23,7 @@ interface DEXController {
 	connectWallet: () => Promise<void>;
 	getOwner: () => Promise<string>;
 	fetchBalance: (
-		tokenMap: Map<string, string>
+		tokenMap: Token
 	) => Promise<InvokeResponse<Map<string, number>>>;
 	updateBalance: (symbol: string, amount: number) => void;
 	issueToken: (
@@ -33,18 +34,34 @@ interface DEXController {
 	deposit: (symbol: string, amount: number) => Promise<InvokeResponse<any>>;
 	withdraw: (symbol: string, amount: number) => Promise<InvokeResponse<any>>;
 	createOrder: (
-		tokenSymbol1: string,
-		tokenSymbol2: string,
+		targetToken: string,
+		market: Market,
 		price: number,
 		amount: number,
 		type: OrderType,
 		nature: OrderNature
 	) => Promise<InvokeResponse<any>>;
 	setActiveMarket: React.Dispatch<React.SetStateAction<Market | null>>;
-	fetchActiveOrders: (
+	fetchOrders: (
 		market: Market,
-		all?: boolean
+		status: OrderStatusQueryFilters,
+		all: boolean
 	) => Promise<InvokeResponse<Order[]>>;
+	cancelOrder: (
+		tokenSymbol1: string,
+		tokenSymbol2: string,
+		orderId: number,
+		type: OrderType,
+		nature: OrderNature
+	) => Promise<InvokeResponse<any>>;
+	setRefetchOrders: React.Dispatch<
+		React.SetStateAction<{
+			marketTable: boolean;
+			orderBookTable: boolean;
+		}>
+	>;
+	getMarketPrice: (market: Market) => Promise<InvokeResponse<[number, number]>>;
+	setMatched: React.Dispatch<React.SetStateAction<string>>;
 }
 
 interface Web3ContextType {
@@ -54,9 +71,14 @@ interface Web3ContextType {
 	contract: DEXContract | null;
 	networkId: string | null;
 	balance: Map<string, number>;
-	tokens: Map<string, string>;
+	tokens: Token;
 	activeMarket: Market | null;
 	markets: Market[];
+	refetchOrders: {
+		marketTable: boolean;
+		orderBookTable: boolean;
+	};
+	matched: string;
 	controller: DEXController;
 }
 
@@ -79,15 +101,18 @@ interface InvokeResponse<T> {
 	result: T;
 }
 
-export type Token = Map<string, string>;
+// token name -> [symbol, id]
+export type Token = Map<string, [string, number]>;
 
-interface Market {
+export type OrderStatusQueryFilters = "ALL" | "ACTIVE" | "CANCELLED" | "FILLED";
+
+export interface Market {
+	id: string;
 	tokenSymbol1: string;
 	tokenSymbol2: string;
 }
 
 export type OrderType = "Buy" | "Sell";
-
 export type OrderNature = "Limit" | "Market";
 
 export const Web3Context = createContext<Web3ContextType | null>(null);
@@ -130,6 +155,7 @@ async function initialiseContracts(
 }
 
 export function Web3Provider({ children }: Web3ProviderProps) {
+	const { toast } = useToast();
 	const [web3Obj, setWeb3Obj] = useState<Web3 | null>(null);
 	const [contract, setContract] = useState<DEXContract | null>(null);
 	const [isWalletConnected, setIsWalletConnected] = useState<boolean>(false);
@@ -143,9 +169,18 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 	const [balance, setBalance] = useState<Map<string, number>>(new Map());
 	const [activeMarket, setActiveMarket] = useState<Market | null>(null);
 
+	const [refetchOrders, setRefetchOrders] = useState<{
+		marketTable: boolean;
+		orderBookTable: boolean;
+	}>({ marketTable: false, orderBookTable: false });
+	const [matched, setMatched] = useState<string>("");
+
 	const connectWallet = useCallback(async () => {
 		if (!window.ethereum) {
-			console.log("Please install MetaMask!");
+			toast({
+				title: "Please install MetaMask!",
+				variant: "destructive",
+			});
 			return;
 		}
 
@@ -228,12 +263,12 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 	const approveTokenSpending = async (
 		tokenContract: any,
 		spenderAddress: string,
-		amount: number,
+		amount: string,
 		account: string
 	): Promise<void> => {
 		try {
 			await tokenContract.methods
-				.approve(spenderAddress, Web3.utils.toWei(amount.toString(), "ether"))
+				.approve(spenderAddress, amount)
 				.send({ from: account });
 		} catch (error) {
 			throw new Error(`Failed to approve token spending: ${error}`);
@@ -268,11 +303,17 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			};
 		}
 
+		const initialSupplyInWei = Web3.utils.toWei(
+			initialSupply.toString(),
+			"ether"
+		);
+
 		try {
+			// TODO: set as env var
 			console.log("Issuing token...", name, symbol, initialSupply);
 			const result = await contract.tokenManager.methods
-				.issueToken(name, symbol, initialSupply)
-				.send({ from: account, gas: 5000000 }); // set higher gas price
+				.issueToken(name, symbol, initialSupplyInWei)
+				.send({ from: account, gas: 10000000 }); // set higher gas price
 			console.log("Token issued:", result);
 			return {
 				status: "Success",
@@ -300,6 +341,8 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			};
 		}
 
+		const amountInWei = Web3.utils.toWei(amount.toString(), "ether");
+
 		try {
 			const { tokenAddr } = await getTokenDetails(contract, symbol);
 			const tokenContract = await initializeTokenContract(
@@ -310,12 +353,14 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			await approveTokenSpending(
 				tokenContract,
 				contract.tokenManager._address,
-				amount,
+				amountInWei,
+				// amount.toString(),
 				account
 			);
 
-			const result = await contract.tokenManager.methods
-				.withdraw(symbol, amount)
+			const result = await contract.exchange.methods
+				.withdrawTokens(symbol, amountInWei)
+				// .withdrawTokens(symbol, amount)
 				.send({ from: account });
 			console.log("Withdrawal result:", result);
 
@@ -346,6 +391,8 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			};
 		}
 
+		const amountInWei = Web3.utils.toWei(amount.toString(), "ether");
+
 		try {
 			const { tokenId, tokenAddr } = await getTokenDetails(contract, symbol);
 			console.log("Token details:", tokenId, tokenAddr);
@@ -360,12 +407,14 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			await approveTokenSpending(
 				tokenContract,
 				contract.tokenManager._address,
-				amount,
+				amountInWei,
+				// amount.toString(),
 				account
 			);
 
-			const result = await contract.tokenManager.methods
-				.deposit(symbol, amount)
+			const result = await contract.exchange.methods
+				.depositTokens(symbol, amountInWei)
+				// .depositTokens(symbol, amount)
 				.send({ from: account });
 			console.log("Deposit result:", result);
 
@@ -391,7 +440,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 	};
 
 	const fetchBalance = async (
-		tokenMap: Map<string, string>
+		tokenMap: Token
 	): Promise<InvokeResponse<Map<string, number>>> => {
 		if (!isContractInitialized(contract)) {
 			return {
@@ -406,17 +455,22 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			const fetchedBalance = await contract.exchange.methods
 				.getAllUserTokenBalance(account)
 				.call();
+			console.log("Fetched balance:", fetchedBalance);
 
 			const balanceMap = new Map<string, number>();
 			for (let i = 0; i < fetchedBalance[0].length; i++) {
 				const tokenName = fetchedBalance[1][i];
-				const tokenSymbol = tokenMap.get(tokenName);
+				const tokenData = tokenMap.get(tokenName);
+				const tokenSymbol = tokenData ? tokenData[0] : undefined;
 				if (!tokenSymbol) {
 					console.error(`Token not found: ${tokenName}`);
 					continue;
 				}
 
-				const tokenBalance = Number(fetchedBalance[0][i]);
+				const tokenBalance = Number(
+					Web3.utils.fromWei(fetchedBalance[0][i], "ether")
+					// fetchedBalance[0][i]
+				);
 				balanceMap.set(tokenSymbol, tokenBalance);
 			}
 			setBalance(balanceMap);
@@ -436,9 +490,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		}
 	};
 
-	const fetchTokens = async (): Promise<
-		InvokeResponse<Map<string, string>>
-	> => {
+	const fetchTokens = async (): Promise<InvokeResponse<Token>> => {
 		if (!isContractInitialized(contract)) {
 			return {
 				status: "Error",
@@ -462,13 +514,14 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 				.call();
 
 			console.log("Fetched tokens:", fetchedTokens);
-			const tokenMap = new Map<string, string>();
+			const tokenMap = new Map<string, [string, number]>();
 			for (let i = 0; i < fetchedTokens[0].length; i++) {
-				if (fetchedTokens[0][i] === "") {
-					continue;
-				}
+				const { tokenId } = await getTokenDetails(
+					contract,
+					fetchedTokens[1][i]
+				);
 
-				tokenMap.set(fetchedTokens[0][i], fetchedTokens[1][i]);
+				tokenMap.set(fetchedTokens[0][i], [fetchedTokens[1][i], tokenId]);
 			}
 			console.log("Token map:", tokenMap);
 			setTokens(tokenMap);
@@ -487,51 +540,109 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		}
 	};
 
-	const constructMarkets = (
-		tokenMap: Map<string, string>
-	): InvokeResponse<Market[]> => {
-		if (tokenMap.size === 0) {
+	const getTokenSymbol = (tokenMap: Token, tokenId: number): string => {
+		const tokensArray = Array.from(tokenMap.values());
+
+		for (let i = 0; i < tokensArray.length; i++) {
+			if (tokensArray[i][1] === tokenId) {
+				return tokensArray[i][0];
+			}
+		}
+
+		console.error(`Token not found for tokenId: ${tokenId}`);
+		return "";
+	};
+
+	const fetchMarkets = async (
+		tokenMap: Token
+	): Promise<InvokeResponse<Market[]>> => {
+		if (!isContractInitialized(contract)) {
 			return {
 				status: "Error",
-				message: "Tokens not fetched",
+				message: "Contract not initialized",
 				result: [],
 			};
 		}
 
-		if (markets.length > 0) {
-			return {
-				status: "Success",
-				message: "Markets already constructed",
-				result: markets,
-			};
-		}
+		try {
+			console.log("Fetching balance for account: ", account);
+			const fetchedMarkets = await contract.exchange.methods
+				.getAllMarkets()
+				.call();
+			console.log("Fetched markets:", fetchedMarkets);
 
-		console.log("Constructing markets...");
-		const marketList: Market[] = [];
-		const tokensArray = Array.from(tokenMap.entries());
+			const marketList: Market[] = [];
+			for (let i = 0; i < fetchedMarkets[0].length; i++) {
+				const token1Id = Number(fetchedMarkets[1][i]);
+				const token2Id = Number(fetchedMarkets[2][i]);
 
-		for (let i = 0; i < tokensArray.length; i++) {
-			for (let j = i + 1; j < tokensArray.length; j++) {
 				const market: Market = {
-					tokenSymbol1: tokensArray[i][1],
-					tokenSymbol2: tokensArray[j][1],
+					id: fetchedMarkets[0][i],
+					tokenSymbol1: getTokenSymbol(tokenMap, token1Id),
+					tokenSymbol2: getTokenSymbol(tokenMap, token2Id),
 				};
 				marketList.push(market);
 			}
-		}
-		setMarkets(marketList);
+			console.log("Markets:", marketList);
+			setMarkets(marketList);
 
-		console.log("Markets constructed:", marketList);
-		return {
-			status: "Success",
-			message: "Markets constructed",
-			result: marketList,
-		};
+			return {
+				status: "Success",
+				message: `Markets fetched: ${Array.from(marketList.entries())}`,
+				result: marketList,
+			};
+		} catch (error) {
+			return {
+				status: "Error",
+				message: `Failed to fetch market: ${error}`,
+				result: [],
+			};
+		}
 	};
 
+	// const constructMarkets = (tokenMap: Token): InvokeResponse<Market[]> => {
+	// 	if (tokenMap.size === 0) {
+	// 		return {
+	// 			status: "Error",
+	// 			message: "Tokens not fetched",
+	// 			result: [],
+	// 		};
+	// 	}
+
+	// 	if (markets.length > 0) {
+	// 		return {
+	// 			status: "Success",
+	// 			message: "Markets already constructed",
+	// 			result: markets,
+	// 		};
+	// 	}
+
+	// 	console.log("Constructing markets...");
+	// 	const marketList: Market[] = [];
+	// 	const tokensArray = Array.from(tokenMap.entries());
+
+	// 	for (let i = 0; i < tokensArray.length; i++) {
+	// 		for (let j = i + 1; j < tokensArray.length; j++) {
+	// 			const market: Market = {
+	// 				tokenSymbol1: tokensArray[i][0],
+	// 				tokenSymbol2: tokensArray[j][0],
+	// 			};
+	// 			marketList.push(market);
+	// 		}
+	// 	}
+	// 	setMarkets(marketList);
+
+	// 	console.log("Markets constructed:", marketList);
+	// 	return {
+	// 		status: "Success",
+	// 		message: "Markets constructed",
+	// 		result: marketList,
+	// 	};
+	// };
+
 	const createOrder = async (
-		tokenSymbol1: string,
-		tokenSymbol2: string,
+		targetToken: string,
+		market: Market,
 		price: number,
 		amount: number,
 		type: OrderType,
@@ -547,31 +658,54 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 
 		// Convert amount to Wei
 		const amountInWei = Web3.utils.toWei(amount.toString(), "ether");
+		const priceInWei = Web3.utils.toWei(price.toString(), "ether");
+
+		/* 
+			TokA/TokB
+			
+			BUY -> buying tokenA using tokenB
+			SELLING -> selling tokenA for tokenB
+		*/
+
+		const pairedToken =
+			targetToken === market.tokenSymbol1
+				? market.tokenSymbol2
+				: market.tokenSymbol1;
+
+		let incomingToken, exchangeToken;
+		if (type === "Buy") {
+			incomingToken = targetToken;
+			exchangeToken = pairedToken;
+		} else {
+			incomingToken = pairedToken;
+			exchangeToken = targetToken;
+		}
 
 		try {
 			let result;
 
 			if (nature === "Market") {
 				console.log(
-					`Creating market order for ${tokenSymbol1} using currency ${tokenSymbol2}`
+					`Creating market order for ${incomingToken} using currency ${exchangeToken}`
 				);
 				result = await contract.exchange.methods
 					.placeMarketOrder(
-						tokenSymbol1,
-						tokenSymbol2,
+						incomingToken, // want
+						exchangeToken, // sell
 						amountInWei,
 						type === "Buy" ? 0 : 1
 					)
 					.send({ from: account });
 			} else {
 				console.log(
-					`Creating limit order for ${tokenSymbol1} using currency ${tokenSymbol2}`
+					`Creating limit order for ${incomingToken} using currency ${exchangeToken}`
 				);
 				result = await contract.exchange.methods
 					.placeLimitOrder(
-						tokenSymbol1,
-						tokenSymbol2,
-						price,
+						incomingToken,
+						exchangeToken,
+						priceInWei,
+						// price,
 						amountInWei,
 						type === "Buy" ? 0 : 1
 					)
@@ -593,9 +727,10 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		}
 	};
 
-	const fetchActiveOrders = async (
+	const fetchOrders = async (
 		market: Market,
-		all?: boolean
+		status: OrderStatusQueryFilters = "ACTIVE",
+		all: boolean = false
 	): Promise<InvokeResponse<Order[]>> => {
 		if (!isContractInitialized(contract)) {
 			return {
@@ -605,30 +740,63 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			};
 		}
 
-		let activeOrders;
+		let orders = [];
 		try {
 			console.log(
-				"Fetching active orders...",
+				"Fetching orders...",
 				market.tokenSymbol1,
 				market.tokenSymbol2,
+				status,
 				account
 			);
 
-			if (all) {
-				activeOrders = await contract.exchange.methods
-					.getAllActiveOrdersForAMarket(
-						market.tokenSymbol1,
-						market.tokenSymbol2
-					)
-					.call();
-			} else {
-				activeOrders = await contract.exchange.methods
-					.getAllActiveUserOrdersForAMarket(
-						market.tokenSymbol1,
-						market.tokenSymbol2,
-						account
-					)
-					.call();
+			switch (status) {
+				case "ACTIVE":
+					console.log("Fetching active orders...");
+					if (all) {
+						orders = await contract.exchange.methods
+							.getAllActiveOrdersForAMarket(
+								market.tokenSymbol1,
+								market.tokenSymbol2
+							)
+							.call();
+					} else {
+						orders = await contract.exchange.methods
+							.getAllActiveUserOrdersForAMarket(
+								market.tokenSymbol1,
+								market.tokenSymbol2,
+								account
+							)
+							.call();
+					}
+					break;
+				case "CANCELLED":
+					console.log("Fetching cancelled orders...");
+					orders = await contract.exchange.methods
+						.getAllCancelledUserOrdersForAMarket(
+							market.tokenSymbol1,
+							market.tokenSymbol2,
+							account
+						)
+						.call();
+					break;
+				case "FILLED":
+					console.log("Fetching filled orders...");
+					orders = await contract.exchange.methods
+						.getAllFulfilledUserOrdersForAMarket(
+							market.tokenSymbol1,
+							market.tokenSymbol2,
+							account
+						)
+						.call();
+					break;
+				default:
+					console.error("Invalid status:", status);
+					return {
+						status: "Error",
+						message: "Invalid status",
+						result: [],
+					};
 			}
 		} catch (error) {
 			return {
@@ -637,60 +805,143 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 				result: [],
 			};
 		}
-		console.log("Active orders fetched:", activeOrders);
+		console.log("Orders fetched:", orders);
 
-		const activeOrdersArr: Order[] = [];
-		for (let i = 0; i < activeOrders[0].length; i++) {
+		const ordersArr: Order[] = [];
+		for (let i = 0; i < orders[0].length; i++) {
+			const fills: Fill[] = [];
+			for (let j = 0; j < orders[5][i].length; j++) {
+				const fill: Fill = {
+					price: Number(Web3.utils.fromWei(orders[5][i][j], "ether")),
+					// price: Number(orders[5][i]),
+					quantity: Number(Web3.utils.fromWei(orders[6][i][j], "ether")),
+					timestamp: Number(orders[7][i][j]),
+				};
+				fills.push(fill);
+			}
+
 			const order: Order = {
-				price: Number(activeOrders[1][i]),
-				quantity: Number(activeOrders[0][i]),
-				type: activeOrders[2][i] === 0 ? "buy" : "sell",
-				nature: activeOrders[3][i] === 0 ? "limit" : "market",
-				status: "active",
+				id: Number(orders[2][i]),
+				price: Number(Web3.utils.fromWei(orders[1][i], "ether")),
+				// price: Number(orders[1][i]),
+				quantity: Number(Web3.utils.fromWei(orders[0][i], "ether")),
+				type: Number(orders[3][i]) === 0 ? "Buy" : "Sell",
+				nature: Number(orders[4][i]) === 0 ? "Market" : "Limit",
+				status: status.toLowerCase() as "active" | "filled" | "cancelled",
 				market: activeMarket
 					? `${activeMarket.tokenSymbol1}/${activeMarket.tokenSymbol2}`
 					: "",
+				fills: fills.reverse(), // sort fills in descending order (latest first)
 			};
-			activeOrdersArr.push(order);
+			ordersArr.push(order);
 		}
-		console.log("Active orders:", activeOrdersArr);
+		console.log("Orders:", ordersArr);
 
 		return {
 			status: "Success",
 			message: `Orders fetched!`,
-			result: activeOrdersArr,
+			result: ordersArr.reverse(), // sort orders in descending order (latest first)
 		};
 	};
 
-	// const watchUserWithdrawals = () => {
-	// 	if (!isContractInitialized(contract)) {
-	// 		return {
-	// 			status: "Error",
-	// 			message: "Contract not initialized",
-	// 			result: null,
-	// 		};
-	// 	}
+	const cancelOrder = async (
+		tokenSymbol1: string,
+		tokenSymbol2: string,
+		orderId: number,
+		type: OrderType,
+		nature: OrderNature
+	): Promise<InvokeResponse<any>> => {
+		if (!isContractInitialized(contract)) {
+			return {
+				status: "Error",
+				message: "Contract not initialized",
+				result: null,
+			};
+		}
 
-	// 	contract.exchange.events
-	// 		.WithdrawalProcessed({
-	// 			filter: { user: account },
-	// 			fromBlock: "latest",
-	// 		})
-	// 		.on("data", (event: any) => {
-	// 			console.log("User withdrawal:", {
-	// 				tokenId: event.returnValues.tokenId,
-	// 				amount: event.returnValues.amount,
-	// 				timestamp: new Date(
-	// 					event.returnValues.timestamp * 1000
-	// 				).toLocaleString(),
-	// 			});
-	// 		});
-	// };
+		const { tokenId: tokenId1 } = await getTokenDetails(contract, tokenSymbol1);
+		const { tokenId: tokenId2 } = await getTokenDetails(contract, tokenSymbol2);
+
+		try {
+			console.log(`Cancelling order...`, orderId, type, nature);
+			const result = await contract.exchange.methods
+				.cancelOrder(
+					tokenId1,
+					tokenId2,
+					orderId,
+					type === "Buy" ? 0 : 1,
+					nature === "Limit" ? 1 : 0
+				)
+				.send({ from: account });
+			console.log("Order cancelled:", result);
+			return {
+				status: "Success",
+				message: `Order cancelled: ${result.transactionHash}`,
+				result,
+			};
+		} catch (error) {
+			return {
+				status: "Error",
+				message: `Failed to cancel order: ${error}`,
+				result: null,
+			};
+		}
+	};
+
+	const getMarketPrice = async (
+		market: Market
+	): Promise<InvokeResponse<[number, number]>> => {
+		if (!isContractInitialized(contract)) {
+			return {
+				status: "Error",
+				message: "Contract not initialized",
+				result: [0, 0],
+			};
+		}
+
+		const bestPrice = [0, 0]; // buy, sell
+
+		try {
+			const result = await contract.exchange.methods
+				.getBestPriceInMarket(0, market.tokenSymbol1, market.tokenSymbol2)
+				.call();
+			console.log("Market price:", result);
+			bestPrice[0] = Number(Web3.utils.fromWei(result, "ether"));
+		} catch (error) {
+			console.error("Failed to fetch market price:", error);
+			return {
+				status: "Error",
+				message: "Failed to fetch market price",
+				result: [0, 0],
+			};
+		}
+
+		try {
+			const result = await contract.exchange.methods
+				.getBestPriceInMarket(1, market.tokenSymbol1, market.tokenSymbol2)
+				.call();
+			console.log("Market price:", result);
+			bestPrice[1] = Number(Web3.utils.fromWei(result, "ether"));
+		} catch (error) {
+			console.error("Failed to fetch market price:", error);
+			return {
+				status: "Error",
+				message: "Failed to fetch market price",
+				result: [0, 0],
+			};
+		}
+
+		return {
+			status: "Success",
+			message: `Market price fetched: ${bestPrice}`,
+			result: bestPrice as [number, number],
+		};
+	};
 
 	useEffect(() => {
 		const fetchData = async () => {
 			const tokenRes = await fetchTokens();
-			constructMarkets(tokenRes.result);
+			await fetchMarkets(tokenRes.result);
 			await fetchBalance(tokenRes.result);
 		};
 
@@ -720,23 +971,52 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		};
 	}, []);
 
-	useEffect(() => {
-		if (!isContractInitialized(contract)) return;
-
-		console.log("Listening for DepositEvent...");
-		const subscription = contract.tokenManager.events.DepositEvent(
-			{
-				filter: { user: account }, // Filter for the user's address
-				fromBlock: "latest",
-			}
-			// },
-			// (_, event: any) => {
-			// 	console.log("DepositEvent:", event);
-			// }
+	const checkUserInvolvedInSettlement = (
+		userAddr: string,
+		from: string,
+		to: string
+	): boolean => {
+		return (
+			userAddr.toLowerCase() === from.toLowerCase() ||
+			userAddr.toLowerCase() === to.toLowerCase()
 		);
+	};
 
-		subscription.on("data", (event: any) => {
-			console.log("DepositEvent data:", event);
+	useEffect(() => {
+		if (!contract || !activeMarket || tokens.size === 0) return;
+
+		const subscription = contract.exchange.events.TransferProcessed({
+			fromBlock: "latest",
+		});
+
+		subscription.on("data", async (event: any) => {
+			console.log(
+				"[web3Context] TransferProcessed event:",
+				event,
+				checkUserInvolvedInSettlement(
+					account as string,
+					event.returnValues.from as string,
+					event.returnValues.to as string
+				)
+			);
+
+			if (
+				!checkUserInvolvedInSettlement(
+					account as string,
+					event.returnValues.from as string,
+					event.returnValues.to as string
+				)
+			)
+				return;
+
+			setMatched(event.transactionHash);
+
+			// trigger refetch of balance and orders
+			await fetchBalance(tokens);
+			setRefetchOrders({
+				marketTable: true,
+				orderBookTable: true,
+			});
 		});
 
 		// Cleanup function to unsubscribe from the event
@@ -749,7 +1029,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 				}
 			});
 		};
-	}, [contract, account]);
+	}, [contract, account, activeMarket]);
 
 	const controller: DEXController = {
 		connectWallet,
@@ -761,7 +1041,11 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 		withdraw,
 		createOrder,
 		setActiveMarket,
-		fetchActiveOrders,
+		fetchOrders,
+		cancelOrder,
+		setRefetchOrders,
+		getMarketPrice,
+		setMatched,
 	};
 
 	const contextValue = useMemo<Web3ContextType>(
@@ -776,6 +1060,8 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			tokens,
 			activeMarket,
 			markets,
+			refetchOrders,
+			matched,
 		}),
 		[
 			web3Obj,
@@ -788,6 +1074,8 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 			tokens,
 			activeMarket,
 			markets,
+			refetchOrders,
+			matched,
 		]
 	);
 

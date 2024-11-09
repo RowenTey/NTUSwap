@@ -15,15 +15,15 @@
     "absolutePath": "project:/contracts/OrderLibrary.sol",
     "exportedSymbols": {
       "OrderLibrary": [
-        14286
+        14758
       ]
     },
-    "id": 14287,
+    "id": 14759,
     "license": "UNLICENSED",
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 14233,
+        "id": 14705,
         "literals": [
           "solidity",
           "^",
@@ -40,9 +40,9 @@
         "contractDependencies": [],
         "contractKind": "library",
         "fullyImplemented": true,
-        "id": 14286,
+        "id": 14758,
         "linearizedBaseContracts": [
-          14286
+          14758
         ],
         "name": "OrderLibrary",
         "nameLocation": "72:12:11",
@@ -50,17 +50,17 @@
         "nodes": [
           {
             "canonicalName": "OrderLibrary.OrderType",
-            "id": 14236,
+            "id": 14708,
             "members": [
               {
-                "id": 14234,
+                "id": 14706,
                 "name": "Buy",
                 "nameLocation": "116:3:11",
                 "nodeType": "EnumValue",
                 "src": "116:3:11"
               },
               {
-                "id": 14235,
+                "id": 14707,
                 "name": "Sell",
                 "nameLocation": "129:4:11",
                 "nodeType": "EnumValue",
@@ -74,17 +74,17 @@
           },
           {
             "canonicalName": "OrderLibrary.OrderNature",
-            "id": 14239,
+            "id": 14711,
             "members": [
               {
-                "id": 14237,
+                "id": 14709,
                 "name": "Market",
                 "nameLocation": "172:6:11",
                 "nodeType": "EnumValue",
                 "src": "172:6:11"
               },
               {
-                "id": 14238,
+                "id": 14710,
                 "name": "Limit",
                 "nameLocation": "188:5:11",
                 "nodeType": "EnumValue",
@@ -98,31 +98,31 @@
           },
           {
             "canonicalName": "OrderLibrary.OrderStatus",
-            "id": 14244,
+            "id": 14716,
             "members": [
               {
-                "id": 14240,
+                "id": 14712,
                 "name": "Active",
                 "nameLocation": "232:6:11",
                 "nodeType": "EnumValue",
                 "src": "232:6:11"
               },
               {
-                "id": 14241,
+                "id": 14713,
                 "name": "PartiallyFilled",
                 "nameLocation": "248:15:11",
                 "nodeType": "EnumValue",
                 "src": "248:15:11"
               },
               {
-                "id": 14242,
+                "id": 14714,
                 "name": "Filled",
                 "nameLocation": "273:6:11",
                 "nodeType": "EnumValue",
                 "src": "273:6:11"
               },
               {
-                "id": 14243,
+                "id": 14715,
                 "name": "Cancelled",
                 "nameLocation": "289:9:11",
                 "nodeType": "EnumValue",
@@ -136,16 +136,16 @@
           },
           {
             "canonicalName": "OrderLibrary.Order",
-            "id": 14270,
+            "id": 14742,
             "members": [
               {
                 "constant": false,
-                "id": 14246,
+                "id": 14718,
                 "mutability": "mutable",
                 "name": "totalAmount",
                 "nameLocation": "341:11:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14270,
+                "scope": 14742,
                 "src": "333:19:11",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -154,7 +154,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 14245,
+                  "id": 14717,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "333:7:11",
@@ -167,12 +167,12 @@
               },
               {
                 "constant": false,
-                "id": 14248,
+                "id": 14720,
                 "mutability": "mutable",
                 "name": "remainingAmount",
                 "nameLocation": "370:15:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14270,
+                "scope": 14742,
                 "src": "362:23:11",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -181,7 +181,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 14247,
+                  "id": 14719,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "362:7:11",
@@ -194,12 +194,12 @@
               },
               {
                 "constant": false,
-                "id": 14250,
+                "id": 14722,
                 "mutability": "mutable",
                 "name": "price",
                 "nameLocation": "402:5:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14270,
+                "scope": 14742,
                 "src": "395:12:11",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -208,7 +208,7 @@
                   "typeString": "int256"
                 },
                 "typeName": {
-                  "id": 14249,
+                  "id": 14721,
                   "name": "int256",
                   "nodeType": "ElementaryTypeName",
                   "src": "395:6:11",
@@ -221,12 +221,12 @@
               },
               {
                 "constant": false,
-                "id": 14252,
+                "id": 14724,
                 "mutability": "mutable",
                 "name": "timestamp",
                 "nameLocation": "425:9:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14270,
+                "scope": 14742,
                 "src": "417:17:11",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -235,7 +235,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 14251,
+                  "id": 14723,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "417:7:11",
@@ -248,12 +248,12 @@
               },
               {
                 "constant": false,
-                "id": 14254,
+                "id": 14726,
                 "mutability": "mutable",
                 "name": "userAddress",
                 "nameLocation": "452:11:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14270,
+                "scope": 14742,
                 "src": "444:19:11",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -262,7 +262,7 @@
                   "typeString": "address"
                 },
                 "typeName": {
-                  "id": 14253,
+                  "id": 14725,
                   "name": "address",
                   "nodeType": "ElementaryTypeName",
                   "src": "444:7:11",
@@ -276,33 +276,33 @@
               },
               {
                 "constant": false,
-                "id": 14257,
+                "id": 14729,
                 "mutability": "mutable",
                 "name": "status",
                 "nameLocation": "485:6:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14270,
+                "scope": 14742,
                 "src": "473:18:11",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
-                  "typeIdentifier": "t_enum$_OrderStatus_$14244",
+                  "typeIdentifier": "t_enum$_OrderStatus_$14716",
                   "typeString": "enum OrderLibrary.OrderStatus"
                 },
                 "typeName": {
-                  "id": 14256,
+                  "id": 14728,
                   "nodeType": "UserDefinedTypeName",
                   "pathNode": {
-                    "id": 14255,
+                    "id": 14727,
                     "name": "OrderStatus",
                     "nodeType": "IdentifierPath",
-                    "referencedDeclaration": 14244,
+                    "referencedDeclaration": 14716,
                     "src": "473:11:11"
                   },
-                  "referencedDeclaration": 14244,
+                  "referencedDeclaration": 14716,
                   "src": "473:11:11",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_enum$_OrderStatus_$14244",
+                    "typeIdentifier": "t_enum$_OrderStatus_$14716",
                     "typeString": "enum OrderLibrary.OrderStatus"
                   }
                 },
@@ -310,33 +310,33 @@
               },
               {
                 "constant": false,
-                "id": 14260,
+                "id": 14732,
                 "mutability": "mutable",
                 "name": "nature",
                 "nameLocation": "513:6:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14270,
+                "scope": 14742,
                 "src": "501:18:11",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
-                  "typeIdentifier": "t_enum$_OrderNature_$14239",
+                  "typeIdentifier": "t_enum$_OrderNature_$14711",
                   "typeString": "enum OrderLibrary.OrderNature"
                 },
                 "typeName": {
-                  "id": 14259,
+                  "id": 14731,
                   "nodeType": "UserDefinedTypeName",
                   "pathNode": {
-                    "id": 14258,
+                    "id": 14730,
                     "name": "OrderNature",
                     "nodeType": "IdentifierPath",
-                    "referencedDeclaration": 14239,
+                    "referencedDeclaration": 14711,
                     "src": "501:11:11"
                   },
-                  "referencedDeclaration": 14239,
+                  "referencedDeclaration": 14711,
                   "src": "501:11:11",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_enum$_OrderNature_$14239",
+                    "typeIdentifier": "t_enum$_OrderNature_$14711",
                     "typeString": "enum OrderLibrary.OrderNature"
                   }
                 },
@@ -344,12 +344,12 @@
               },
               {
                 "constant": false,
-                "id": 14263,
+                "id": 14735,
                 "mutability": "mutable",
                 "name": "fillsPrice",
                 "nameLocation": "538:10:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14270,
+                "scope": 14742,
                 "src": "529:19:11",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -359,7 +359,7 @@
                 },
                 "typeName": {
                   "baseType": {
-                    "id": 14261,
+                    "id": 14733,
                     "name": "int256",
                     "nodeType": "ElementaryTypeName",
                     "src": "529:6:11",
@@ -368,7 +368,7 @@
                       "typeString": "int256"
                     }
                   },
-                  "id": 14262,
+                  "id": 14734,
                   "nodeType": "ArrayTypeName",
                   "src": "529:8:11",
                   "typeDescriptions": {
@@ -380,12 +380,12 @@
               },
               {
                 "constant": false,
-                "id": 14266,
+                "id": 14738,
                 "mutability": "mutable",
                 "name": "fillsAmount",
                 "nameLocation": "568:11:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14270,
+                "scope": 14742,
                 "src": "558:21:11",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -395,7 +395,7 @@
                 },
                 "typeName": {
                   "baseType": {
-                    "id": 14264,
+                    "id": 14736,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "558:7:11",
@@ -404,7 +404,7 @@
                       "typeString": "uint256"
                     }
                   },
-                  "id": 14265,
+                  "id": 14737,
                   "nodeType": "ArrayTypeName",
                   "src": "558:9:11",
                   "typeDescriptions": {
@@ -416,12 +416,12 @@
               },
               {
                 "constant": false,
-                "id": 14269,
+                "id": 14741,
                 "mutability": "mutable",
                 "name": "fillsTimestamp",
                 "nameLocation": "599:14:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14270,
+                "scope": 14742,
                 "src": "589:24:11",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -431,7 +431,7 @@
                 },
                 "typeName": {
                   "baseType": {
-                    "id": 14267,
+                    "id": 14739,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "589:7:11",
@@ -440,7 +440,7 @@
                       "typeString": "uint256"
                     }
                   },
-                  "id": 14268,
+                  "id": 14740,
                   "nodeType": "ArrayTypeName",
                   "src": "589:9:11",
                   "typeDescriptions": {
@@ -454,22 +454,22 @@
             "name": "Order",
             "nameLocation": "317:5:11",
             "nodeType": "StructDefinition",
-            "scope": 14286,
+            "scope": 14758,
             "src": "310:310:11",
             "visibility": "public"
           },
           {
             "canonicalName": "OrderLibrary.Fills",
-            "id": 14277,
+            "id": 14749,
             "members": [
               {
                 "constant": false,
-                "id": 14272,
+                "id": 14744,
                 "mutability": "mutable",
                 "name": "price",
                 "nameLocation": "656:5:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14277,
+                "scope": 14749,
                 "src": "649:12:11",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -478,7 +478,7 @@
                   "typeString": "int256"
                 },
                 "typeName": {
-                  "id": 14271,
+                  "id": 14743,
                   "name": "int256",
                   "nodeType": "ElementaryTypeName",
                   "src": "649:6:11",
@@ -491,12 +491,12 @@
               },
               {
                 "constant": false,
-                "id": 14274,
+                "id": 14746,
                 "mutability": "mutable",
                 "name": "amount",
                 "nameLocation": "679:6:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14277,
+                "scope": 14749,
                 "src": "671:14:11",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -505,7 +505,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 14273,
+                  "id": 14745,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "671:7:11",
@@ -518,12 +518,12 @@
               },
               {
                 "constant": false,
-                "id": 14276,
+                "id": 14748,
                 "mutability": "mutable",
                 "name": "timestamp",
                 "nameLocation": "703:9:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14277,
+                "scope": 14749,
                 "src": "695:17:11",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -532,7 +532,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 14275,
+                  "id": 14747,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "695:7:11",
@@ -547,43 +547,43 @@
             "name": "Fills",
             "nameLocation": "633:5:11",
             "nodeType": "StructDefinition",
-            "scope": 14286,
+            "scope": 14758,
             "src": "626:93:11",
             "visibility": "public"
           },
           {
             "canonicalName": "OrderLibrary.AllOrdersQueryParams",
-            "id": 14285,
+            "id": 14757,
             "members": [
               {
                 "constant": false,
-                "id": 14280,
+                "id": 14752,
                 "mutability": "mutable",
                 "name": "status",
                 "nameLocation": "788:6:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14285,
+                "scope": 14757,
                 "src": "763:31:11",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
-                  "typeIdentifier": "t_enum$_OrderStatus_$14244",
+                  "typeIdentifier": "t_enum$_OrderStatus_$14716",
                   "typeString": "enum OrderLibrary.OrderStatus"
                 },
                 "typeName": {
-                  "id": 14279,
+                  "id": 14751,
                   "nodeType": "UserDefinedTypeName",
                   "pathNode": {
-                    "id": 14278,
+                    "id": 14750,
                     "name": "OrderLibrary.OrderStatus",
                     "nodeType": "IdentifierPath",
-                    "referencedDeclaration": 14244,
+                    "referencedDeclaration": 14716,
                     "src": "763:24:11"
                   },
-                  "referencedDeclaration": 14244,
+                  "referencedDeclaration": 14716,
                   "src": "763:24:11",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_enum$_OrderStatus_$14244",
+                    "typeIdentifier": "t_enum$_OrderStatus_$14716",
                     "typeString": "enum OrderLibrary.OrderStatus"
                   }
                 },
@@ -591,12 +591,12 @@
               },
               {
                 "constant": false,
-                "id": 14282,
+                "id": 14754,
                 "mutability": "mutable",
                 "name": "userAddress",
                 "nameLocation": "812:11:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14285,
+                "scope": 14757,
                 "src": "804:19:11",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -605,7 +605,7 @@
                   "typeString": "address"
                 },
                 "typeName": {
-                  "id": 14281,
+                  "id": 14753,
                   "name": "address",
                   "nodeType": "ElementaryTypeName",
                   "src": "804:7:11",
@@ -619,12 +619,12 @@
               },
               {
                 "constant": false,
-                "id": 14284,
+                "id": 14756,
                 "mutability": "mutable",
                 "name": "filterByUser",
                 "nameLocation": "838:12:11",
                 "nodeType": "VariableDeclaration",
-                "scope": 14285,
+                "scope": 14757,
                 "src": "833:17:11",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -633,7 +633,7 @@
                   "typeString": "bool"
                 },
                 "typeName": {
-                  "id": 14283,
+                  "id": 14755,
                   "name": "bool",
                   "nodeType": "ElementaryTypeName",
                   "src": "833:4:11",
@@ -648,12 +648,12 @@
             "name": "AllOrdersQueryParams",
             "nameLocation": "732:20:11",
             "nodeType": "StructDefinition",
-            "scope": 14286,
+            "scope": 14758,
             "src": "725:132:11",
             "visibility": "public"
           }
         ],
-        "scope": 14287,
+        "scope": 14759,
         "src": "64:795:11",
         "usedErrors": []
       }
@@ -666,7 +666,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.16",
-  "updatedAt": "2024-11-07T08:25:46.834Z",
+  "updatedAt": "2024-11-09T05:40:47.481Z",
   "devdoc": {
     "kind": "dev",
     "methods": {},

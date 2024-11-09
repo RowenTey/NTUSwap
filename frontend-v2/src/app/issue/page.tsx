@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
-const DashboardPage: FC = () => {
+const IssuePage: FC = () => {
 	const router = useRouter();
 	const { toast } = useToast();
 	const { isWalletConnected, controller } = useWeb3();
@@ -42,7 +42,6 @@ const DashboardPage: FC = () => {
 		setName(value);
 	};
 
-	// TODO: trigger token refetch on successful token issue
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
@@ -70,6 +69,7 @@ const DashboardPage: FC = () => {
 			description: "Token issued successfully",
 		});
 		resetForm();
+		router.push("/dashboard");
 	};
 
 	return (
@@ -109,4 +109,4 @@ const DashboardPage: FC = () => {
 	);
 };
 
-export default DashboardPage;
+export default IssuePage;

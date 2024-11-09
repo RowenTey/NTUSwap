@@ -7,6 +7,7 @@ import { LoadingSpinner } from "../ui/spinner";
 const UserBalanceWidget: FC = () => {
 	const { balance } = useWeb3();
 
+	// TODO: Update balance when orderMatched event is emitted
 	const tableData: TokenBalance[] = useMemo(() => {
 		return Array.from(balance.entries()).map(([token, quantity]) => {
 			return {

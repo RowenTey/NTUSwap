@@ -1,4 +1,4 @@
-import { FC, FormEvent, useState } from "react";
+import { FC, FormEvent, useEffect, useState } from "react";
 import {
 	Select,
 	SelectContent,
@@ -15,12 +15,13 @@ import { OrderNature, OrderType, useWeb3 } from "@/contexts/web3";
 const CreateOrderWidget: FC = () => {
 	const { toast } = useToast();
 	const { activeMarket, controller } = useWeb3();
-	const { createOrder } = controller;
+	const { createOrder, setRefetchOrders } = controller;
 	const [orderNature, setOrderNature] = useState<OrderNature>("Limit");
 	const [orderType, setOrderType] = useState<OrderType>("Buy");
 	const [price, setPrice] = useState<number | string>("");
 	const [quantity, setQuantity] = useState<number | string>("");
 	const [total, setTotal] = useState(0);
+	const [selectedToken, setSelectedToken] = useState<string>("");
 
 	const calculateTotal = (price: number, quantity: number) => {
 		setTotal(price * quantity);
@@ -66,9 +67,10 @@ const CreateOrderWidget: FC = () => {
 			return;
 		}
 
+		console.log("Selected token: ", selectedToken);
 		const res = await createOrder(
-			activeMarket.tokenSymbol1,
-			activeMarket.tokenSymbol2,
+			selectedToken,
+			activeMarket,
 			orderNature === "Limit" ? Number(price) : 0,
 			Number(quantity),
 			orderType,
@@ -87,7 +89,17 @@ const CreateOrderWidget: FC = () => {
 			title: "Order placed successfully.",
 		});
 		resetForm();
+		setRefetchOrders({
+			marketTable: true,
+			orderBookTable: true,
+		});
 	};
+
+	useEffect(() => {
+		if (!activeMarket) return;
+
+		setSelectedToken(activeMarket.tokenSymbol1);
+	}, [activeMarket]);
 
 	return (
 		<div className="w-full flex flex-col gap-3 bg-zinc-300 p-4 items-center rounded-md border">
@@ -104,6 +116,27 @@ const CreateOrderWidget: FC = () => {
 					<ToggleGroupItem value="Buy">Buy</ToggleGroupItem>
 					<ToggleGroupItem value="Sell">Sell</ToggleGroupItem>
 				</ToggleGroup>
+				{activeMarket && (
+					<Select
+						defaultValue={activeMarket.tokenSymbol1}
+						onValueChange={(value) => {
+							console.log("Selected token: ", value);
+							setSelectedToken(value);
+						}}
+					>
+						<SelectTrigger className="w-[180px]">
+							<SelectValue placeholder="Token" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={activeMarket.tokenSymbol1}>
+								{activeMarket.tokenSymbol1}
+							</SelectItem>
+							<SelectItem value={activeMarket.tokenSymbol2}>
+								{activeMarket.tokenSymbol2}
+							</SelectItem>
+						</SelectContent>
+					</Select>
+				)}
 				<Select
 					defaultValue="Limit"
 					onValueChange={(value) => setOrderNature(value as "Market" | "Limit")}
@@ -138,9 +171,7 @@ const CreateOrderWidget: FC = () => {
 					/>
 				</div>
 				{total !== 0 && orderNature == "Limit" && <p>Total: {total}</p>}
-				<Button variant="outline" type="submit">
-					Place Order
-				</Button>
+				<Button type="submit">Place Order</Button>
 			</form>
 		</div>
 	);

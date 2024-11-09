@@ -2,9 +2,8 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Order } from "./order-book-table";
+import { Fill, Order } from "./order-book-table";
 
-import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -16,8 +15,31 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { DataTable } from "../ui/data-table";
+
+const fillsColumns: ColumnDef<Fill>[] = [
+	{
+		accessorKey: "price",
+		header: "Price",
+		cell: ({ row }) => {
+			const price = row.original.price;
+			return `$${price}`;
+		},
+	},
+	{
+		accessorKey: "quantity",
+		header: "Quantity",
+	},
+	{
+		accessorKey: "timestamp",
+		header: "Timestamp",
+		// parse timestamp to human readable format
+		cell: ({ row }) => {
+			const timestamp = row.original.timestamp;
+			return new Date(timestamp * 1000).toLocaleString();
+		},
+	},
+];
 
 export const columns: ColumnDef<Order>[] = [
 	{
@@ -35,7 +57,7 @@ export const columns: ColumnDef<Order>[] = [
 		cell: ({ row }) => (
 			<Checkbox
 				checked={row.getIsSelected()}
-				onCheckedChange={(value) => row.toggleSelected(!!value)}
+				onCheckedChange={row.getToggleSelectedHandler()}
 				aria-label="Select row"
 			/>
 		),
@@ -54,7 +76,7 @@ export const columns: ColumnDef<Order>[] = [
 		cell: ({ row }) => {
 			const nature = row.original.nature;
 			const price = row.original.price;
-			return nature === "market" ? "-" : price;
+			return nature === "Market" ? "-" : `$${price}`;
 		},
 	},
 	{
@@ -70,44 +92,33 @@ export const columns: ColumnDef<Order>[] = [
 		},
 	},
 	{
-		header: "Details",
-		cell: ({ row }) => (
-			<Dialog>
-				<DialogTrigger asChild>
-					<Button variant="outline">See More</Button>
-				</DialogTrigger>
-				<DialogContent className="sm:max-w-md">
-					<DialogHeader>
-						<DialogTitle>Share link</DialogTitle>
-						<DialogDescription>
-							Anyone who has this link will be able to view this.
-						</DialogDescription>
-					</DialogHeader>
-					<div className="flex items-center space-x-2">
-						<div className="grid flex-1 gap-2">
-							<Label htmlFor="link" className="sr-only">
-								Link
-							</Label>
-							<Input
-								id="link"
-								defaultValue="https://ui.shadcn.com/docs/installation"
-								readOnly
-							/>
-						</div>
-						<Button type="submit" size="sm" className="px-3">
-							<span className="sr-only">Copy</span>
-							<Copy className="h-4 w-4" />
-						</Button>
-					</div>
-					<DialogFooter className="sm:justify-start">
-						<DialogClose asChild>
-							<Button type="button" variant="secondary">
-								Close
-							</Button>
-						</DialogClose>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
-		),
+		accessorKey: "fills",
+		header: "Fills",
+		cell: ({ row }) => {
+			const fills = row.original.fills;
+
+			return (
+				<Dialog>
+					<DialogTrigger asChild>
+						<Button disabled={fills.length === 0}>See More</Button>
+					</DialogTrigger>
+
+					<DialogContent className="sm:max-w-md">
+						<DialogHeader>
+							<DialogTitle>Order Fills</DialogTitle>
+							<DialogDescription>
+								Partial fills of the order are shown here.
+							</DialogDescription>
+						</DialogHeader>
+						<DataTable columns={fillsColumns} data={fills} />
+						<DialogFooter className="sm:justify-center">
+							<DialogClose asChild>
+								<Button type="button">Close</Button>
+							</DialogClose>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
+			);
+		},
 	},
 ];

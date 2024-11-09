@@ -17,7 +17,7 @@ const TokenManagerWidget: FC = () => {
 	const { tokens, controller } = useWeb3();
 	const { deposit, withdraw, updateBalance } = controller;
 	const tokensArr = useMemo(() => {
-		return Array.from(tokens.values());
+		return Array.from(tokens.values().map((token) => token[0]));
 	}, [tokens]);
 	const [operation, setOperation] = useState<"deposit" | "withdraw">("deposit");
 	const [selectedToken, setSelectedToken] = useState(tokensArr[0]);

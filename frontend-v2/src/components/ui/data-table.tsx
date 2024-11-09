@@ -4,6 +4,7 @@ import {
 	ColumnDef,
 	flexRender,
 	getCoreRowModel,
+	RowSelectionState,
 	useReactTable,
 } from "@tanstack/react-table";
 
@@ -15,22 +16,43 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { useEffect, useState } from "react";
 
 interface DataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
 	data: TData[];
+	onSelectionChange?: (selectedData: TData | null) => void;
 }
 
 export function DataTable<TData, TValue>({
 	columns,
 	data,
+	onSelectionChange,
 }: DataTableProps<TData, TValue>) {
+	const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
+
 	const table = useReactTable({
 		data,
 		columns,
 		getCoreRowModel: getCoreRowModel(),
+		onRowSelectionChange: setSelectedRows,
 		enableMultiRowSelection: false, // disable multi select
+		state: {
+			rowSelection: selectedRows,
+		},
 	});
+
+	useEffect(() => {
+		if (!onSelectionChange) return;
+
+		// unselected
+		if (!table.getSelectedRowModel().rows.length) {
+			onSelectionChange(null);
+			return;
+		}
+
+		onSelectionChange(data[Number(table.getSelectedRowModel().rows[0].id)]);
+	}, [selectedRows]);
 
 	return (
 		<div className="w-full rounded-md border max-h-[200px] overflow-y-auto">
