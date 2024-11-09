@@ -2,7 +2,7 @@
 
 # Step 1: Run the truffle migrate command
 echo "Running truffle migrate..."
-truffle migrate --network development
+truffle migrate --network development --reset --compile-none
 
 # Check if the truffle migrate command was successful
 if [ $? -ne 0 ]; then
