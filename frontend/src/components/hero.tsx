@@ -14,7 +14,6 @@ const Hero: FC = () => {
 	const { connectWallet } = controller;
 
 	useEffect(() => {
-		router.prefetch("/dashboard");
 		if (isWalletConnected) {
 			console.log("Wallet connected!");
 			return;
