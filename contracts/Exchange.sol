@@ -197,7 +197,8 @@ contract Exchange {
             marketManager.getMarketId(tokenId1, tokenId2),
             orderId,
             exchangeTokenId,
-            OrderLibrary.OrderType.Buy
+            OrderLibrary.OrderType.Buy,
+            orderNature
         );
 
         return orderId;
@@ -205,7 +206,7 @@ contract Exchange {
 
     function placeSellOrder(
         string memory token1, // want
-        string memory token2, // give
+        string memory token2, // give`
         int256 price,
         uint256 amount,
         OrderLibrary.OrderNature orderNature,
@@ -243,7 +244,8 @@ contract Exchange {
             marketManager.getMarketId(tokenId1, tokenId2),
             orderId,
             exchangeTokenId,
-            OrderLibrary.OrderType.Sell
+            OrderLibrary.OrderType.Sell,
+            orderNature
         );
 
         return orderId;
@@ -253,7 +255,8 @@ contract Exchange {
         bytes32 marketId,
         uint256 orderId,
         uint8 _exchangeTokenId,
-        OrderLibrary.OrderType _orderType
+        OrderLibrary.OrderType _orderType,
+        OrderLibrary.OrderNature _orderNature
     ) internal {
         // Get matching results from OrderBookManager
         (
@@ -289,7 +292,9 @@ contract Exchange {
                 toBePaid[i],
                 toReceive[i],
                 tokenAmount[i],
-                currencyAmount[i]
+                currencyAmount[i],
+                _orderType,
+                _orderNature
             );
         }
 
@@ -311,19 +316,52 @@ contract Exchange {
         address toBePaid,
         address toReceive,
         uint256 tokenAmount,
-        int256 currencyAmount
+        int256 currencyAmount,
+        OrderLibrary.OrderType orderType,
+        OrderLibrary.OrderNature orderNature
     ) internal {
         require(toBePaid != address(0), "Invalid toBePaid address");
         require(toReceive != address(0), "Invalid toReceive address");
         require(tokenAmount > 0, "Invalid token amount");
         require(currencyAmount > 0, "Invalid currency amount");
 
-        // Get the market details from the matched order
-        (uint8 baseTokenId, uint8 quoteTokenId) = marketManager.getMarketTokens(
+        (uint8 token1Id, uint8 token2Id) = marketManager.getMarketTokens(
             marketId
         );
-        if (baseTokenId == exchangeTokenId) {
-            (baseTokenId, quoteTokenId) = (quoteTokenId, baseTokenId);
+
+        uint8 baseTokenId;
+        uint8 quoteTokenId;
+
+        if (orderNature == OrderLibrary.OrderNature.Market) {
+            // For market orders, exchangeTokenId is the token being given
+            if (orderType == OrderLibrary.OrderType.Buy) {
+                // Market Buy: exchangeTokenId is quote token (what buyer pays with)
+                quoteTokenId = exchangeTokenId;
+                baseTokenId = (token1Id == exchangeTokenId)
+                    ? token2Id
+                    : token1Id;
+            } else {
+                // Market Sell: exchangeTokenId is base token (what seller gives)
+                baseTokenId = exchangeTokenId;
+                quoteTokenId = (token1Id == exchangeTokenId)
+                    ? token2Id
+                    : token1Id;
+            }
+        } else {
+            // For limit orders, exchangeTokenId is the token being wanted
+            if (orderType == OrderLibrary.OrderType.Buy) {
+                // Limit Buy: exchangeTokenId is base token (what buyer wants)
+                baseTokenId = exchangeTokenId;
+                quoteTokenId = (token1Id == exchangeTokenId)
+                    ? token2Id
+                    : token1Id;
+            } else {
+                // Limit Sell: exchangeTokenId is quote token (what seller wants)
+                quoteTokenId = exchangeTokenId;
+                baseTokenId = (token1Id == exchangeTokenId)
+                    ? token2Id
+                    : token1Id;
+            }
         }
 
         // Transfer base token from seller to buyer
@@ -593,20 +631,33 @@ contract Exchange {
             );
     }
 
-    function getAllMarkets() external view returns (bytes32[] memory, uint8[] memory, uint8[] memory) {
+    function getAllMarkets()
+        external
+        view
+        returns (bytes32[] memory, uint8[] memory, uint8[] memory)
+    {
         (
             string[] memory tokenNames,
             string[] memory tokenSymbols
         ) = tokenManager.getAllTokens();
         uint count = 0;
-        bytes32[] memory marketIds = new bytes32[]((tokenSymbols.length * (tokenSymbols.length - 1)) / 2);
-        uint8[] memory token1Ids = new uint8[]((tokenSymbols.length * (tokenSymbols.length - 1)) / 2);
-        uint8[] memory token2Ids = new uint8[]((tokenSymbols.length * (tokenSymbols.length - 1)) / 2);
+        bytes32[] memory marketIds = new bytes32[](
+            (tokenSymbols.length * (tokenSymbols.length - 1)) / 2
+        );
+        uint8[] memory token1Ids = new uint8[](
+            (tokenSymbols.length * (tokenSymbols.length - 1)) / 2
+        );
+        uint8[] memory token2Ids = new uint8[](
+            (tokenSymbols.length * (tokenSymbols.length - 1)) / 2
+        );
         for (uint i = 0; i < tokenSymbols.length - 1; i++) {
             uint8 tokenId1 = tokenManager.getTokenId(tokenSymbols[i]);
             for (uint j = i + 1; j < tokenSymbols.length; j++) {
                 uint8 tokenId2 = tokenManager.getTokenId(tokenSymbols[j]);
-                bytes32 marketId = marketManager.getMarketId(tokenId1, tokenId2);
+                bytes32 marketId = marketManager.getMarketId(
+                    tokenId1,
+                    tokenId2
+                );
                 marketIds[count] = marketId;
                 token1Ids[count] = tokenId1;
                 token2Ids[count] = tokenId2;
@@ -616,7 +667,11 @@ contract Exchange {
         return (marketIds, token1Ids, token2Ids);
     }
 
-    function getBestPriceInMarket(OrderLibrary.OrderType _orderType, string memory _token1, string memory _token2) external view returns (int256) {
+    function getBestPriceInMarket(
+        OrderLibrary.OrderType _orderType,
+        string memory _token1,
+        string memory _token2
+    ) external view returns (int256) {
         uint8 token1Id = tokenManager.getTokenId(_token1);
         uint8 token2Id = tokenManager.getTokenId(_token2);
         bytes32 marketId = marketManager.getMarketId(token1Id, token2Id);
