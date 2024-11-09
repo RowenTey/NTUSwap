@@ -1,256 +1,173 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
-
-// import "truffle/console.sol";
+import "./OrderLibrary.sol";
+import "./MarketData.sol";
 import "./OrderBookManager.sol";
 
-struct Market {
-    OrderBookManager orderBookManager;
-}
+import "hardhat/console.sol";
 
 contract MarketManager {
-    mapping(uint8 => Market) internal exchangeMarkets;
-    // Map market index to token index
-    mapping(uint8 => uint8[]) internal marketTokens;
-    uint8 internal marketIndex = 0;
+    IMarketData public marketData;
+    OrderBookManager public orderBookManager;
+    bool private initialized;
 
-    event MarketCreatedEvent(
-        uint256 marketId,
-        uint8 tokenId1,
-        uint8 tokenId2,
-        uint256 timestamp
+    event MarketOrderBooksCreatedEvent(
+        bytes32 indexed marketId,
+        uint8 token1,
+        uint8 token2
     );
 
-    event OrderCreatedEvent(
-        uint8 tokenId1,
-        uint8 tokenId2,
-        uint256 price,
-        uint256 amount,
+    event OrderPlacedEvent(
+        bytes32 indexed marketId,
+        uint256 orderId,
+        OrderLibrary.OrderType orderType,
+        int256 price,
+        uint256 timestamp,
         address userAddress,
-        OrderLibrary.OrderType orderType,
-        OrderLibrary.OrderNature orderNature,
-        uint256 timestamp
-    );
-
-    event OrderFilledEvent(
-        uint8 tokenId1,
-        uint8 tokenId2,
-        uint256 price,
-        uint256 amount,
-        OrderLibrary.OrderType orderType,
-        OrderLibrary.OrderNature orderNature,
-        uint256 timestamp
+        OrderLibrary.OrderNature orderNature
     );
 
     event OrderCancelledEvent(
+        bytes32 indexed marketId,
         uint256 orderId,
-        uint8 tokenId1,
-        uint8 tokenId2,
-        OrderLibrary.OrderType orderType,
         address userAddress,
+        OrderLibrary.OrderType orderType,
         uint256 timestamp
     );
 
-    function addMarket(uint8 tokenIndex) internal {
-        require(marketIndex + 1 > marketIndex, "Market index overflow");
+    modifier onlyInitialized() {
+        require(initialized, "Market manager not initialized");
+        _;
+    }
 
-        for (uint8 i = 1; i < tokenIndex; i++) {
-            // console.log("Adding market: %s and %s", i, tokenIndex);
+    constructor() {
+        initialized = false;
+    }
 
-            marketIndex++;
-            marketTokens[marketIndex] = [tokenIndex, i];
+    function initialize(
+        address _marketDataAddr,
+        address _orderBookManagerAddr
+    ) external {
+        require(!initialized, "Already initialized");
+        require(_marketDataAddr != address(0), "Invalid market data address");
+        require(
+            _orderBookManagerAddr != address(0),
+            "Invalid orderbook manager address"
+        );
 
-            emit MarketCreatedEvent(
-                marketIndex,
+        marketData = IMarketData(_marketDataAddr);
+        orderBookManager = OrderBookManager(_orderBookManagerAddr);
+        initialized = true;
+    }
+
+    function createMarket(uint8 _tokenId) external onlyInitialized {
+        require(_tokenId > 1, "Invalid token ID");
+        marketData.addMarket(_tokenId);
+        console.log("[MarketManager] Market added for token:", _tokenId);
+
+        // Create orderbooks for each market pair
+        for (uint8 i = 1; i < _tokenId; i++) {
+            bytes32 marketId = getMarketId(i, _tokenId);
+            console.log(
+                "[MarketManager] Creating market order books for tokens:",
                 i,
-                tokenIndex,
-                block.timestamp
+                _tokenId
             );
 
-            Market memory newMarket = Market({
-                orderBookManager: new OrderBookManager()
-            });
-
-            // Create a new order book
-            exchangeMarkets[marketIndex] = newMarket;
-        }
-
-        // console.log("Total markets after adding: ", marketIndex);
-    }
-
-    function _placeOrder(
-        OrderLibrary.PlaceOrderParams memory params
-    ) internal returns (OrderLibrary.PlaceOrderResults memory result) {
-        require(params.price > 0, "Price must be greater than zero");
-        require(params.amount > 0, "Amount must be greater than zero");
-
-        uint8 marketId = getMarketIdByTokens(
-            params.tokenIndex1,
-            params.tokenIndex2
-        );
-        Market storage market = exchangeMarkets[marketId];
-
-        result.orderId = _createInitialOrder(market, params);
-
-        uint256 balance;
-        (
-            balance,
-            result.toPay,
-            result.toReceive,
-            result.tokenAmount,
-            result.currencyAmount
-        ) = market.orderBookManager.matchOrder(
-            result.orderId,
-            params.orderType,
-            params.orderNature
-        );
-
-        result.orderId = _handleRemainingBalance(
-            market,
-            params,
-            result.orderId,
-            balance
-        );
-
-        for (uint256 i = 0; i < result.tokenAmount.length; i++) {
-            emit OrderFilledEvent(
-                params.tokenIndex1,
-                params.tokenIndex2,
-                params.price,
-                result.tokenAmount[i],
-                params.orderType,
-                params.orderNature,
-                block.timestamp
-            );
-        }
-
-        return result;
-    }
-
-    function _createInitialOrder(
-        Market storage market,
-        OrderLibrary.PlaceOrderParams memory params
-    ) private returns (uint256) {
-        uint256 orderId = market.orderBookManager.addOrder(
-            params.amount,
-            params.price,
-            params.userAddress,
-            params.orderType,
-            params.orderNature,
-            false
-        );
-
-        emit OrderCreatedEvent(
-            params.tokenIndex1,
-            params.tokenIndex2,
-            params.price,
-            params.amount,
-            params.userAddress,
-            params.orderType,
-            params.orderNature,
-            block.timestamp
-        );
-
-        return orderId;
-    }
-
-    function _handleRemainingBalance(
-        Market storage market,
-        OrderLibrary.PlaceOrderParams memory params,
-        uint256 orderId,
-        uint256 balance
-    ) private returns (uint256) {
-        if (balance > 0 && balance < params.amount) {
-            market.orderBookManager.updateOrder(
-                orderId,
-                params.orderType,
-                OrderLibrary.OrderStatus.PartiallyFilled
-            );
-
-            uint256 remainingAmount = params.amount - balance;
-            orderId = market.orderBookManager.addOrder(
-                remainingAmount,
-                params.price,
-                params.userAddress,
-                params.orderType,
-                params.orderNature,
-                true
-            );
-
-            emit OrderCreatedEvent(
-                params.tokenIndex1,
-                params.tokenIndex2,
-                params.price,
-                remainingAmount,
-                params.userAddress,
-                params.orderType,
-                params.orderNature,
-                block.timestamp
-            );
-        } else if (balance == 0) {
-            market.orderBookManager.updateOrder(
-                orderId,
-                params.orderType,
-                OrderLibrary.OrderStatus.Filled
-            );
-        } else {
-            market.orderBookManager.pushToQueue(orderId, params.orderType);
-        }
-
-        return orderId;
-    }
-
-    function _cancelOrder(
-        uint8 marketId,
-        uint256 orderId,
-        address userAddress,
-        OrderLibrary.OrderType orderType
-    ) internal {
-        uint8 tokenIndex1;
-        uint8 tokenIndex2;
-        (tokenIndex1, tokenIndex2) = getTokensByMarketId(marketId);
-        Market storage market = exchangeMarkets[marketId];
-
-        bool isCancelled = market.orderBookManager.cancelOrder(
-            orderId,
-            orderType
-        );
-
-        // TODO: Do I need to refund to user?
-
-        if (isCancelled) {
-            emit OrderCancelledEvent(
-                orderId,
-                tokenIndex1,
-                tokenIndex2,
-                orderType,
-                userAddress,
-                block.timestamp
-            );
-        }
-    }
-
-    function getTokensByMarketId(
-        uint8 marketId
-    ) internal view returns (uint8 tokenId1, uint8 tokenId2) {
-        return (marketTokens[marketId][0], marketTokens[marketId][1]);
-    }
-
-    function getMarketIdByTokens(
-        uint8 tokenId1,
-        uint8 tokenId2
-    ) internal view returns (uint8 marketId) {
-        for (uint8 i = 0; i <= marketIndex; i++) {
-            if (
-                marketTokens[i][0] == tokenId1 && marketTokens[i][1] == tokenId2
-            ) {
-                return i;
-            } else if (
-                marketTokens[i][0] == tokenId2 && marketTokens[i][1] == tokenId1
-            ) {
-                return i;
+            // Only create orderbooks if they don't exist
+            if (!orderBookManager.orderBookExists(marketId)) {
+                orderBookManager.createMarketOrderBook(marketId);
+                emit MarketOrderBooksCreatedEvent(marketId, i, _tokenId);
+                console.log("[MarketManager] Market order books created!");
             }
         }
-        return 0;
+    }
+
+    function placeOrder(
+        uint8 tokenId1,
+        uint8 tokenId2,
+        int256 price,
+        uint256 amount,
+        address userAddress,
+        OrderLibrary.OrderType orderType,
+        OrderLibrary.OrderNature orderNature
+    ) external onlyInitialized returns (uint256 orderId) {
+        bytes32 marketId = getMarketId(tokenId1, tokenId2);
+        require(
+            isMarketInitialized(tokenId1, tokenId2),
+            "Market does not exist for these pairs of tokens"
+        );
+
+        orderId = orderBookManager.createOrder(
+            marketId,
+            amount,
+            price,
+            userAddress,
+            orderType,
+            orderNature
+        );
+        emit OrderPlacedEvent(
+            marketId,
+            orderId,
+            orderType,
+            price,
+            block.timestamp,
+            userAddress,
+            orderNature
+        );
+
+        return orderId;
+    }
+
+    function cancelOrder(
+        bytes32 marketId,
+        uint256 orderId,
+        address userAddress,
+        OrderLibrary.OrderType orderType,
+        OrderLibrary.OrderNature orderNature
+    ) external onlyInitialized returns (bool) {
+        require(marketData.isMarketPresent(marketId), "Market does not exist");
+
+        // Forward cancellation request to OrderBookManager
+        bool success = orderBookManager.cancelOrder(
+            marketId,
+            orderId,
+            orderType,
+            orderNature
+        );
+        if (success) {
+            emit OrderCancelledEvent(
+                marketId,
+                orderId,
+                userAddress,
+                orderType,
+                block.timestamp
+            );
+        }
+        return success;
+    }
+
+    function getMarketTokens(
+        bytes32 _marketId
+    ) external view onlyInitialized returns (uint8, uint8) {
+        return marketData.getTokensFromMarketId(_marketId);
+    }
+
+    // Helper function to check if a market is fully initialized
+    function isMarketInitialized(
+        uint8 tokenId1,
+        uint8 tokenId2
+    ) public view onlyInitialized returns (bool) {
+        bytes32 marketId = getMarketId(tokenId1, tokenId2);
+        return
+            marketData.isMarketPresent(marketId) &&
+            orderBookManager.orderBookExists(marketId);
+    }
+
+    function getMarketId(
+        uint8 tokenId1,
+        uint8 tokenId2
+    ) public view onlyInitialized returns (bytes32) {
+        return marketData.getMarketId(tokenId1, tokenId2);
     }
 }

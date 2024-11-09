@@ -1,18 +1,10 @@
 {
-  "name": "sc4053-blockchain-technology",
-  "version": "1.0.0",
-  "main": "truffle-config.js",
-  "directories": {
-    "test": "test"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "@openzeppelin/contracts": "^4.9.3"
+    "@openzeppelin/contracts": "^4.9.3",
+    "@openzeppelin/test-helpers": "^0.5.16",
+    "ganache-cli": "^6.12.2"
+  },
+  "devDependencies": {
+    "hardhat": "^2.22.15"
   }
 }
