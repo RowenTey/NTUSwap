@@ -51,11 +51,14 @@ contract OrderBookManager {
             address(marketOrderBooks[_marketId]) == address(0),
             "Order Book already exists"
         );
+        console.log("[OrderBookManager] Creating Order Book for Market...");
+
         // Deploy new OrderBookData contract for this market
         OrderBookData newOrderBook = new OrderBookData(address(this));
         marketOrderBooks[_marketId] = IOrderBookData(address(newOrderBook));
 
         emit OrderBookCreatedEvent(_marketId, address(newOrderBook));
+        console.log("[OrderBookManager] Order Book created for Market...");
     }
 
     function createOrder(
@@ -145,6 +148,7 @@ contract OrderBookManager {
                 _exchangeTokenId
             );
             while (flag && pendingOrder.remainingAmount > 0) {
+                console.log("Available Balance: ", availableBalance);
                 uint256 bestOrderId = marketOrderBook.getBestOrderFromHeap(
                     oppositeOrderType
                 );
@@ -184,12 +188,13 @@ contract OrderBookManager {
                         flag = false; // Market Order will get partially filled but Limit Order will also get partially filled. Thus, market order will not be able to satisfy any more limit orders because of lack of user balance
                     } else {
                         availableBalance -=
-                            (minimumAmount *
-                            uint256(settlingPrice)) / 1 ether; // Limit Order is fully satisfied but Market order is only partially filled and will continue to look for next best order, so user balance is updated
+                            (minimumAmount * uint256(settlingPrice)) /
+                            1 ether; // Limit Order is fully satisfied but Market order is only partially filled and will continue to look for next best order, so user balance is updated
                     }
                 }
 
-                uint256 matchedAmount = (minimumAmount * uint256(settlingPrice)) / 1 ether;
+                uint256 matchedAmount = (minimumAmount *
+                    uint256(settlingPrice)) / 1 ether;
                 toBePaid[count] = _orderType == OrderLibrary.OrderType.Buy
                     ? bestOrder.userAddress
                     : pendingOrder.userAddress;
@@ -306,13 +311,17 @@ contract OrderBookManager {
                             ? pendingOrderNewAmount
                             : marketOrder.remainingAmount;
                         console.log("Minimum Amount = ", minimumAmount);
-                        console.log("Initial Amount to match = ", (minimumAmount *
-                            uint256(settlingPrice)) / 1 ether);
+                        console.log(
+                            "Initial Amount to match = ",
+                            (minimumAmount * uint256(settlingPrice)) / 1 ether
+                        );
                         if (
                             userBalance <
-                            (minimumAmount * uint256(settlingPrice) / 1 ether)
+                            ((minimumAmount * uint256(settlingPrice)) / 1 ether)
                         ) {
-                            console.log("Entering if condition: Reducing Balance");
+                            console.log(
+                                "Entering if condition: Reducing Balance"
+                            );
                             minimumAmount =
                                 (minimumAmount * uint256(settlingPrice)) /
                                 (userBalance * 1 ether);
@@ -321,9 +330,9 @@ contract OrderBookManager {
 
                         uint256 amountToMatch = (minimumAmount *
                             uint256(settlingPrice)) / 1 ether;
-                        
+
                         console.log("Final Amount to match = ", amountToMatch);
-                        
+
                         toBePaid[count] = _orderType ==
                             OrderLibrary.OrderType.Buy
                             ? marketOrder.userAddress
@@ -339,7 +348,10 @@ contract OrderBookManager {
                         uint256 marketOrderNewAmount = marketOrder
                             .remainingAmount - minimumAmount;
 
-                        console.log("Market Order New Amount = ", marketOrderNewAmount);
+                        console.log(
+                            "Market Order New Amount = ",
+                            marketOrderNewAmount
+                        );
                         // Update fills for both matched orders
                         OrderLibrary.Fills
                             memory newPendingOrderReceipts = OrderLibrary
@@ -562,7 +574,10 @@ contract OrderBookManager {
         return orderBook.getAllOrdersWithFilters(params);
     }
 
-    function getBestPriceInMarket(OrderLibrary.OrderType _orderType, bytes32 _marketId) external view returns (int256) {
+    function getBestPriceInMarket(
+        OrderLibrary.OrderType _orderType,
+        bytes32 _marketId
+    ) external view returns (int256) {
         IOrderBookData marketOrderBook = marketOrderBooks[_marketId];
         uint256 orderId = marketOrderBook.getBestOrderFromHeap(_orderType);
         return marketOrderBook.getOrderFromId(_orderType, orderId).price;

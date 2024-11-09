@@ -4,7 +4,7 @@ import "./OrderLibrary.sol";
 import "./MarketData.sol";
 import "./OrderBookManager.sol";
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 contract MarketManager {
     IMarketData public marketData;
@@ -63,15 +63,22 @@ contract MarketManager {
     function createMarket(uint8 _tokenId) external onlyInitialized {
         require(_tokenId > 1, "Invalid token ID");
         marketData.addMarket(_tokenId);
+        console.log("[MarketManager] Market added for token:", _tokenId);
 
         // Create orderbooks for each market pair
         for (uint8 i = 1; i < _tokenId; i++) {
             bytes32 marketId = getMarketId(i, _tokenId);
+            console.log(
+                "[MarketManager] Creating market order books for tokens:",
+                i,
+                _tokenId
+            );
 
             // Only create orderbooks if they don't exist
             if (!orderBookManager.orderBookExists(marketId)) {
                 orderBookManager.createMarketOrderBook(marketId);
                 emit MarketOrderBooksCreatedEvent(marketId, i, _tokenId);
+                console.log("[MarketManager] Market order books created!");
             }
         }
     }

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+import "hardhat/console.sol";
+
 // Interface for MarketData contract
 interface IMarketData {
     struct Market {
@@ -57,16 +59,17 @@ contract MarketData is IMarketData {
     }
 
     function addMarket(uint8 _tokenId) external override onlyMarketManager {
+        console.log("[MarketData] Adding market for token:", _tokenId);
         for (uint8 i = 1; i < _tokenId; i++) {
             bytes32 marketId = getMarketId(i, _tokenId);
-            if (!(exchangeMarkets[marketId].exists)) {
-                exchangeMarkets[marketId] = Market({
-                    token1: i,
-                    token2: _tokenId,
-                    exists: true
-                });
-            }
+            require(!exchangeMarkets[marketId].exists, "Market already exists");
+            exchangeMarkets[marketId] = Market({
+                token1: i,
+                token2: _tokenId,
+                exists: true
+            });
             emit MarketCreatedEvent(marketId, i, _tokenId, block.timestamp);
+            console.log("[MarketData] Market created for tokens:", i, _tokenId);
         }
     }
 
@@ -86,6 +89,11 @@ contract MarketData is IMarketData {
         if (token1 > token2) {
             (token1, token2) = (token2, token1);
         }
+        console.log(
+            "[MarketData] Getting market ID for tokens:",
+            token1,
+            token2
+        );
         return keccak256(abi.encodePacked(token1, token2));
     }
 

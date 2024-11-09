@@ -85,12 +85,12 @@ contract TokenManager is Ownable {
         uint256 _initialSupply
     ) external onlyOwner onlyInitialized {
         // Log each parameter explicitly
-        console.log("Token Name:", _name);
-        console.log("Token Symbol:", _symbol);
-        console.log("Initial Supply:", _initialSupply);
+        console.log("[TokenManager] Token Name:", _name);
+        console.log("[TokenManager] Token Symbol:", _symbol);
+        console.log("[TokenManager] Initial Supply:", _initialSupply);
         require(isToken[_symbol] == 0, "Token already exists!");
         require(_initialSupply > 0, "Initial supply must be greater than 0");
-        // console.log('Issuing token:', _name, _symbol, _initialSupply);
+
         // Create a token
         Token newToken = new Token(_name, _symbol, _initialSupply, msg.sender);
 
@@ -104,9 +104,11 @@ contract TokenManager is Ownable {
             _initialSupply,
             block.timestamp
         );
+        console.log("[TokenManager] Emitted TokenIssueEvent");
 
         if (tokenId > 1) {
             marketManager.createMarket(tokenId);
+            console.log("[TokenManager] Market created for token:", tokenId);
         }
 
         tokenId++;
@@ -138,6 +140,7 @@ contract TokenManager is Ownable {
 
         emit DepositEvent(_symbol, _userAddress, _amount, block.timestamp);
 
+        console.log("Updated balance - ", userBalances[_userAddress][_tokenId]);
         return userBalances[_userAddress][_tokenId];
     }
 
@@ -150,6 +153,7 @@ contract TokenManager is Ownable {
         require(_amount > 0, "Amount must be greater than zero");
 
         uint256 userBalance = getUserTokenBalance(_userAddress, _symbol);
+        console.log("User balance - ", userBalance);
         require(userBalance >= _amount, "Insufficient balance");
 
         uint8 _tokenId = isToken[_symbol];
@@ -189,9 +193,10 @@ contract TokenManager is Ownable {
         require(tokens[_tokenId] != Token(address(0)), "Token does not exist");
 
         // Check if sender has sufficient balance
+        console.log("Transferring - ", _from, _tokenId, _amount);
         require(
             userBalances[_from][_tokenId] >= _amount,
-            "Insufficient balance"
+            "[TokenManager] Insufficient balance"
         );
 
         // Update balances
