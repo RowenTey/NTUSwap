@@ -18,6 +18,9 @@ const Hero: FC = () => {
 			console.log("Wallet connected!");
 			return;
 		}
+		router.prefetch("/dashboard");
+		router.prefetch("/issue");
+
 		// connectWallet();
 	}, []);
 

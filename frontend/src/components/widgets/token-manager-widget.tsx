@@ -17,7 +17,7 @@ const TokenManagerWidget: FC = () => {
 	const { tokens, controller } = useWeb3();
 	const { deposit, withdraw, updateBalance } = controller;
 	const tokensArr = useMemo(() => {
-		return Array.from(tokens.values().map((token) => token[0]));
+		return Array.from(tokens.values()).map((t) => t[0]);
 	}, [tokens]);
 	const [operation, setOperation] = useState<"deposit" | "withdraw">("deposit");
 	const [selectedToken, setSelectedToken] = useState(tokensArr[0]);
@@ -39,8 +39,6 @@ const TokenManagerWidget: FC = () => {
 			return;
 		}
 
-		// TODO: Listen for events in user balance widget to update balance
-		// TODO: Handle errors
 		if (operation === "deposit") {
 			const res = await deposit(selectedToken, Number(quantity));
 			if (res.status !== "Success") {
