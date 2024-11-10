@@ -1,4 +1,4 @@
-# Decentralized Exchange
+# NTUSwap - Decentralized Exchange
 
 Our Decentralized Exchange is a secure, on-chain trading platform that enables peer-to-peer trading of ERC20 tokens without the need for intermediaries. Built on Ethereum, it implements an order book model providing users with traditional exchange functionalities in a decentralized manner.
 
