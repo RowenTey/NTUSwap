@@ -11,7 +11,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Step 2: Delete all files in the target directory
-TARGET_DIR="frontend-v2/public/contracts"
+TARGET_DIR="frontend/public/contracts"
 SOURCE_DIR="build/contracts"
 
 echo "Deleting all files in the target directory: $TARGET_DIR"
