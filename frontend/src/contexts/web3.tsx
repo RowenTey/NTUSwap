@@ -284,7 +284,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 
 		try {
 			const ownerAddress = await contract.tokenManager.methods.owner().call();
-			console.log("Owner address:", ownerAddress);
+			// console.log("Owner address:", ownerAddress);
 			return ownerAddress;
 		} catch (error) {
 			console.error("Failed to fetch owner address:", error);
