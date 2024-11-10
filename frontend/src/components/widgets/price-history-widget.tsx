@@ -59,6 +59,7 @@ const PriceHistoryWidget: FC = () => {
 		if (!contract || !activeMarket) return;
 
 		fetchMarketPrice(activeMarket);
+		setMarketData([]);
 
 		contract.exchange.getPastEvents(
 			"OrderMatched",

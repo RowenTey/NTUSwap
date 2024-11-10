@@ -7,7 +7,7 @@ import { formatAddress } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 
 const Navbar: FC = () => {
-	const { account, contract, controller } = useWeb3();
+	const { isWalletConnected, account, contract, controller } = useWeb3();
 	const { getOwner } = controller;
 	const [owner, setOwner] = useState<string>("");
 	const [activeTab, setActiveTab] = useState<string>("");
@@ -56,7 +56,7 @@ const Navbar: FC = () => {
 						>
 							Dashboard
 						</Link>
-						{account === owner && (
+						{isWalletConnected && account === owner && (
 							<Link
 								href="/issue"
 								onClick={() => handleTabClick("issue")}
