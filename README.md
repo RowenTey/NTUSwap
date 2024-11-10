@@ -64,6 +64,6 @@ npm run dev
 8. Add local Ganache chain to Metamask. (RPC URL: http://127.0.0.1:8545, Chain ID: 1337)
    ![alt text](image.png)
 
-9. Import the secret key of account1 (owner) and account3 (user2) into Metamask.
+9. Import the private key of account1 (owner) and account3 (user2) into Metamask.
    ![alt text](image-1.png)
 10. Click "Connect Wallet" on the landing page.
