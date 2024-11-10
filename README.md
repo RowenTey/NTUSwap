@@ -2,6 +2,10 @@
 
 Our Decentralized Exchange is a secure, on-chain trading platform that enables peer-to-peer trading of ERC20 tokens without the need for intermediaries. Built on Ethereum, it implements an order book model providing users with traditional exchange functionalities in a decentralized manner.
 
+## Demo
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/fI01RsQn7iA/0.jpg)](https://www.youtube.com/watch?v=fI01RsQn7iA)
+
 ## Prerequisites
 
 <ul>
