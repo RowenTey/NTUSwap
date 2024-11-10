@@ -60,3 +60,5 @@ npm install
 ```
 npm run dev
 ```
+
+8. Add the secret key of `account1` and `account3` in the Ganache test chain into the Metamask wallet.
