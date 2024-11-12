@@ -4,7 +4,7 @@ Our Decentralized Exchange is a secure, on-chain trading platform that enables p
 
 ## Demo
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/fI01RsQn7iA/0.jpg)](https://www.youtube.com/watch?v=fI01RsQn7iA)
+[![Demo](https://img.youtube.com/vi/fI01RsQn7iA/0.jpg)](https://www.youtube.com/watch?v=fI01RsQn7iA)
 
 ## Prerequisites
 
