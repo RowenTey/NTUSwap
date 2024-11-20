@@ -16,7 +16,7 @@ Our Decentralized Exchange is a secure, on-chain trading platform that enables p
   <li>Web3.js v1.10.0</li>
 </ul>
 
-## Steps to run the project
+## Getting Started
 
 1. Clone the repository:
 
